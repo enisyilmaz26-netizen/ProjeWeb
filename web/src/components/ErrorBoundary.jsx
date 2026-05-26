@@ -16,6 +16,10 @@ export default class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      let lang = 'TR'
+      try { lang = JSON.parse(localStorage.getItem('app_language') || '"TR"') } catch {}
+      const isTR = lang === 'TR'
+
       return (
         <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#040A1C] px-4">
           <div className="text-center max-w-sm">
@@ -26,13 +30,17 @@ export default class ErrorBoundary extends React.Component {
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Beklenmeyen bir hata oluştu</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Sayfayı yenileyerek tekrar deneyin.</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              {isTR ? 'Beklenmeyen bir hata oluştu' : 'An unexpected error occurred'}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              {isTR ? 'Sayfayı yenileyerek tekrar deneyin.' : 'Please try refreshing the page.'}
+            </p>
             <button
               onClick={() => window.location.reload()}
               className="px-6 py-2.5 bg-[#1565C0] hover:bg-[#0D47A1] text-white font-semibold rounded-xl text-sm transition"
             >
-              Sayfayı Yenile
+              {isTR ? 'Sayfayı Yenile' : 'Refresh Page'}
             </button>
           </div>
         </div>

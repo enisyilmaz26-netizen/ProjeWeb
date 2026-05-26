@@ -26,12 +26,18 @@ function loadFromStorage(key) {
   }
 }
 
-// Module-level rate limit tracker (cleared on page refresh — intentional)
-const loginAttempts = {}
+const RATE_LIMIT_KEY = 'rl_attempts'
+
+function loadRateLimits() {
+  try { return JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{}') } catch { return {} }
+}
+function saveRateLimits(data) {
+  try { localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data)) } catch {}
+}
 
 function checkRateLimit(email) {
   const now = Date.now()
-  const entry = loginAttempts[email]
+  const entry = loadRateLimits()[email]
   if (entry && entry.lockUntil > now) {
     return { locked: true, secs: Math.ceil((entry.lockUntil - now) / 1000) }
   }
@@ -39,16 +45,20 @@ function checkRateLimit(email) {
 }
 
 function recordFailedAttempt(email) {
-  if (!loginAttempts[email]) loginAttempts[email] = { count: 0, lockUntil: 0 }
-  loginAttempts[email].count++
-  if (loginAttempts[email].count >= 5) {
-    loginAttempts[email].lockUntil = Date.now() + 60000
-    loginAttempts[email].count = 0
+  const all = loadRateLimits()
+  if (!all[email]) all[email] = { count: 0, lockUntil: 0 }
+  all[email].count++
+  if (all[email].count >= 5) {
+    all[email].lockUntil = Date.now() + 60000
+    all[email].count = 0
   }
+  saveRateLimits(all)
 }
 
 function clearAttempts(email) {
-  delete loginAttempts[email]
+  const all = loadRateLimits()
+  delete all[email]
+  saveRateLimits(all)
 }
 
 export function AppProvider({ children }) {
@@ -122,6 +132,31 @@ export function AppProvider({ children }) {
     return () => clearInterval(interval)
   }, [loadAllData])
 
+  useEffect(() => {
+    const apptChannel = supabase
+      .channel('rt-appointments')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setAppointments(prev => prev.find(a => a.id === n.id) ? prev : [n, ...prev])
+        else if (eventType === 'UPDATE') setAppointments(prev => prev.map(a => a.id === n.id ? n : a))
+        else if (eventType === 'DELETE') setAppointments(prev => prev.filter(a => a.id !== o.id))
+      })
+      .subscribe()
+
+    const notifChannel = supabase
+      .channel('rt-notifications')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setNotifications(prev => prev.find(x => x.id === n.id) ? prev : [n, ...prev])
+        else if (eventType === 'UPDATE') setNotifications(prev => prev.map(x => x.id === n.id ? n : x))
+        else if (eventType === 'DELETE') setNotifications(prev => prev.filter(x => x.id !== o.id))
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(apptChannel)
+      supabase.removeChannel(notifChannel)
+    }
+  }, [])
+
   // AUTH ACTIONS
   const loginUser = async (email, password) => {
     const rl = checkRateLimit(email)
@@ -136,17 +171,9 @@ export function AppProvider({ children }) {
     }
 
     const hashed = await hashPassword(password, email)
-    const isHashMatch = data.password_hash === hashed
-    const isPlainMatch = !isHashMatch && data.password_hash === password
-
-    if (!isHashMatch && !isPlainMatch) {
+    if (data.password_hash !== hashed) {
       recordFailedAttempt(email)
       return { success: false, error: 'err_user_not_found' }
-    }
-
-    if (isPlainMatch) {
-      await supabase.from('users').update({ password_hash: hashed }).eq('id', data.id)
-      data.password_hash = hashed
     }
 
     if (!data.is_approved) return { success: false, error: 'err_not_approved' }
@@ -169,17 +196,7 @@ export function AppProvider({ children }) {
     }
 
     const hashed = await hashPassword(password, email)
-    let passwordOk = false
-    if (data.password_hash) {
-      passwordOk = data.password_hash === hashed || data.password_hash === password
-      if (data.password_hash === password) {
-        await supabase.from('admins').update({ password_hash: hashed }).eq('id', data.id)
-      }
-    } else {
-      passwordOk = password === 'admin123'
-    }
-
-    if (!passwordOk) {
+    if (!data.password_hash || data.password_hash !== hashed) {
       recordFailedAttempt(email)
       return { success: false, error: 'err_user_not_found' }
     }
@@ -242,13 +259,7 @@ export function AppProvider({ children }) {
     if (!data) return { success: false, error: 'err_user_not_found' }
 
     const currentHashed = await hashPassword(currentPassword, email)
-    let passwordOk = false
-    if (data.password_hash) {
-      passwordOk = data.password_hash === currentHashed || data.password_hash === currentPassword
-    } else {
-      passwordOk = currentPassword === 'admin123'
-    }
-    if (!passwordOk) return { success: false, error: 'err_current_password_wrong' }
+    if (!data.password_hash || data.password_hash !== currentHashed) return { success: false, error: 'err_current_password_wrong' }
 
     const newHashed = await hashPassword(newPassword, email)
     const { error } = await supabase.from('admins').update({ password_hash: newHashed }).eq('id', adminId)
@@ -262,10 +273,7 @@ export function AppProvider({ children }) {
     if (!data) return { success: false, error: 'err_user_not_found' }
 
     const currentHashed = await hashPassword(currentPassword, email)
-    const isHashMatch = data.password_hash === currentHashed
-    const isPlainMatch = !isHashMatch && data.password_hash === currentPassword
-
-    if (!isHashMatch && !isPlainMatch) return { success: false, error: 'err_current_password_wrong' }
+    if (!data.password_hash || data.password_hash !== currentHashed) return { success: false, error: 'err_current_password_wrong' }
 
     const newHashed = await hashPassword(newPassword, email)
     const { error } = await supabase.from('users').update({ password_hash: newHashed }).eq('id', userId)
@@ -312,7 +320,10 @@ export function AppProvider({ children }) {
       .select()
       .single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) {
+      if (error.code === '23505') return { success: false, error: 'err_duplicate_appointment' }
+      return { success: false, error: error.message }
+    }
     setAppointments(prev => [data, ...prev])
     return { success: true, data }
   }
