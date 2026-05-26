@@ -182,11 +182,11 @@ export default function LandingPage({ onLoginClick }) {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-white dark:bg-[#040A1C]">
+      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-br from-white via-[#EFF8FF] to-[#1565C0] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565]">
         {/* Decorative circles */}
-        <div className="absolute top-20 right-10 w-72 h-72 bg-[#00AEEF]/8 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#1565C0]/6 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#7DD4FC]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-20 right-10 w-72 h-72 bg-[#00AEEF]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#1565C0]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-20 text-center">
           {/* Badge */}
