@@ -17,6 +17,21 @@ function getTomorrowDate() {
   return d.toISOString().split('T')[0]
 }
 
+function getMaxDate() {
+  const d = new Date()
+  d.setDate(d.getDate() + 60)
+  return d.toISOString().split('T')[0]
+}
+
+function isWeekend(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00')
+  return d.getDay() === 0 || d.getDay() === 6
+}
+
+function normalizeSlot(str) {
+  return (str || '').replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/, '$1 - $2')
+}
+
 export default function UserReservationScreen() {
   const { cities, labs, appointments, timeSlots, loggedInUser, submitAppointment, language } = useApp()
 
@@ -29,6 +44,7 @@ export default function UserReservationScreen() {
   const [submitting, setSubmitting] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [dateError, setDateError] = useState('')
 
   // User can only see their own city
   const userCity = useMemo(() => {
@@ -77,6 +93,11 @@ export default function UserReservationScreen() {
   }
 
   const handleDateSelect = (date) => {
+    if (isWeekend(date)) {
+      setDateError(language === 'TR' ? 'Hafta sonları randevu alınamaz. Lütfen hafta içi bir gün seçin.' : 'Appointments cannot be made on weekends. Please select a weekday.')
+      return
+    }
+    setDateError('')
     setSelectedDate(date)
     setSelectedSlot(null)
     setStep(4)
@@ -134,7 +155,7 @@ export default function UserReservationScreen() {
     else if (s <= 4) { setSelectedSlot(null); setStep(4) }
   }
 
-  const cardClass = "bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 mb-4"
+  const cardClass = "bg-white dark:bg-[#252035] rounded-2xl shadow p-4 mb-4"
 
   return (
     <div className="px-4 py-4">
@@ -173,7 +194,7 @@ export default function UserReservationScreen() {
                 <button
                   key={city.id}
                   onClick={() => handleCitySelect(city)}
-                  className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-5 text-left hover:ring-2 hover:ring-[#6750A4] dark:hover:ring-[#D0BCFF] transition active:scale-[0.98]"
+                  className="bg-white dark:bg-[#252035] rounded-2xl shadow p-5 text-left hover:ring-2 hover:ring-[#6750A4] dark:hover:ring-[#D0BCFF] transition active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center">
@@ -258,10 +279,17 @@ export default function UserReservationScreen() {
             <input
               type="date"
               min={getTomorrowDate()}
+              max={getMaxDate()}
               value={selectedDate}
               onChange={e => handleDateSelect(e.target.value)}
               className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2C2A31] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6750A4] dark:focus:ring-[#D0BCFF] text-sm"
             />
+            {dateError && (
+              <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{dateError}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              {language === 'TR' ? 'Hafta sonları ve 60 günden ileri tarihler seçilemez.' : 'Weekends and dates beyond 60 days are not available.'}
+            </p>
           </div>
           <button onClick={() => resetToStep(2)} className="mt-1 text-sm text-[#6750A4] dark:text-[#D0BCFF] font-medium flex items-center gap-1">
             ← {language === 'TR' ? 'Stüdyo Seçimine Dön' : 'Back to Studio Selection'}
@@ -298,10 +326,10 @@ export default function UserReservationScreen() {
                     className={`rounded-2xl p-4 text-left border-2 transition active:scale-[0.98] ${
                       avail.full
                         ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed'
-                        : 'bg-white dark:bg-[#1D1B20] border-transparent hover:border-[#6750A4] dark:hover:border-[#D0BCFF] shadow'
+                        : 'bg-white dark:bg-[#252035] border-transparent hover:border-[#6750A4] dark:hover:border-[#D0BCFF] shadow'
                     }`}
                   >
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{slot.time_range}</p>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{normalizeSlot(slot.time_range)}</p>
                     {avail.full ? (
                       <p className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">{t('slot_full', language)}</p>
                     ) : (
@@ -340,7 +368,7 @@ export default function UserReservationScreen() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 space-y-3">
+            <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <InfoField label={t('input_name', language)} value={loggedInUser?.name} />
                 <InfoField label={t('input_surname', language)} value={loggedInUser?.surname} />
@@ -395,7 +423,7 @@ function LabCard({ lab, onClick, language, getMaxCapacity }) {
   return (
     <button
       onClick={onClick}
-      className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 text-left hover:ring-2 hover:ring-[#6750A4] dark:hover:ring-[#D0BCFF] transition active:scale-[0.98] w-full"
+      className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 text-left hover:ring-2 hover:ring-[#6750A4] dark:hover:ring-[#D0BCFF] transition active:scale-[0.98] w-full"
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">

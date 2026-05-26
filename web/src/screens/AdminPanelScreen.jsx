@@ -420,7 +420,7 @@ export default function AdminPanelScreen() {
       )}
 
       {/* Admin header */}
-      <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 mb-4">
+      <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center">
             <span className="text-[#6750A4] dark:text-[#D0BCFF] text-xl">⚙️</span>
@@ -567,14 +567,14 @@ export default function AdminPanelScreen() {
           </div>
 
           {filteredAppointments.length === 0 ? (
-            <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+            <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
               {t('no_appointments', language)}
             </div>
           ) : (
             <>
               <div className="space-y-3">
                 {filteredAppointments.slice(0, visibleCount).map(appt => (
-                  <div key={appt.id} className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+                  <div key={appt.id} className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">
@@ -660,7 +660,7 @@ export default function AdminPanelScreen() {
           )}
 
           {showAddLab && (
-            <form onSubmit={handleAddLab} className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 mb-4 space-y-3">
+            <form onSubmit={handleAddLab} className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 mb-4 space-y-3">
               <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Yeni Stüdyo' : 'New Studio'}</h4>
               <LabFormFields form={labForm} setForm={setLabForm} cities={cities} inputClass={inputClass} language={language} showCity={isGlobal} />
               <div className="flex gap-2">
@@ -675,7 +675,7 @@ export default function AdminPanelScreen() {
               const city = cities.find(c => String(c.id) === String(lab.city_id))
               const isEditing = editingLabId === lab.id
               return (
-                <div key={lab.id} className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+                <div key={lab.id} className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
                   {isEditing ? (
                     <form onSubmit={handleUpdateLab} className="space-y-3">
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Stüdyoyu Düzenle' : 'Edit Studio'}</h4>
@@ -713,7 +713,7 @@ export default function AdminPanelScreen() {
       {activeTab === 'slots' && (
         <div>
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{language === 'TR' ? 'Saat Dilimi Yönetimi' : 'Time Slot Management'}</h3>
-          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 mb-4">
+          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 mb-4">
             <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{language === 'TR' ? 'Yeni Saat Dilimi Ekle' : 'Add New Time Slot'}</h4>
             <div className="flex flex-col sm:flex-row gap-2">
               {isGlobal && (
@@ -747,7 +747,7 @@ export default function AdminPanelScreen() {
             <div className="space-y-2">
               {visibleSlots.map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)}
               {visibleSlots.length === 0 && (
-                <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+                <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
                   {language === 'TR' ? 'Henüz saat dilimi eklenmemiş.' : 'No time slots added yet.'}
                 </div>
               )}
@@ -773,7 +773,7 @@ export default function AdminPanelScreen() {
             {language === 'TR' ? 'Onay Bekleyenler' : 'Pending Approval'} ({pendingUsers.length})
           </h3>
           {pendingUsers.length === 0 ? (
-            <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">
+            <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">
               {language === 'TR' ? 'Onay bekleyen kullanıcı yok.' : 'No users pending approval.'}
             </div>
           ) : (
@@ -788,7 +788,7 @@ export default function AdminPanelScreen() {
             {language === 'TR' ? 'Onaylı Üyeler' : 'Approved Members'} ({approvedUsers.length})
           </h3>
           {approvedUsers.length === 0 ? (
-            <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+            <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
               {language === 'TR' ? 'Onaylı üye yok.' : 'No approved members.'}
             </div>
           ) : (
@@ -824,7 +824,7 @@ export default function AdminPanelScreen() {
           )}
 
           {/* Studio Usage Ranking */}
-          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_studio_usage', language)}</h3>
             {studioStats.length === 0 ? (
               <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
@@ -852,7 +852,7 @@ export default function AdminPanelScreen() {
           </div>
 
           {/* Status Distribution */}
-          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_status_dist', language)}</h3>
             {statusStats.length === 0 ? (
               <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
@@ -886,7 +886,7 @@ export default function AdminPanelScreen() {
           </div>
 
           {/* Monthly Trend */}
-          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_monthly', language)}</h3>
             {monthlyStats.every(m => m.count === 0) ? (
               <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
@@ -915,7 +915,7 @@ export default function AdminPanelScreen() {
           </div>
 
           {/* Busiest Time Slots */}
-          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_slots', language)}</h3>
             {slotStats.length === 0 ? (
               <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
@@ -950,7 +950,7 @@ export default function AdminPanelScreen() {
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">
             {language === 'TR' ? 'Yeni Bildirim Gönder' : 'Send New Notification'}
           </h3>
-          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
             <form onSubmit={handleCreateNotification} className="space-y-3">
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Tür' : 'Type'}</label>
@@ -1051,7 +1051,7 @@ function LabFormFields({ form, setForm, cities, inputClass, language, showCity }
 
 function StatCard({ label, value, color }) {
   return (
-    <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 text-center">
+    <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 text-center">
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{label}</p>
     </div>
@@ -1060,7 +1060,7 @@ function StatCard({ label, value, color }) {
 
 function SlotItem({ slot, processingId, onRemove, language }) {
   return (
-    <div className="bg-white dark:bg-[#1D1B20] rounded-xl shadow px-4 py-3 flex items-center justify-between">
+    <div className="bg-white dark:bg-[#252035] rounded-xl shadow px-4 py-3 flex items-center justify-between">
       <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">{slot.time_range}</span>
       <button onClick={() => onRemove(slot.id)} disabled={processingId === slot.id} className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40">
         {processingId === slot.id ? '...' : (language === 'TR' ? 'Sil' : 'Delete')}
@@ -1071,7 +1071,7 @@ function SlotItem({ slot, processingId, onRemove, language }) {
 
 function UserCard({ user, language, processingId, onApprove, onRevoke, showApprove, showRevoke }) {
   return (
-    <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+    <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
       <div className="flex items-start gap-3 mb-2">
         <div className="w-10 h-10 rounded-full bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
           <span className="text-[#6750A4] dark:text-[#D0BCFF] font-bold text-sm">{(user.name || '?').charAt(0).toUpperCase()}</span>

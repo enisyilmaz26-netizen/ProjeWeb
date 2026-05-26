@@ -128,7 +128,7 @@ export default function LandingPage({ onLoginClick }) {
   const cityLabCount = (cityId) => labs.filter(l => String(l.city_id) === String(cityId)).length
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0F0D13] text-gray-800 dark:text-gray-100" style={{ fontFamily: "'Poppins', sans-serif" }}>
+    <div className="min-h-screen bg-white dark:bg-[#0F0D13] text-gray-800 dark:text-gray-100">
 
       {/* ── HEADER ── */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 dark:bg-[#1E1635]/95 backdrop-blur shadow-md' : 'bg-transparent'}`}>
@@ -170,8 +170,8 @@ export default function LandingPage({ onLoginClick }) {
               {lang === 'TR' ? 'Giriş Yap' : 'Sign In'}
             </button>
             {/* Mobile hamburger */}
-            <button className="md:hidden ml-1 text-white" onClick={() => setMenuOpen(p => !p)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke={scrolled ? '#374151' : 'white'} strokeWidth="2" className="w-6 h-6">
+            <button className={`md:hidden ml-1 ${scrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'}`} onClick={() => setMenuOpen(p => !p)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
                 {menuOpen ? <path d="M18 6L6 18M6 6l12 12"/> : <path d="M3 12h18M3 6h18M3 18h18"/>}
               </svg>
             </button>

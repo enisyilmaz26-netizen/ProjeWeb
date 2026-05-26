@@ -163,7 +163,7 @@ export default function MyProfileScreen() {
       )}
 
       {/* Profile Card */}
-      <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-5 mb-5">
+      <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-5 mb-5">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-16 h-16 rounded-2xl bg-[#6750A4] dark:bg-[#D0BCFF] flex items-center justify-center flex-shrink-0">
             <span className="text-white dark:text-[#141218] text-xl font-bold">{initials}</span>
@@ -241,7 +241,7 @@ export default function MyProfileScreen() {
       </div>
 
       {/* Password Change */}
-      <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow mb-5">
+      <div className="bg-white dark:bg-[#252035] rounded-2xl shadow mb-5">
         <button
           onClick={() => { setShowPwChange(p => !p); setPwError(''); setPwForm({ current: '', newPw: '', confirm: '' }) }}
           className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -279,7 +279,7 @@ export default function MyProfileScreen() {
       </div>
 
       {upcomingAppointments.length === 0 ? (
-        <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">
+        <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">
           {language === 'TR' ? 'Yaklaşan randevu yok.' : 'No upcoming appointments.'}
         </div>
       ) : (
@@ -319,7 +319,7 @@ export default function MyProfileScreen() {
       {/* Cancel Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">
               {language === 'TR' ? 'İptal Talebi' : 'Cancellation Request'}
             </h3>
@@ -357,7 +357,7 @@ export default function MyProfileScreen() {
 
 function AppointmentCard({ appt, language, canCancel, onCancelClick }) {
   return (
-    <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+    <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
         <div>
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{appt.lab_name}</p>
