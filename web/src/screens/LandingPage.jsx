@@ -201,7 +201,7 @@ export default function LandingPage({ onLoginClick }) {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-white/15 border border-white/25 rounded-full px-4 py-1.5 text-white text-xs font-medium mb-8">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            {lang === 'TR' ? 'IPA III — MEB ÖGEDEP Dijital Ekosistemi Projesi' : 'IPA III — MEB ÖGEDEP Digital Ecosystem Project'}
+            {lang === 'TR' ? 'Öğretmen Eğitimi Dijital Ekosistemi Projesi' : 'Teacher Training Digital Ecosystem Project'}
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6">
@@ -487,7 +487,7 @@ export default function LandingPage({ onLoginClick }) {
               <AppLogo size={40} />
               <div>
                 <p className="font-bold text-sm text-white">Öğretmen Öğrenme Laboratuvarları</p>
-                <p className="text-xs text-gray-400">MEB ÖGEDEP Dijital Ekosistemi Projesi</p>
+                <p className="text-xs text-gray-400">Öğretmen Eğitimi Dijital Ekosistemi Projesi</p>
               </div>
             </div>
             <div className="flex gap-4">
