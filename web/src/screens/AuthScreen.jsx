@@ -405,7 +405,7 @@ export default function AuthScreen({ onBack }) {
                     value={regForm.password}
                     onChange={e => setRegForm(p => ({ ...p, password: e.target.value }))}
                     required
-                    minLength={4}
+                    minLength={8}
                   />
                 </div>
 
@@ -417,7 +417,7 @@ export default function AuthScreen({ onBack }) {
                     value={regForm.confirmPassword}
                     onChange={e => setRegForm(p => ({ ...p, confirmPassword: e.target.value }))}
                     required
-                    minLength={4}
+                    minLength={8}
                   />
                 </div>
 
@@ -526,7 +526,7 @@ export default function AuthScreen({ onBack }) {
                       value={forgotNewPassword}
                       onChange={e => setForgotNewPassword(e.target.value)}
                       required
-                      minLength={4}
+                      minLength={8}
                     />
                   </div>
                   <div>

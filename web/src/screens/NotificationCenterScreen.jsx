@@ -90,7 +90,7 @@ export default function NotificationCenterScreen() {
               }`}
             >
               <div className="flex items-start gap-3">
-                <span className="text-xl flex-shrink-0 mt-0.5">{getTypeIcon(notif.type)}</span>
+                <span className="text-xl flex-shrink-0 mt-0.5" aria-hidden="true">{getTypeIcon(notif.type)}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <p className={`font-semibold text-sm ${notif.type === 'ALERT' ? 'text-red-700 dark:text-red-300' : 'text-gray-900 dark:text-gray-100'}`}>

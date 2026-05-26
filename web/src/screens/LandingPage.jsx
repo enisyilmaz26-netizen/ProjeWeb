@@ -172,8 +172,8 @@ export default function LandingPage({ onLoginClick }) {
               {lang === 'TR' ? 'Giriş Yap' : 'Sign In'}
             </button>
             {/* Mobile hamburger */}
-            <button className="md:hidden ml-1 text-gray-700 dark:text-gray-200" onClick={() => setMenuOpen(p => !p)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
+            <button className="md:hidden ml-1 text-gray-700 dark:text-gray-200" onClick={() => setMenuOpen(p => !p)} aria-label={menuOpen ? (lang === 'TR' ? 'Menüyü kapat' : 'Close menu') : (lang === 'TR' ? 'Menüyü aç' : 'Open menu')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6" aria-hidden="true">
                 {menuOpen ? <path d="M18 6L6 18M6 6l12 12"/> : <path d="M3 12h18M3 6h18M3 18h18"/>}
               </svg>
             </button>
@@ -241,7 +241,7 @@ export default function LandingPage({ onLoginClick }) {
           <div className="grid grid-cols-3 gap-4">
             {statsData.map((s, i) => (
               <div key={i} className="rounded-2xl p-5 text-center bg-white/80 dark:bg-white/10 backdrop-blur border" style={{ borderColor: s.color + '50' }}>
-                <div className="flex justify-center mb-2" style={{ color: s.color }}>{s.icon}</div>
+                <div className="flex justify-center mb-2" style={{ color: s.color }} aria-hidden="true">{s.icon}</div>
                 <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">{s.value}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label[lang]}</p>
               </div>
@@ -250,7 +250,7 @@ export default function LandingPage({ onLoginClick }) {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-gray-400 dark:text-white/50 animate-bounce">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-gray-400 dark:text-white/50 animate-bounce" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
             <path d="M12 5v14M5 12l7 7 7-7"/>
           </svg>
@@ -322,7 +322,7 @@ export default function LandingPage({ onLoginClick }) {
               },
             ].map((item, i) => (
               <div key={i} className="flex gap-3 p-4 bg-gray-50 dark:bg-[#0D1E3D] rounded-2xl border border-gray-100 dark:border-[#162848]">
-                <div className="w-9 h-9 flex-shrink-0 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC]">
+                <div className="w-9 h-9 flex-shrink-0 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC]" aria-hidden="true">
                   {item.icon}
                 </div>
                 <div>
@@ -342,7 +342,7 @@ export default function LandingPage({ onLoginClick }) {
               className="inline-flex items-center gap-2 px-7 py-3 bg-[#1565C0] hover:bg-[#0D47A1] dark:bg-[#7DD4FC] dark:hover:bg-[#4DC8FA] text-white dark:text-[#060E26] font-semibold rounded-2xl text-sm transition shadow-lg hover:shadow-blue-200/40 active:scale-95"
             >
               {lang === 'TR' ? 'Daha Fazla Detay' : 'Learn More'}
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0" aria-hidden="true">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/>
                 <line x1="10" y1="14" x2="21" y2="3"/>
@@ -354,7 +354,7 @@ export default function LandingPage({ onLoginClick }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((f, i) => (
               <div key={i} className="group p-6 bg-gray-50 dark:bg-[#0D1E3D] rounded-2xl hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-gray-100 dark:border-[#162848]">
-                <div className="w-12 h-12 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC] mb-4 group-hover:bg-[#1565C0] group-hover:text-white dark:group-hover:bg-[#1976D2] dark:group-hover:text-white transition-all">
+                <div className="w-12 h-12 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC] mb-4 group-hover:bg-[#1565C0] group-hover:text-white dark:group-hover:bg-[#1976D2] dark:group-hover:text-white transition-all" aria-hidden="true">
                   {f.icon}
                 </div>
                 <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2">{f.title[lang]}</h3>

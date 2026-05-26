@@ -394,6 +394,7 @@ export default function UserReservationScreen() {
                   value={note}
                   onChange={e => setNote(e.target.value)}
                   placeholder={t('input_note', language)}
+                  maxLength={500}
                 />
               </div>
             </div>

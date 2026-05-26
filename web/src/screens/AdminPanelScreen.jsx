@@ -19,7 +19,7 @@ function exportToCSV(appts, language) {
     a.lab_name, a.date, a.time_slot,
     STATUS_LABELS[a.status]?.[language] || a.status,
     a.note || '',
-    a.created_timestamp ? new Date(Number(a.created_timestamp)).toLocaleDateString('tr-TR') : '',
+    a.created_timestamp ? new Date(Number(a.created_timestamp)).toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB') : '',
   ])
   const csv = [headers, ...rows]
     .map(row => row.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
@@ -147,7 +147,7 @@ export default function AdminPanelScreen() {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      const label = d.toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' })
+      const label = d.toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { month: 'short', year: '2-digit' })
       months[key] = { label, count: 0 }
     }
     scopedAppointments.forEach(a => {
@@ -156,7 +156,7 @@ export default function AdminPanelScreen() {
       if (months[key]) months[key].count++
     })
     return Object.values(months)
-  }, [scopedAppointments])
+  }, [scopedAppointments, language])
 
   const slotStats = useMemo(() => {
     const counts = {}
@@ -424,8 +424,8 @@ export default function AdminPanelScreen() {
       setAdminPwError(t('err_password_mismatch', language))
       return
     }
-    if (adminPwForm.newPw.length < 4) {
-      setAdminPwError(language === 'TR' ? 'Şifre en az 4 karakter olmalıdır.' : 'Password must be at least 4 characters.')
+    if (adminPwForm.newPw.length < 8) {
+      setAdminPwError(t('err_password_min_length', language))
       return
     }
     setAdminPwLoading(true)
@@ -506,7 +506,7 @@ export default function AdminPanelScreen() {
               </div>
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('new_password', language)} *</label>
-                <input type="password" className={inputClass} value={adminPwForm.newPw} onChange={e => setAdminPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={4} />
+                <input type="password" className={inputClass} value={adminPwForm.newPw} onChange={e => setAdminPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={8} />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_confirm_password', language)} *</label>
@@ -723,7 +723,7 @@ export default function AdminPanelScreen() {
                       <LabFormFields form={editLabForm} setForm={setEditLabForm} cities={cities} inputClass={inputClass} language={language} showCity={false} />
                       <div className="flex gap-2">
                         <button type="submit" className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl">{language === 'TR' ? 'Kaydet' : 'Save'}</button>
-                        <button type="button" onClick={() => setEditingLabId(null)} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{language === 'TR' ? 'İptal' : 'Cancel'}</button>
+                        <button type="button" onClick={() => { setEditingLabId(null); setEditLabForm({}) }} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{language === 'TR' ? 'İptal' : 'Cancel'}</button>
                       </div>
                     </form>
                   ) : (

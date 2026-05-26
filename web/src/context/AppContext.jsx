@@ -74,6 +74,7 @@ export function AppProvider({ children }) {
   const [timeSlots, setTimeSlots] = useState([])
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const rtChannelsRef = React.useRef([])
 
   // Persist session & preferences
@@ -119,8 +120,10 @@ export function AppProvider({ children }) {
       if (notificationsData) setNotifications(notificationsData)
       if (timeSlotsData) setTimeSlots(timeSlotsData)
       if (usersData) setUsers(usersData)
+      setLoadError(false)
     } catch (err) {
       console.error('Error loading data:', err)
+      setLoadError(true)
     } finally {
       if (showLoader) setLoading(false)
     }
@@ -232,7 +235,9 @@ export function AppProvider({ children }) {
 
     await supabase.from('notifications').insert([{
       title: `[${formData.city_name}] ${language === 'TR' ? 'Yeni Üye Başvurusu' : 'New Member Request'}`,
-      message: `${formData.name} ${formData.surname} (${formData.email}) kayıt talebinde bulundu.`,
+      message: language === 'TR'
+        ? `${formData.name} ${formData.surname} (${formData.email}) kayıt talebinde bulundu.`
+        : `${formData.name} ${formData.surname} (${formData.email}) has submitted a registration request.`,
       type: 'SYSTEM',
       timestamp: Date.now(),
       is_read: false,
@@ -478,7 +483,7 @@ export function AppProvider({ children }) {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
     cities, labs, appointments, notifications, timeSlots, users,
-    loading,
+    loading, loadError,
     loadAllData,
     loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
     toggleLanguage, toggleDarkMode,
