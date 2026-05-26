@@ -1,22 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate, translations } from '../lib/languages'
-
-const STATUS_COLORS = {
-  PENDING: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
-  APPROVED: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-  CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-  CANCELLATION_REQUESTED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-  COMPLETED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-}
-
-const STATUS_LABELS = {
-  PENDING: { TR: 'Beklemede', EN: 'Pending' },
-  APPROVED: { TR: 'Onaylandı', EN: 'Approved' },
-  CANCELLED: { TR: 'İptal Edildi', EN: 'Cancelled' },
-  CANCELLATION_REQUESTED: { TR: 'İptal Talebi', EN: 'Cancel Requested' },
-  COMPLETED: { TR: 'Tamamlandı', EN: 'Completed' },
-}
+import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
+import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
 
 export default function MyProfileScreen() {
   const { loggedInUser, appointments, submitCancellationRequest, updateUserProfile, changePassword, language } = useApp()
@@ -150,8 +135,8 @@ export default function MyProfileScreen() {
   if (!loggedInUser) return null
 
   const initials = `${(loggedInUser.name || '?').charAt(0)}${(loggedInUser.surname || '').charAt(0)}`.toUpperCase()
-  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC] text-sm"
-  const labelClass = "block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"
+  const inputClass = `w-full ${INPUT_BASE}`
+  const labelClass = LABEL_CLASS
 
   return (
     <div className="px-4 py-4">

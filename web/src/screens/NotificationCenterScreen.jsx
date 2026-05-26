@@ -9,19 +9,24 @@ export default function NotificationCenterScreen() {
   const adminCity = cities.find(c => String(c.id) === String(loggedInAdmin?.city_id))
   const cityName = (loggedInAdmin?.role === 'CITY' && adminCity) ? adminCity.name : null
 
+  const extractCityTag = (title) => {
+    const match = (title || '').match(/^\[([^\]]+)\]/)
+    return match ? match[1] : null
+  }
+
   let visibleNotifications = notifications
   if (cityName) {
-    // City admin: only their city's notifications
-    visibleNotifications = notifications.filter(n =>
-      (n.title || '').includes(cityName) || (n.message || '').includes(cityName)
-    )
+    // İl yöneticisi: sadece kendi iline ait veya genel bildirimler
+    visibleNotifications = notifications.filter(n => {
+      const tag = extractCityTag(n.title)
+      return tag === null || tag === cityName
+    })
   } else if (loggedInUser) {
-    // Regular user: global notifications + their city's notifications
+    // Öğretmen: genel bildirimler + kendi ilinin bildirimleri
     const userCity = loggedInUser.city_name
     visibleNotifications = notifications.filter(n => {
-      const match = (n.title || '').match(/^\[([^\]]+)\]/)
-      if (!match) return true
-      return match[1] === userCity
+      const tag = extractCityTag(n.title)
+      return tag === null || tag === userCity
     })
   }
 

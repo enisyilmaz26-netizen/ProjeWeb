@@ -4,7 +4,7 @@ import AppLogo from '../components/AppLogo'
 
 const NAV_LINKS = [
   { href: '#proje', label: { TR: 'Proje', EN: 'Project' } },
-  { href: '#sehirler', label: { TR: 'Şehirler', EN: 'Cities' } },
+  { href: '#sehirler', label: { TR: 'İller', EN: 'Provinces' } },
   { href: '#nasil-calisir', label: { TR: 'Nasıl Çalışır?', EN: 'How It Works' } },
 ]
 
@@ -42,10 +42,19 @@ export default function LandingPage({ onLoginClick }) {
       label: { TR: 'Laboratuvar', EN: 'Laboratory' },
       color: '#1565C0',
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
-          <path d="M9 3h6"/>
-          <path d="M10 3v7l-4.5 9.5a1 1 0 0 0 .9 1.5h11.2a1 1 0 0 0 .9-1.5L14 10V3"/>
-          <path d="M7.5 16.5h9"/>
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7">
+          {/* Shotgun mikrofon kapsülü */}
+          <rect x="12" y="16" width="60" height="16" rx="7" fill="none" stroke="#1a1a1a" strokeWidth="4.5" strokeLinecap="round"/>
+          {/* Mikrofon braket */}
+          <line x1="42" y1="32" x2="42" y2="42" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round"/>
+          {/* Kamera gövdesi */}
+          <rect x="8" y="42" width="72" height="38" rx="7" fill="none" stroke="#1a1a1a" strokeWidth="4.5" strokeLinecap="round"/>
+          {/* Kamera lensi dış */}
+          <circle cx="44" cy="61" r="11" fill="none" stroke="#1a1a1a" strokeWidth="4"/>
+          {/* Kamera lensi iç */}
+          <circle cx="44" cy="61" r="5" fill="none" stroke="#1a1a1a" strokeWidth="3"/>
+          {/* Video viewfinder üçgeni */}
+          <polygon points="80,48 92,42 92,80 80,74" fill="none" stroke="#1a1a1a" strokeWidth="4" strokeLinejoin="round"/>
         </svg>
       ),
     },
@@ -112,10 +121,10 @@ export default function LandingPage({ onLoginClick }) {
   ]
 
   const steps = [
-    { title: { TR: 'Kayıt Ol', EN: 'Register' }, desc: { TR: 'Sisteme üye olun. Branş, kurum ve şehir bilgilerinizi girin.', EN: 'Register on the system. Enter your branch, institution, and city information.' } },
-    { title: { TR: 'Onay Bekle', EN: 'Wait for Approval' }, desc: { TR: 'Şehir yöneticiniz üyeliğinizi inceler ve onaylar.', EN: 'Your city administrator reviews and approves your membership.' } },
-    { title: { TR: 'Randevu Al', EN: 'Book a Slot' }, desc: { TR: 'Şehrinizde bulunan stüdyolardan tarih ve saat seçerek randevunuzu oluşturun.', EN: 'Choose a date and time from studios in your city and create your reservation.' } },
-    { title: { TR: 'Stüdyonu Kullan', EN: 'Use the Studio' }, desc: { TR: 'Onaylanan randevunuzla stüdyoya gelin, dijital içerik üretin.', EN: 'Come to the studio with your approved reservation and produce digital content.' } },
+    { title: { TR: 'Kayıt Ol', EN: 'Register' }, desc: { TR: 'Sisteme üye olun. Branş, kurum ve il bilgilerinizi girin.', EN: 'Register on the system. Enter your branch, institution, and province information.' } },
+    { title: { TR: 'Onay Bekle', EN: 'Wait for Approval' }, desc: { TR: 'İl yöneticiniz üyeliğinizi inceler ve onaylar.', EN: 'Your province administrator reviews and approves your membership.' } },
+    { title: { TR: 'Randevu Al', EN: 'Book a Slot' }, desc: { TR: 'İlinizde bulunan stüdyolardan tarih ve saat seçerek randevunuzu oluşturun.', EN: 'Choose a date and time from studios in your province and create your reservation.' } },
+    { title: { TR: 'Stüdyoyu Kullan', EN: 'Use the Studio' }, desc: { TR: 'Onaylanan randevunuzla stüdyoya gelin, dijital içerik üretin.', EN: 'Come to the studio with your approved reservation and produce digital content.' } },
   ]
 
   const cityLabCount = (cityId) => labs.filter(l => String(l.city_id) === String(cityId)).length
@@ -216,7 +225,7 @@ export default function LandingPage({ onLoginClick }) {
               onClick={onLoginClick}
               className="px-8 py-3.5 bg-[#1565C0] hover:bg-[#0D47A1] text-white font-bold rounded-2xl text-sm transition shadow-xl hover:shadow-blue-200 active:scale-95"
             >
-              {lang === 'TR' ? '🎙 Hemen Randevu Al' : '🎙 Book Now'}
+              {lang === 'TR' ? 'Hemen Randevu Al' : 'Book Now'}
             </button>
             <button
               onClick={() => scrollTo('proje')}
@@ -251,7 +260,7 @@ export default function LandingPage({ onLoginClick }) {
       {/* ── PROJE HAKKINDA ── */}
       <section id="proje" className="py-20 px-4 sm:px-6 bg-white dark:bg-[#040A1C]">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10">
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
               {lang === 'TR' ? 'Proje Hakkında' : 'About the Project'}
             </span>
@@ -265,7 +274,83 @@ export default function LandingPage({ onLoginClick }) {
             </p>
           </div>
 
-          {/* Feature cards */}
+          {/* ÖÖL Açıklama Paragrafı */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-7 max-w-3xl mx-auto text-center">
+            {lang === 'TR'
+              ? 'MEB ÖGEDEP bünyesinde kurulan laboratuvarlar, öğretmenlerin dijital eğitim ekosistemiyle ilgili kapasitelerini geliştirmek amacıyla tasarlanmıştır. 7 ilde 8 laboratuvarda öğretmenler; yeni dijital öğretim fikirlerini keşfedebilir, bu fikirleri sınıf ortamına hızla uygulayabilir ve mesleki iş birliği kültürünü güçlendirebilir.'
+              : 'Established within MEB ÖGEDEP, the labs are designed to develop teachers\' capacity in the digital education ecosystem. Across 8 labs in 7 provinces, teachers can discover new digital teaching ideas, quickly apply them to classroom settings, and strengthen professional collaboration culture.'}
+          </p>
+
+          {/* Genel Bilgi Kartları */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            {[
+              {
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                  </svg>
+                ),
+                title: { TR: 'Temel Amaç', EN: 'Core Purpose' },
+                desc: { TR: 'Dijital eğitim fikirlerini keşfetme, sınıf ortamına hızla uygulama ve mesleki iş birliği kültürünü güçlendirme.', EN: 'Discover digital education ideas, quickly apply them to the classroom, and strengthen professional collaboration culture.' },
+              },
+              {
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                  </svg>
+                ),
+                title: { TR: 'Teknik Donanım', EN: 'Technical Equipment' },
+                desc: { TR: 'Ses ve video kayıt cihazları, çekim sonrası içerik düzenleme yazılımları ve ileri teknoloji altyapısı.', EN: 'Audio and video recording equipment, post-production editing software, and advanced technology infrastructure.' },
+              },
+              {
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+                  </svg>
+                ),
+                title: { TR: 'Kapsam', EN: 'Coverage' },
+                desc: { TR: "Ankara, İstanbul, İzmir, Gaziantep, Mersin, Erzurum ve Rize'de toplam 8 laboratuvar.", EN: '8 laboratories in total across Ankara, Istanbul, Izmir, Gaziantep, Mersin, Erzurum, and Rize.' },
+              },
+              {
+                icon: (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                ),
+                title: { TR: 'Kazanımlar', EN: 'Outcomes' },
+                desc: { TR: 'Dijital içerik üretimi, materyal geliştirme, teknoloji destekli öğretim uygulamaları ve dijital beceri güçlendirme.', EN: 'Digital content production, material development, technology-supported teaching, and digital skills strengthening.' },
+              },
+            ].map((item, i) => (
+              <div key={i} className="flex gap-3 p-4 bg-gray-50 dark:bg-[#0D1E3D] rounded-2xl border border-gray-100 dark:border-[#162848]">
+                <div className="w-9 h-9 flex-shrink-0 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC]">
+                  {item.icon}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{item.title[lang]}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc[lang]}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Daha Fazla Detay */}
+          <div className="flex justify-center mb-14">
+            <a
+              href="https://ogedep.eba.gov.tr/ogretmen-ogrenme-laboratuvarlari/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-7 py-3 bg-[#1565C0] hover:bg-[#0D47A1] dark:bg-[#7DD4FC] dark:hover:bg-[#4DC8FA] text-white dark:text-[#060E26] font-semibold rounded-2xl text-sm transition shadow-lg hover:shadow-blue-200/40 active:scale-95"
+            >
+              {lang === 'TR' ? 'Daha Fazla Detay' : 'Learn More'}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </a>
+          </div>
+
+          {/* Stüdyo Özellik Kartları */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((f, i) => (
               <div key={i} className="group p-6 bg-gray-50 dark:bg-[#0D1E3D] rounded-2xl hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-gray-100 dark:border-[#162848]">
@@ -277,110 +362,16 @@ export default function LandingPage({ onLoginClick }) {
               </div>
             ))}
           </div>
-
-          {/* Competency framework box */}
-          <div className="mt-14 bg-gradient-to-r from-[#1565C0] to-[#00AEEF] dark:from-[#020A22] dark:via-[#071A48] dark:to-[#0A2565] rounded-3xl p-8 sm:p-10 text-white">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-              {[
-                { val: '3', label: { TR: 'Temel Yeterlik Alanı', EN: 'Core Competency Area' } },
-                { val: '17', label: { TR: 'Yeterlik', EN: 'Competency' } },
-                { val: '380', label: { TR: 'Gösterge', EN: 'Indicator' } },
-              ].map((x, i) => (
-                <div key={i}>
-                  <p className="text-5xl font-extrabold text-white">{x.val}</p>
-                  <p className="text-white/70 text-sm mt-1">{x.label[lang]}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-center text-white/60 text-xs mt-6">
-              {lang === 'TR' ? 'Dijital Öğretmen Yeterlikleri Çerçevesi' : 'Digital Teacher Competencies Framework'}
-            </p>
-          </div>
-
-          {/* ÖÖL Detay Kutusu */}
-          <div className="mt-10 bg-gray-50 dark:bg-[#060E28] rounded-3xl p-8 sm:p-10 border border-gray-100 dark:border-[#162848]">
-            <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">
-              {lang === 'TR' ? 'Öğretmen Öğrenme Laboratuvarları' : 'Teacher Learning Labs'}
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-7">
-              {lang === 'TR'
-                ? 'MEB ÖGEDEP bünyesinde kurulan laboratuvarlar, öğretmenlerin dijital eğitim ekosistemiyle ilgili kapasitelerini geliştirmek amacıyla tasarlanmıştır. 7 ilde 8 laboratuvarda öğretmenler; yeni dijital öğretim fikirlerini keşfedebilir, bu fikirleri sınıf ortamına hızla uygulayabilir ve mesleki iş birliği kültürünü güçlendirebilir.'
-                : 'Established within MEB ÖGEDEP, the labs are designed to develop teachers\' capacity in the digital education ecosystem. Across 8 labs in 7 provinces, teachers can discover new digital teaching ideas, quickly apply them to classroom settings, and strengthen professional collaboration culture.'}
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              {[
-                {
-                  icon: (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                      <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-                    </svg>
-                  ),
-                  title: { TR: 'Temel Amaç', EN: 'Core Purpose' },
-                  desc: { TR: 'Dijital eğitim fikirlerini keşfetme, sınıf ortamına hızla uygulama ve mesleki iş birliği kültürünü güçlendirme.', EN: 'Discover digital education ideas, quickly apply them to the classroom, and strengthen professional collaboration culture.' },
-                },
-                {
-                  icon: (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                      <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-                    </svg>
-                  ),
-                  title: { TR: 'Teknik Donanım', EN: 'Technical Equipment' },
-                  desc: { TR: 'Ses ve video kayıt cihazları, çekim sonrası içerik düzenleme yazılımları ve ileri teknoloji altyapısı.', EN: 'Audio and video recording equipment, post-production editing software, and advanced technology infrastructure.' },
-                },
-                {
-                  icon: (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
-                    </svg>
-                  ),
-                  title: { TR: 'Kapsam', EN: 'Coverage' },
-                  desc: { TR: "Ankara, İstanbul, İzmir, Gaziantep, Mersin, Erzurum ve Rize'de toplam 8 laboratuvar.", EN: '8 laboratories in total across Ankara, Istanbul, Izmir, Gaziantep, Mersin, Erzurum, and Rize.' },
-                },
-                {
-                  icon: (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
-                  ),
-                  title: { TR: 'Kazanımlar', EN: 'Outcomes' },
-                  desc: { TR: 'Dijital içerik üretimi, materyal geliştirme, teknoloji destekli öğretim uygulamaları ve dijital beceri güçlendirme.', EN: 'Digital content production, material development, technology-supported teaching, and digital skills strengthening.' },
-                },
-              ].map((item, i) => (
-                <div key={i} className="flex gap-3 p-4 bg-white dark:bg-[#0D1E3D] rounded-2xl border border-gray-100 dark:border-[#162848]">
-                  <div className="w-9 h-9 flex-shrink-0 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC]">
-                    {item.icon}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{item.title[lang]}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc[lang]}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-center">
-              <a
-                href="https://ogedep.eba.gov.tr/ogretmen-ogrenme-laboratuvarlari/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-7 py-3 bg-[#1565C0] hover:bg-[#0D47A1] dark:bg-[#7DD4FC] dark:hover:bg-[#4DC8FA] text-white dark:text-[#060E26] font-semibold rounded-2xl text-sm transition shadow-lg hover:shadow-blue-200/40 active:scale-95"
-              >
-                {lang === 'TR' ? 'Daha Fazla Detay' : 'Learn More'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                  <polyline points="15 3 21 3 21 9"/>
-                  <line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-              </a>
-            </div>
-          </div>
         </div>
       </section>
 
       {/* ── ŞEHİRLER ── */}
-      <section id="sehirler" className="py-20 px-4 sm:px-6 bg-gray-50 dark:bg-[#060E26]">
-        <div className="max-w-6xl mx-auto">
+      <section id="sehirler" className="relative py-20 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-white via-[#EFF8FF] to-[#1565C0] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565]">
+        {/* Dekoratif blur daireler */}
+        <div className="absolute top-10 right-10 w-72 h-72 bg-[#00AEEF]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-[#1565C0]/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
               {lang === 'TR' ? 'Kapsam' : 'Coverage'}
@@ -390,14 +381,14 @@ export default function LandingPage({ onLoginClick }) {
             </h2>
             <p className="mt-3 text-gray-500 dark:text-gray-400 text-sm max-w-xl mx-auto">
               {lang === 'TR'
-                ? 'Her şehirde birden fazla stüdyoyla öğretmenler dijital içerik üretim olanaklarına kolayca erişebilir.'
-                : 'With multiple studios in each city, teachers can easily access digital content production facilities.'}
+                ? 'Her ilde birden fazla stüdyoyla öğretmenler dijital içerik üretim olanaklarına kolayca erişebilir.'
+                : 'With multiple studios in each province, teachers can easily access digital content production facilities.'}
             </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {cities.length > 0 ? cities.map(city => (
-              <div key={city.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl p-5 border border-gray-100 dark:border-[#162848] hover:border-[#1565C0]/40 dark:hover:border-[#29ABE2] hover:shadow-md transition-all group">
+              <div key={city.id} className="bg-white/80 dark:bg-[#0D1E3D]/90 backdrop-blur-sm rounded-2xl p-5 border border-white/60 dark:border-[#162848] hover:border-[#1565C0]/40 dark:hover:border-[#29ABE2] hover:shadow-md transition-all group">
                 <div className="w-10 h-10 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center mb-3">
                   <span className="text-[#1565C0] dark:text-[#7DD4FC] font-extrabold text-lg">{city.name.charAt(0)}</span>
                 </div>
@@ -421,7 +412,7 @@ export default function LandingPage({ onLoginClick }) {
             )) : (
               // Placeholder while loading
               Array.from({ length: 7 }).map((_, i) => (
-                <div key={i} className="bg-white dark:bg-[#0D1E3D] rounded-2xl p-5 border border-gray-100 dark:border-[#162848] animate-pulse h-28" />
+                <div key={i} className="bg-white/80 dark:bg-[#0D1E3D]/90 rounded-2xl p-5 border border-white/60 dark:border-[#162848] animate-pulse h-28" />
               ))
             )}
           </div>
@@ -463,7 +454,7 @@ export default function LandingPage({ onLoginClick }) {
               onClick={onLoginClick}
               className="px-10 py-4 bg-[#1565C0] hover:bg-[#0D47A1] dark:bg-[#7DD4FC] dark:hover:bg-[#4DC8FA] text-white dark:text-[#060E26] font-bold rounded-2xl text-sm transition shadow-xl hover:shadow-blue-200 dark:hover:shadow-blue-900 active:scale-95"
             >
-              {lang === 'TR' ? '🚀 Hemen Başla' : '🚀 Get Started'}
+              {lang === 'TR' ? 'Hemen Başla' : 'Get Started'}
             </button>
             <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
               {lang === 'TR' ? 'Ücretsiz kayıt — yalnızca MEB bünyesindeki öğretmenler için' : 'Free registration — exclusively for MEB teachers'}

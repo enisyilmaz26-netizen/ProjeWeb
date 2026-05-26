@@ -1,22 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate, translations } from '../lib/languages'
-
-const STATUS_COLORS = {
-  PENDING: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
-  APPROVED: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-  CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-  CANCELLATION_REQUESTED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-  COMPLETED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-}
-
-const STATUS_LABELS = {
-  PENDING: { TR: 'Beklemede', EN: 'Pending' },
-  APPROVED: { TR: 'Onaylandı', EN: 'Approved' },
-  CANCELLED: { TR: 'İptal Edildi', EN: 'Cancelled' },
-  CANCELLATION_REQUESTED: { TR: 'İptal Talebi', EN: 'Cancel Requested' },
-  COMPLETED: { TR: 'Tamamlandı', EN: 'Completed' },
-}
+import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
+import { INPUT_BASE } from '../lib/ui'
 
 function statusLabel(status, lang) {
   return STATUS_LABELS[status]?.[lang] || status
@@ -26,8 +11,8 @@ const PAGE_SIZE = 50
 
 function exportToCSV(appts, language) {
   const headers = language === 'TR'
-    ? ['Ad', 'Soyad', 'E-posta', 'Telefon', 'Branş', 'Kurum', 'Şehir', 'İlçe', 'Stüdyo', 'Tarih', 'Saat', 'Durum', 'Not', 'Oluşturma']
-    : ['First Name', 'Last Name', 'Email', 'Phone', 'Branch', 'Institution', 'City', 'District', 'Studio', 'Date', 'Time', 'Status', 'Note', 'Created']
+    ? ['Ad', 'Soyad', 'E-posta', 'Telefon', 'Branş', 'Kurum', 'İl', 'İlçe', 'Stüdyo', 'Tarih', 'Saat', 'Durum', 'Not', 'Oluşturma']
+    : ['First Name', 'Last Name', 'Email', 'Phone', 'Branch', 'Institution', 'Province', 'District', 'Studio', 'Date', 'Time', 'Status', 'Note', 'Created']
   const rows = appts.map(a => [
     a.user_name, a.user_surname, a.user_email, a.user_phone,
     a.user_branch, a.user_work_location, a.city_name, a.user_district,
@@ -102,6 +87,9 @@ export default function AdminPanelScreen() {
 
   // Stats tab
   const [statsCity, setStatsCity] = useState('')
+
+  // Confirm modal
+  const [confirmModal, setConfirmModal] = useState(null) // { label, onConfirm }
 
   // Notifications tab
   const [notifForm, setNotifForm] = useState({ title: '', message: '', type: 'SYSTEM' })
@@ -240,7 +228,7 @@ export default function AdminPanelScreen() {
   }, [labs, isGlobal, adminCityId])
 
   // Handlers
-  const handleApprove = async (id) => {
+  const execApprove = async (id) => {
     setProcessingId(id)
     await approveAppointment(id)
     const appt = appointments.find(a => a.id === id)
@@ -255,7 +243,7 @@ export default function AdminPanelScreen() {
     setProcessingId(null)
   }
 
-  const handleCancel = async (id) => {
+  const execCancel = async (id) => {
     setProcessingId(id)
     await cancelAppointment(id)
     const appt = appointments.find(a => a.id === id)
@@ -269,9 +257,31 @@ export default function AdminPanelScreen() {
     }
     setProcessingId(null)
   }
-  const handleMarkCompleted = async (id) => { setProcessingId(id); await markAppointmentCompleted(id); setProcessingId(null) }
-  const handleApproveUser = async (id) => { setProcessingId(id); await approveUser(id); setProcessingId(null) }
-  const handleRevokeUser = async (id) => { setProcessingId(id); await revokeUser(id); setProcessingId(null) }
+
+  const handleApprove = (id) => setConfirmModal({
+    label: language === 'TR' ? 'Bu randevuyu onaylamak istediğinizden emin misiniz?' : 'Are you sure you want to approve this appointment?',
+    onConfirm: () => execApprove(id),
+  })
+
+  const handleCancel = (id) => setConfirmModal({
+    label: language === 'TR' ? 'Bu randevuyu iptal etmek istediğinizden emin misiniz?' : 'Are you sure you want to cancel this appointment?',
+    onConfirm: () => execCancel(id),
+  })
+
+  const handleMarkCompleted = (id) => setConfirmModal({
+    label: language === 'TR' ? 'Bu randevuyu tamamlandı olarak işaretlemek istediğinizden emin misiniz?' : 'Mark this appointment as completed?',
+    onConfirm: async () => { setProcessingId(id); await markAppointmentCompleted(id); setProcessingId(null) },
+  })
+
+  const handleApproveUser = (id) => setConfirmModal({
+    label: language === 'TR' ? 'Bu üyeyi onaylamak istediğinizden emin misiniz?' : 'Are you sure you want to approve this member?',
+    onConfirm: async () => { setProcessingId(id); await approveUser(id); setProcessingId(null) },
+  })
+
+  const handleRevokeUser = (id) => setConfirmModal({
+    label: language === 'TR' ? 'Bu üyenin erişimini kaldırmak istediğinizden emin misiniz?' : 'Are you sure you want to revoke this member\'s access?',
+    onConfirm: async () => { setProcessingId(id); await revokeUser(id); setProcessingId(null) },
+  })
 
   const handleAddSlot = async () => {
     setSlotError('')
@@ -304,7 +314,7 @@ export default function AdminPanelScreen() {
     setLabError('')
     const cityId = isGlobal ? labForm.city_id : adminCityId
     if (!cityId || !labForm.name.trim()) {
-      setLabError(language === 'TR' ? 'Şehir ve stüdyo adı zorunludur.' : 'City and studio name are required.')
+      setLabError(language === 'TR' ? 'İl ve stüdyo adı zorunludur.' : 'Province and studio name are required.')
       return
     }
     const result = await addLab({
@@ -426,7 +436,7 @@ export default function AdminPanelScreen() {
     setFilterDateFrom(''); setFilterDateTo(''); setVisibleCount(PAGE_SIZE)
   }
 
-  const inputClass = "px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC] text-sm"
+  const inputClass = INPUT_BASE
 
   const tabs = [
     { key: 'appointments', label: language === 'TR' ? 'Randevular' : 'Appointments' },
@@ -455,7 +465,7 @@ export default function AdminPanelScreen() {
           <div>
             <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{loggedInAdmin?.name || loggedInAdmin?.email}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {isGlobal ? (language === 'TR' ? 'Genel Yönetici' : 'Global Admin') : (language === 'TR' ? 'Şehir Yöneticisi' : 'City Admin')}
+              {isGlobal ? (language === 'TR' ? 'Genel Yönetici' : 'Global Admin') : (language === 'TR' ? 'İl Yöneticisi' : 'Province Admin')}
               {!isGlobal && loggedInAdmin?.city_id && (() => {
                 const c = cities.find(x => String(x.id) === String(loggedInAdmin.city_id))
                 return c ? ` — ${c.name}` : ''
@@ -545,7 +555,7 @@ export default function AdminPanelScreen() {
               />
               {isGlobal && (
                 <select className={inputClass} value={filterCity} onChange={e => { setFilterCity(e.target.value); setFilterLocation(''); setVisibleCount(PAGE_SIZE) }}>
-                  <option value="">{language === 'TR' ? 'Tüm Şehirler' : 'All Cities'}</option>
+                  <option value="">{language === 'TR' ? 'Tüm İller' : 'All Provinces'}</option>
                   {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               )}
@@ -616,7 +626,7 @@ export default function AdminPanelScreen() {
 
                     <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 dark:text-gray-400 mb-3">
                       <span><span className="font-medium">{language === 'TR' ? 'Stüdyo' : 'Studio'}:</span> {appt.lab_name}</span>
-                      <span><span className="font-medium">{language === 'TR' ? 'Şehir' : 'City'}:</span> {appt.city_name}</span>
+                      <span><span className="font-medium">{language === 'TR' ? 'İl' : 'Province'}:</span> {appt.city_name}</span>
                       <span><span className="font-medium">{language === 'TR' ? 'Tarih' : 'Date'}:</span> {formatDate(appt.date)}</span>
                       <span><span className="font-medium">{language === 'TR' ? 'Saat' : 'Time'}:</span> {appt.time_slot}</span>
                       {appt.user_branch && <span><span className="font-medium">{language === 'TR' ? 'Branş' : 'Branch'}:</span> {appt.user_branch}</span>}
@@ -738,7 +748,7 @@ export default function AdminPanelScreen() {
             <div className="flex flex-col sm:flex-row gap-2">
               {isGlobal && (
                 <select className={`${inputClass} flex-1`} value={newSlotCityId} onChange={e => setNewSlotCityId(e.target.value)}>
-                  <option value="">{language === 'TR' ? 'Şehir Seçin' : 'Select City'}</option>
+                  <option value="">{language === 'TR' ? 'İl Seçin' : 'Select Province'}</option>
                   {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               )}
@@ -832,7 +842,7 @@ export default function AdminPanelScreen() {
                 value={statsCity}
                 onChange={e => setStatsCity(e.target.value)}
               >
-                <option value="">{language === 'TR' ? 'Tüm Şehirler' : 'All Cities'}</option>
+                <option value="">{language === 'TR' ? 'Tüm İller' : 'All Provinces'}</option>
                 {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               {statsCity && (
@@ -1029,6 +1039,29 @@ export default function AdminPanelScreen() {
           </div>
         </div>
       )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <p className="text-sm text-gray-800 dark:text-gray-100 font-medium mb-5">{confirmModal.label}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={async () => { setConfirmModal(null); await confirmModal.onConfirm() }}
+                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition"
+              >
+                {language === 'TR' ? 'Evet' : 'Yes'}
+              </button>
+              <button
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                {language === 'TR' ? 'Vazgeç' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1038,9 +1071,9 @@ function LabFormFields({ form, setForm, cities, inputClass, language, showCity }
     <>
       {showCity && (
         <div>
-          <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Şehir' : 'City'} *</label>
+          <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'İl' : 'Province'} *</label>
           <select className={`${inputClass} w-full`} value={form.city_id || ''} onChange={e => setForm(p => ({ ...p, city_id: e.target.value }))} required>
-            <option value="">{language === 'TR' ? 'Şehir Seçin' : 'Select City'}</option>
+            <option value="">{language === 'TR' ? 'İl Seçin' : 'Select Province'}</option>
             {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
@@ -1104,7 +1137,7 @@ function UserCard({ user, language, processingId, onApprove, onRevoke, showAppro
       <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 dark:text-gray-400 mb-3">
         {user.branch && <span><span className="font-medium">{language === 'TR' ? 'Branş' : 'Branch'}:</span> {user.branch}</span>}
         {user.phone && <span><span className="font-medium">{language === 'TR' ? 'Tel' : 'Phone'}:</span> {user.phone}</span>}
-        {user.city_name && <span><span className="font-medium">{language === 'TR' ? 'Şehir' : 'City'}:</span> {user.city_name}</span>}
+        {user.city_name && <span><span className="font-medium">{language === 'TR' ? 'İl' : 'Province'}:</span> {user.city_name}</span>}
         {user.district && <span><span className="font-medium">{language === 'TR' ? 'İlçe' : 'District'}:</span> {user.district}</span>}
         {user.work_location && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Kurum' : 'Institution'}:</span> {user.work_location}</span>}
       </div>

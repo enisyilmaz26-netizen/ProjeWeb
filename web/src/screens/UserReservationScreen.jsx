@@ -17,9 +17,11 @@ function getTomorrowDate() {
   return d.toISOString().split('T')[0]
 }
 
+const BOOKING_WINDOW_DAYS = 60
+
 function getMaxDate() {
   const d = new Date()
-  d.setDate(d.getDate() + 60)
+  d.setDate(d.getDate() + BOOKING_WINDOW_DAYS)
   return d.toISOString().split('T')[0]
 }
 
@@ -112,6 +114,7 @@ export default function UserReservationScreen() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submitting) return
     if (!loggedInUser || !selectedCity || !selectedLab || !selectedDate || !selectedSlot) return
     setSubmitting(true)
     setErrorMsg('')
@@ -185,7 +188,7 @@ export default function UserReservationScreen() {
           {availableCities.length === 0 ? (
             <div className={cardClass}>
               <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-                {language === 'TR' ? 'Şehir bilgisi bulunamadı.' : 'No city information found.'}
+                {language === 'TR' ? 'İl bilgisi bulunamadı.' : 'No province information found.'}
               </p>
             </div>
           ) : (
@@ -219,7 +222,7 @@ export default function UserReservationScreen() {
           {cityLabs.length === 0 ? (
             <div className={cardClass}>
               <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-                {language === 'TR' ? 'Bu şehir için stüdyo bulunamadı.' : 'No studios found for this city.'}
+                {language === 'TR' ? 'Bu il için stüdyo bulunamadı.' : 'No studios found for this province.'}
               </p>
             </div>
           ) : (
@@ -256,7 +259,7 @@ export default function UserReservationScreen() {
             </div>
           )}
           <button onClick={() => resetToStep(1)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
-            ← {language === 'TR' ? 'Şehir Seçimine Dön' : 'Back to City Selection'}
+            ← {language === 'TR' ? 'İl Seçimine Dön' : 'Back to Province Selection'}
           </button>
         </div>
       )}
@@ -311,7 +314,7 @@ export default function UserReservationScreen() {
           {citySlots.length === 0 ? (
             <div className={cardClass}>
               <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-                {language === 'TR' ? 'Bu şehir için saat dilimi tanımlanmamış.' : 'No time slots defined for this city.'}
+                {language === 'TR' ? 'Bu il için saat dilimi tanımlanmamış.' : 'No time slots defined for this province.'}
               </p>
             </div>
           ) : (
@@ -356,7 +359,7 @@ export default function UserReservationScreen() {
           {/* Summary card */}
           <div className="bg-[#1565C0]/8 dark:bg-[#7DD4FC]/8 border border-[#1565C0]/20 dark:border-[#7DD4FC]/20 rounded-xl px-4 py-3 mb-4">
             <div className="grid grid-cols-2 gap-1 text-xs">
-              <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Şehir' : 'City'}:</span>
+              <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'İl' : 'Province'}:</span>
               <span className="text-gray-800 dark:text-gray-200 font-medium">{selectedCity?.name}</span>
               <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Stüdyo' : 'Studio'}:</span>
               <span className="text-gray-800 dark:text-gray-200 font-medium">{selectedLab?.name}</span>

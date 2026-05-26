@@ -84,8 +84,8 @@ export function AppProvider({ children }) {
     else document.documentElement.classList.remove('dark')
   }, [isDarkMode])
 
-  const loadAllData = useCallback(async () => {
-    setLoading(true)
+  const loadAllData = useCallback(async (showLoader = true) => {
+    if (showLoader) setLoading(true)
     try {
       const [
         { data: citiesData },
@@ -111,14 +111,14 @@ export function AppProvider({ children }) {
     } catch (err) {
       console.error('Error loading data:', err)
     } finally {
-      setLoading(false)
+      if (showLoader) setLoading(false)
     }
   }, [])
 
   useEffect(() => { loadAllData() }, [loadAllData])
 
   useEffect(() => {
-    const interval = setInterval(() => { loadAllData() }, 30000)
+    const interval = setInterval(() => { loadAllData(false) }, 30000)
     return () => clearInterval(interval)
   }, [loadAllData])
 
@@ -220,13 +220,11 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
-  const findUserForReset = async (name, surname, email) => {
+  const findUserForReset = async (email) => {
     const { data, error } = await supabase
       .from('users')
       .select('id, name, surname, email')
-      .eq('email', email)
-      .ilike('name', name.trim())
-      .ilike('surname', surname.trim())
+      .eq('email', email.trim().toLowerCase())
       .maybeSingle()
     if (error || !data) return { success: false, error: 'err_user_not_registered' }
     return { success: true, data }

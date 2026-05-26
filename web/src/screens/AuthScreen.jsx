@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
+import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
 import AppLogo from '../components/AppLogo'
 
 export default function AuthScreen({ onBack }) {
@@ -27,7 +28,7 @@ export default function AuthScreen({ onBack }) {
 
   // Forgot password form
   const [forgotStep, setForgotStep] = useState(1) // 1=lookup, 2=new password
-  const [forgotForm, setForgotForm] = useState({ name: '', surname: '', email: '' })
+  const [forgotForm, setForgotForm] = useState({ email: '' })
   const [forgotFoundUser, setForgotFoundUser] = useState(null)
   const [forgotNewPassword, setForgotNewPassword] = useState('')
   const [forgotConfirmPassword, setForgotConfirmPassword] = useState('')
@@ -114,7 +115,7 @@ export default function AuthScreen({ onBack }) {
     setForgotError('')
     setForgotLoading(true)
     try {
-      const result = await findUserForReset(forgotForm.name, forgotForm.surname, forgotForm.email)
+      const result = await findUserForReset(forgotForm.email)
       if (result.success) {
         setForgotFoundUser(result.data)
         setForgotStep(2)
@@ -149,7 +150,7 @@ export default function AuthScreen({ onBack }) {
   const goBackToLogin = () => {
     setActiveTab('login')
     setForgotStep(1)
-    setForgotForm({ name: '', surname: '', email: '' })
+    setForgotForm({ email: '' })
     setForgotFoundUser(null)
     setForgotNewPassword('')
     setForgotConfirmPassword('')
@@ -157,8 +158,8 @@ export default function AuthScreen({ onBack }) {
     setForgotSuccess(false)
   }
 
-  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC] text-sm placeholder-gray-400 dark:placeholder-gray-500"
-  const labelClass = "block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+  const inputClass = `w-full ${INPUT_BASE} placeholder-gray-400 dark:placeholder-gray-500`
+  const labelClass = LABEL_CLASS
 
   return (
     <div className="min-h-screen bg-[#EFF8FF] dark:bg-[#060E26] flex flex-col">
@@ -477,33 +478,12 @@ export default function AuthScreen({ onBack }) {
                 </div>
               ) : forgotStep === 1 ? (
                 <form onSubmit={handleForgotLookup} className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelClass}>{t('input_name', language)} *</label>
-                      <input
-                        type="text"
-                        className={inputClass}
-                        value={forgotForm.name}
-                        onChange={e => setForgotForm(p => ({ ...p, name: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className={labelClass}>{t('input_surname', language)} *</label>
-                      <input
-                        type="text"
-                        className={inputClass}
-                        value={forgotForm.surname}
-                        onChange={e => setForgotForm(p => ({ ...p, surname: e.target.value }))}
-                        required
-                      />
-                    </div>
-                  </div>
                   <div>
                     <label className={labelClass}>{t('input_email', language)} *</label>
                     <input
                       type="email"
                       className={inputClass}
+                      placeholder={language === 'TR' ? 'Kayıtlı e-posta adresiniz' : 'Your registered email'}
                       value={forgotForm.email}
                       onChange={e => setForgotForm(p => ({ ...p, email: e.target.value }))}
                       required

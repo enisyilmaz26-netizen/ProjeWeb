@@ -5,7 +5,7 @@ export default function AppLogo({ size = 40 }) {
     <img
       src="/logo.png"
       alt="ÖÖL Logo"
-      style={{ width: size, height: size, objectFit: 'contain' }}
+      style={{ height: size, width: 'auto', flexShrink: 0, objectFit: 'contain' }}
     />
   )
 }

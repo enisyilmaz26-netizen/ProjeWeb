@@ -35,8 +35,6 @@ export const translations = {
   notifications_header: { TR: 'Bildirim Geçmişi', EN: 'Notification History' },
   notifications_empty: { TR: 'Henüz bildirim yok.', EN: 'No notifications yet.' },
   clear_notifications: { TR: 'Tümünü Temizle', EN: 'Clear All' },
-  kvkk_checkbox_label: { TR: "KVKK Aydınlatma Metni'ni okudum ve kabul ediyorum. *", EN: 'I have read and agree to the KVKK Consent Text. *' },
-  kvkk_text: { TR: '6698 sayılı KVKK uyarınca kişisel verileriniz yalnızca randevu planlama amacıyla işlenecektir.', EN: 'Pursuant to KVKK No. 6698, your personal data will only be processed for appointment scheduling purposes.' },
   err_password_mismatch: { TR: 'Şifreler uyuşmamaktadır!', EN: 'Passwords do not match!' },
   err_user_not_found: { TR: 'Geçersiz E-posta veya Şifre!', EN: 'Invalid Email or Password!' },
   err_not_approved: { TR: 'Üyeliğiniz henüz onaylanmamıştır.', EN: 'Your membership has not been approved yet.' },
@@ -60,15 +58,31 @@ export const translations = {
   stats_slots: { TR: 'En Yoğun Saat Dilimleri', EN: 'Busiest Time Slots' },
   stats_no_data: { TR: 'Gösterilecek veri yok.', EN: 'No data to display.' },
   export_csv: { TR: 'CSV İndir', EN: 'Download CSV' },
-  notif_target_city: { TR: 'Hedef Şehir (Opsiyonel)', EN: 'Target City (Optional)' },
-  notif_target_all: { TR: 'Tüm Şehirler', EN: 'All Cities' },
+  notif_target_city: { TR: 'Hedef İl (Opsiyonel)', EN: 'Target Province (Optional)' },
+  notif_target_all: { TR: 'Tüm İller', EN: 'All Provinces' },
   forgot_password: { TR: 'Şifremi Unuttum', EN: 'Forgot Password' },
-  forgot_subtitle: { TR: 'Ad, soyad ve e-posta adresinizi girin.', EN: 'Enter your first name, last name and email.' },
+  forgot_subtitle: { TR: 'Sisteme kayıtlı e-posta adresinizi girin.', EN: 'Enter your registered email address.' },
   forgot_verify_btn: { TR: 'Sorgula', EN: 'Look Up' },
   forgot_new_password_subtitle: { TR: 'Yeni şifrenizi belirleyin.', EN: 'Set your new password.' },
   forgot_save_btn: { TR: 'Şifreyi Kaydet', EN: 'Save Password' },
   forgot_success: { TR: 'Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.', EN: 'Your password has been updated. You can now sign in.' },
   back_to_login: { TR: 'Giriş Sayfasına Dön', EN: 'Back to Sign In' },
+}
+
+export const STATUS_COLORS = {
+  PENDING: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+  APPROVED: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+  CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+  CANCELLATION_REQUESTED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  COMPLETED: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+}
+
+export const STATUS_LABELS = {
+  PENDING: { TR: 'Beklemede', EN: 'Pending' },
+  APPROVED: { TR: 'Onaylandı', EN: 'Approved' },
+  CANCELLED: { TR: 'İptal Edildi', EN: 'Cancelled' },
+  CANCELLATION_REQUESTED: { TR: 'İptal Talebi', EN: 'Cancel Requested' },
+  COMPLETED: { TR: 'Tamamlandı', EN: 'Completed' },
 }
 
 export function t(key, lang = 'TR') {
