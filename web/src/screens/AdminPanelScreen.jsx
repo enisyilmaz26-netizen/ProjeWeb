@@ -24,6 +24,30 @@ function statusLabel(status, lang) {
 
 const PAGE_SIZE = 50
 
+function exportToCSV(appts, language) {
+  const headers = language === 'TR'
+    ? ['Ad', 'Soyad', 'E-posta', 'Telefon', 'Branş', 'Kurum', 'Şehir', 'İlçe', 'Stüdyo', 'Tarih', 'Saat', 'Durum', 'Not', 'Oluşturma']
+    : ['First Name', 'Last Name', 'Email', 'Phone', 'Branch', 'Institution', 'City', 'District', 'Studio', 'Date', 'Time', 'Status', 'Note', 'Created']
+  const rows = appts.map(a => [
+    a.user_name, a.user_surname, a.user_email, a.user_phone,
+    a.user_branch, a.user_work_location, a.city_name, a.user_district,
+    a.lab_name, a.date, a.time_slot,
+    STATUS_LABELS[a.status]?.[language] || a.status,
+    a.note || '',
+    a.created_timestamp ? new Date(Number(a.created_timestamp)).toLocaleDateString('tr-TR') : '',
+  ])
+  const csv = [headers, ...rows]
+    .map(row => row.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
+    .join('\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `randevular_${new Date().toISOString().split('T')[0]}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export default function AdminPanelScreen() {
   const {
     loggedInAdmin, language,
@@ -70,6 +94,7 @@ export default function AdminPanelScreen() {
 
   // Notifications tab
   const [notifForm, setNotifForm] = useState({ title: '', message: '', type: 'SYSTEM' })
+  const [notifCity, setNotifCity] = useState('')
   const [notifLoading, setNotifLoading] = useState(false)
   const [notifSuccess, setNotifSuccess] = useState('')
   const [notifError, setNotifError] = useState('')
@@ -82,6 +107,63 @@ export default function AdminPanelScreen() {
       : labs
     return [...new Set(scopeLabs.map(l => l.location).filter(Boolean))]
   }, [labs, isGlobal, adminCityId, filterCity])
+
+  // Scoped appointments (city filter only — used for stats)
+  const scopedAppointments = useMemo(() => {
+    if (!isGlobal && adminCityId) return appointments.filter(a => String(a.city_id) === String(adminCityId))
+    if (isGlobal && filterCity) return appointments.filter(a => String(a.city_id) === String(filterCity))
+    return appointments
+  }, [appointments, isGlobal, adminCityId, filterCity])
+
+  // Stats
+  const studioStats = useMemo(() => {
+    const counts = {}
+    scopedAppointments.forEach(a => {
+      if (a.status === 'CANCELLED') return
+      const key = a.lab_name || '?'
+      counts[key] = (counts[key] || 0) + 1
+    })
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+  }, [scopedAppointments])
+
+  const statusStats = useMemo(() => {
+    const counts = { PENDING: 0, APPROVED: 0, COMPLETED: 0, CANCELLED: 0, CANCELLATION_REQUESTED: 0 }
+    scopedAppointments.forEach(a => { if (counts[a.status] !== undefined) counts[a.status]++ })
+    return Object.entries(counts).map(([status, count]) => ({ status, count })).filter(x => x.count > 0)
+  }, [scopedAppointments])
+
+  const monthlyStats = useMemo(() => {
+    const now = new Date()
+    const months = {}
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const label = d.toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' })
+      months[key] = { label, count: 0 }
+    }
+    scopedAppointments.forEach(a => {
+      if (!a.date) return
+      const key = a.date.substring(0, 7)
+      if (months[key]) months[key].count++
+    })
+    return Object.values(months)
+  }, [scopedAppointments])
+
+  const slotStats = useMemo(() => {
+    const counts = {}
+    scopedAppointments.forEach(a => {
+      if (a.status === 'CANCELLED') return
+      const key = a.time_slot || '?'
+      counts[key] = (counts[key] || 0) + 1
+    })
+    return Object.entries(counts)
+      .map(([slot, count]) => ({ slot, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8)
+  }, [scopedAppointments])
 
   // Filtered appointments
   const filteredAppointments = useMemo(() => {
@@ -255,10 +337,20 @@ export default function AdminPanelScreen() {
       return
     }
     setNotifLoading(true)
-    const result = await createNotification(notifForm)
+    // Prepend city tag for targeted notifications
+    let finalTitle = notifForm.title
+    if (isGlobal && notifCity) {
+      const cityObj = cities.find(c => String(c.id) === String(notifCity))
+      if (cityObj) finalTitle = `[${cityObj.name}] ${notifForm.title}`
+    } else if (!isGlobal && adminCityId) {
+      const cityObj = cities.find(c => String(c.id) === String(adminCityId))
+      if (cityObj) finalTitle = `[${cityObj.name}] ${notifForm.title}`
+    }
+    const result = await createNotification({ ...notifForm, title: finalTitle })
     setNotifLoading(false)
     if (result.success) {
       setNotifForm({ title: '', message: '', type: 'SYSTEM' })
+      setNotifCity('')
       setNotifSuccess(language === 'TR' ? 'Bildirim gönderildi.' : 'Notification sent.')
       setTimeout(() => setNotifSuccess(''), 3000)
     } else {
@@ -279,6 +371,7 @@ export default function AdminPanelScreen() {
     { key: 'slots', label: language === 'TR' ? 'Saat Dilimleri' : 'Time Slots' },
     { key: 'user_approvals', label: language === 'TR' ? 'Üye Onayları' : 'User Approvals' },
     { key: 'notifications', label: language === 'TR' ? 'Bildirim Gönder' : 'Send Notification' },
+    { key: 'stats', label: t('tab_stats', language) },
   ]
 
   return (
@@ -378,10 +471,20 @@ export default function AdminPanelScreen() {
             </div>
           </div>
 
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
-            {filteredAppointments.length} {language === 'TR' ? 'kayıt' : 'records'}
-            {filteredAppointments.length > visibleCount && ` (${visibleCount} ${language === 'TR' ? 'gösteriliyor' : 'shown'})`}
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              {filteredAppointments.length} {language === 'TR' ? 'kayıt' : 'records'}
+              {filteredAppointments.length > visibleCount && ` (${visibleCount} ${language === 'TR' ? 'gösteriliyor' : 'shown'})`}
+            </p>
+            {filteredAppointments.length > 0 && (
+              <button
+                onClick={() => exportToCSV(filteredAppointments, language)}
+                className="text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition"
+              >
+                ⬇ {t('export_csv', language)}
+              </button>
+            )}
+          </div>
 
           {filteredAppointments.length === 0 ? (
             <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
@@ -618,6 +721,130 @@ export default function AdminPanelScreen() {
         </div>
       )}
 
+      {/* STATS TAB */}
+      {activeTab === 'stats' && (
+        <div className="space-y-4">
+          {/* Studio Usage Ranking */}
+          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_studio_usage', language)}</h3>
+            {studioStats.length === 0 ? (
+              <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
+            ) : (
+              <div className="space-y-2">
+                {studioStats.map((item, i) => {
+                  const pct = Math.round((item.count / studioStats[0].count) * 100)
+                  return (
+                    <div key={item.name}>
+                      <div className="flex justify-between text-xs text-gray-700 dark:text-gray-300 mb-0.5">
+                        <span className="truncate max-w-[70%]">{i + 1}. {item.name}</span>
+                        <span className="font-semibold">{item.count}</span>
+                      </div>
+                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-[#6750A4] dark:bg-[#D0BCFF] h-2 rounded-full transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Status Distribution */}
+          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_status_dist', language)}</h3>
+            {statusStats.length === 0 ? (
+              <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
+            ) : (
+              <div className="space-y-2">
+                {statusStats.map(item => {
+                  const max = Math.max(...statusStats.map(x => x.count))
+                  const pct = Math.round((item.count / max) * 100)
+                  return (
+                    <div key={item.status}>
+                      <div className="flex justify-between text-xs text-gray-700 dark:text-gray-300 mb-0.5">
+                        <span>{statusLabel(item.status, language)}</span>
+                        <span className="font-semibold">{item.count}</span>
+                      </div>
+                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full transition-all ${
+                            item.status === 'APPROVED' ? 'bg-green-500' :
+                            item.status === 'PENDING' ? 'bg-orange-400' :
+                            item.status === 'COMPLETED' ? 'bg-blue-500' :
+                            'bg-red-400'
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Monthly Trend */}
+          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_monthly', language)}</h3>
+            {monthlyStats.every(m => m.count === 0) ? (
+              <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
+            ) : (() => {
+              const maxCount = Math.max(...monthlyStats.map(m => m.count), 1)
+              return (
+                <div className="flex items-end gap-2 h-28">
+                  {monthlyStats.map(m => {
+                    const heightPct = Math.round((m.count / maxCount) * 100)
+                    return (
+                      <div key={m.label} className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">{m.count > 0 ? m.count : ''}</span>
+                        <div className="w-full flex items-end" style={{ height: '72px' }}>
+                          <div
+                            className="w-full bg-[#6750A4] dark:bg-[#D0BCFF] rounded-t-md transition-all"
+                            style={{ height: `${Math.max(heightPct, m.count > 0 ? 4 : 0)}%` }}
+                          />
+                        </div>
+                        <span className="text-[9px] text-gray-500 dark:text-gray-400 text-center leading-tight">{m.label}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* Busiest Time Slots */}
+          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_slots', language)}</h3>
+            {slotStats.length === 0 ? (
+              <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
+            ) : (
+              <div className="space-y-2">
+                {slotStats.map(item => {
+                  const pct = Math.round((item.count / slotStats[0].count) * 100)
+                  return (
+                    <div key={item.slot}>
+                      <div className="flex justify-between text-xs text-gray-700 dark:text-gray-300 mb-0.5">
+                        <span>{item.slot}</span>
+                        <span className="font-semibold">{item.count}</span>
+                      </div>
+                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-orange-400 h-2 rounded-full transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* NOTIFICATIONS TAB */}
       {activeTab === 'notifications' && (
         <div>
@@ -634,6 +861,20 @@ export default function AdminPanelScreen() {
                   <option value="ALERT">🚨 {language === 'TR' ? 'Uyarı' : 'Alert'}</option>
                 </select>
               </div>
+              {isGlobal && (
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('notif_target_city', language)}</label>
+                  <select className={`${inputClass} w-full`} value={notifCity} onChange={e => setNotifCity(e.target.value)}>
+                    <option value="">{t('notif_target_all', language)}</option>
+                    {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  {notifCity && (
+                    <p className="text-xs text-[#6750A4] dark:text-[#D0BCFF] mt-1">
+                      {language === 'TR' ? '📍 Yalnızca seçilen şehrin kullanıcılarına gönderilecek.' : '📍 Will be sent only to users in the selected city.'}
+                    </p>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Başlık' : 'Title'} *</label>
                 <input
