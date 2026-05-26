@@ -50,7 +50,7 @@ function recordFailedAttempt(email) {
   all[email].count++
   if (all[email].count >= 5) {
     all[email].lockUntil = Date.now() + 60000
-    all[email].count = 0
+    // count stays at 5 — next attempt re-locks immediately
   }
   saveRateLimits(all)
 }
@@ -74,6 +74,7 @@ export function AppProvider({ children }) {
   const [timeSlots, setTimeSlots] = useState([])
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
+  const rtChannelsRef = React.useRef([])
 
   // Persist session & preferences
   useEffect(() => {
@@ -151,9 +152,11 @@ export function AppProvider({ children }) {
       })
       .subscribe()
 
+    rtChannelsRef.current = [apptChannel, notifChannel]
     return () => {
       supabase.removeChannel(apptChannel)
       supabase.removeChannel(notifChannel)
+      rtChannelsRef.current = []
     }
   }, [])
 
@@ -290,6 +293,8 @@ export function AppProvider({ children }) {
   }
 
   const logout = () => {
+    rtChannelsRef.current.forEach(ch => supabase.removeChannel(ch))
+    rtChannelsRef.current = []
     setLoggedInUser(null)
     setLoggedInAdmin(null)
   }

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
@@ -18,6 +18,15 @@ export default function MyProfileScreen() {
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' })
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState('')
+
+  useEffect(() => {
+    if (!showPwChange && !showCancelModal) return
+    const handler = (e) => {
+      if (e.key === 'Escape') { setShowPwChange(false); setShowCancelModal(false) }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [showPwChange, showCancelModal])
 
   // Profile editing
   const [editMode, setEditMode] = useState(false)
@@ -62,8 +71,8 @@ export default function MyProfileScreen() {
       setShowCancelModal(false)
       setCancelTargetId(null)
       setCancelReason('')
-      setSuccessMsg(language === 'TR' ? 'İptal talebiniz iletildi.' : 'Your cancellation request has been submitted.')
-      setTimeout(() => setSuccessMsg(''), 4000)
+      setSuccessMsg(t('cancellation_submitted', language))
+      setTimeout(() => setSuccessMsg(''), 3000)
     }
   }
 
@@ -74,8 +83,8 @@ export default function MyProfileScreen() {
       setPwError(t('err_password_mismatch', language))
       return
     }
-    if (pwForm.newPw.length < 4) {
-      setPwError(language === 'TR' ? 'Şifre en az 4 karakter olmalıdır.' : 'Password must be at least 4 characters.')
+    if (pwForm.newPw.length < 8) {
+      setPwError(t('err_password_min_length', language))
       return
     }
     setPwLoading(true)
@@ -85,10 +94,10 @@ export default function MyProfileScreen() {
       setShowPwChange(false)
       setPwForm({ current: '', newPw: '', confirm: '' })
       setSuccessMsg(t('password_changed', language))
-      setTimeout(() => setSuccessMsg(''), 4000)
+      setTimeout(() => setSuccessMsg(''), 3000)
     } else {
       const errKey = result.error
-      setPwError(translations[errKey] ? t(errKey, language) : (errKey || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.')))
+      setPwError(translations[errKey] ? t(errKey, language) : (errKey || t('err_generic', language)))
     }
   }
 
@@ -110,7 +119,7 @@ export default function MyProfileScreen() {
     setEditError('')
     const phoneDigits = editForm.phone.replace(/\D/g, '')
     if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-      setEditError(language === 'TR' ? 'Geçerli bir telefon numarası giriniz (10-11 rakam).' : 'Please enter a valid phone number (10-11 digits).')
+      setEditError(t('err_phone_invalid', language))
       return
     }
     setEditLoading(true)
@@ -125,10 +134,10 @@ export default function MyProfileScreen() {
     setEditLoading(false)
     if (result.success) {
       setEditMode(false)
-      setSuccessMsg(language === 'TR' ? 'Profiliniz güncellendi.' : 'Profile updated successfully.')
-      setTimeout(() => setSuccessMsg(''), 4000)
+      setSuccessMsg(t('profile_updated', language))
+      setTimeout(() => setSuccessMsg(''), 3000)
     } else {
-      setEditError(result.error || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.'))
+      setEditError(result.error || t('err_generic', language))
     }
   }
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
@@ -36,6 +36,14 @@ export default function AuthScreen({ onBack }) {
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotSuccess, setForgotSuccess] = useState(false)
 
+  useEffect(() => {
+    const anyModal = showRegSuccessModal || showKvkkModal
+    if (!anyModal) return
+    const handler = (e) => { if (e.key === 'Escape') { setShowRegSuccessModal(false); setShowKvkkModal(false) } }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [showRegSuccessModal, showKvkkModal])
+
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoginError('')
@@ -67,12 +75,12 @@ export default function AuthScreen({ onBack }) {
       return
     }
     if (!regForm.kvkk) {
-      setRegError(language === 'TR' ? 'KVKK onayı zorunludur.' : 'KVKK consent is required.')
+      setRegError(t('err_kvkk_required', language))
       return
     }
     const phoneDigits = regForm.phone.replace(/\D/g, '')
     if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-      setRegError(language === 'TR' ? 'Geçerli bir telefon numarası giriniz (10-11 rakam).' : 'Please enter a valid phone number (10-11 digits).')
+      setRegError(t('err_phone_invalid', language))
       return
     }
     setRegLoading(true)
@@ -98,7 +106,7 @@ export default function AuthScreen({ onBack }) {
         })
       } else {
         const errKey = result.error
-        setRegError(errKey?.startsWith('err_') ? t(errKey, language) : (errKey || (language === 'TR' ? 'Kayıt sırasında bir hata oluştu.' : 'An error occurred during registration.')))
+        setRegError(errKey?.startsWith('err_') ? t(errKey, language) : (errKey || t('err_registration_failed', language)))
       }
     } finally {
       setRegLoading(false)
@@ -168,7 +176,7 @@ export default function AuthScreen({ onBack }) {
         {onBack ? (
           <button onClick={onBack} className="text-white/80 hover:text-white flex items-center gap-1 text-xs font-medium transition">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            {language === 'TR' ? 'Geri' : 'Back'}
+            {t('btn_back', language)}
           </button>
         ) : <div />}
         <div className="text-center">

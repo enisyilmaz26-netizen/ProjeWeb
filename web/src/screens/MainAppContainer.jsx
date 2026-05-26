@@ -53,31 +53,36 @@ export default function MainAppContainer() {
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={toggleLanguage}
+              aria-label={t('toggle_lang', language)}
               className="text-white border border-white/40 rounded-lg px-2 py-0.5 text-xs font-medium hover:bg-white/20 transition"
             >
               {language === 'TR' ? 'EN' : 'TR'}
             </button>
             <button
               onClick={toggleDarkMode}
+              aria-label={t('toggle_dark', language)}
               className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition"
-              title="Toggle dark mode"
             >
               {isDarkMode ? '☀️' : '🌙'}
             </button>
             <button
               onClick={logout}
+              aria-label={t('btn_logout', language)}
               className="text-white border border-white/40 rounded-lg px-2 py-1 text-xs font-medium hover:bg-white/20 transition"
             >
-              {language === 'TR' ? 'Çıkış' : 'Logout'}
+              {t('btn_logout', language)}
             </button>
           </div>
         </div>
 
         {/* Tab bar */}
-        <div className="flex border-t border-white/10">
+        <div className="flex border-t border-white/10" role="tablist">
           {tabs.map(tab => (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              aria-label={tab.label}
               onClick={() => setActiveTab(tab.key)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition relative ${
                 activeTab === tab.key
@@ -85,10 +90,10 @@ export default function MainAppContainer() {
                   : 'text-white/60 hover:text-white/90'
               }`}
             >
-              <span>{tab.icon}</span>
+              <span aria-hidden="true">{tab.icon}</span>
               <span>{tab.label}</span>
               {tab.key === 'notifications' && unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                <span aria-label={`${unreadCount} okunmamış bildirim`} className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}

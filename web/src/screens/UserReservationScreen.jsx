@@ -96,7 +96,7 @@ export default function UserReservationScreen() {
 
   const handleDateSelect = (date) => {
     if (isWeekend(date)) {
-      setDateError(language === 'TR' ? 'Hafta sonları randevu alınamaz. Lütfen hafta içi bir gün seçin.' : 'Appointments cannot be made on weekends. Please select a weekday.')
+      setDateError(t('weekend_restriction', language))
       return
     }
     setDateError('')
@@ -137,7 +137,7 @@ export default function UserReservationScreen() {
     })
     setSubmitting(false)
     if (result.success) {
-      setSuccessMsg(language === 'TR' ? 'Randevu talebiniz başarıyla oluşturuldu!' : 'Your reservation request was created successfully!')
+      setSuccessMsg(t('appointment_success', language))
       setStep(1)
       setSelectedCity(null)
       setSelectedLab(null)
@@ -146,7 +146,7 @@ export default function UserReservationScreen() {
       setNote('')
     } else {
       const errKey = result.error
-      const errMsg = (errKey && translations[errKey]) ? t(errKey, language) : (errKey || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.'))
+      const errMsg = (errKey && translations[errKey]) ? t(errKey, language) : (errKey || t('err_generic', language))
       setErrorMsg(errMsg)
     }
   }
@@ -188,7 +188,7 @@ export default function UserReservationScreen() {
           {availableCities.length === 0 ? (
             <div className={cardClass}>
               <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-                {language === 'TR' ? 'İl bilgisi bulunamadı.' : 'No province information found.'}
+                {t('province_not_found', language)}
               </p>
             </div>
           ) : (
@@ -222,7 +222,7 @@ export default function UserReservationScreen() {
           {cityLabs.length === 0 ? (
             <div className={cardClass}>
               <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-                {language === 'TR' ? 'Bu il için stüdyo bulunamadı.' : 'No studios found for this province.'}
+                {t('studios_not_found', language)}
               </p>
             </div>
           ) : (
@@ -259,7 +259,7 @@ export default function UserReservationScreen() {
             </div>
           )}
           <button onClick={() => resetToStep(1)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
-            ← {language === 'TR' ? 'İl Seçimine Dön' : 'Back to Province Selection'}
+            ← {t('back_to_province', language)}
           </button>
         </div>
       )}
@@ -291,11 +291,11 @@ export default function UserReservationScreen() {
               <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{dateError}</p>
             )}
             <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              {language === 'TR' ? 'Hafta sonları ve 60 günden ileri tarihler seçilemez.' : 'Weekends and dates beyond 60 days are not available.'}
+              {t('date_restriction', language)}
             </p>
           </div>
           <button onClick={() => resetToStep(2)} className="mt-1 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
-            ← {language === 'TR' ? 'Stüdyo Seçimine Dön' : 'Back to Studio Selection'}
+            ← {t('back_to_studio', language)}
           </button>
         </div>
       )}
@@ -314,7 +314,7 @@ export default function UserReservationScreen() {
           {citySlots.length === 0 ? (
             <div className={cardClass}>
               <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-                {language === 'TR' ? 'Bu il için saat dilimi tanımlanmamış.' : 'No time slots defined for this province.'}
+                {t('no_timeslots', language)}
               </p>
             </div>
           ) : (
@@ -346,7 +346,7 @@ export default function UserReservationScreen() {
             </div>
           )}
           <button onClick={() => resetToStep(3)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
-            ← {language === 'TR' ? 'Tarih Seçimine Dön' : 'Back to Date Selection'}
+            ← {t('back_to_date', language)}
           </button>
         </div>
       )}
@@ -359,13 +359,13 @@ export default function UserReservationScreen() {
           {/* Summary card */}
           <div className="bg-[#1565C0]/8 dark:bg-[#7DD4FC]/8 border border-[#1565C0]/20 dark:border-[#7DD4FC]/20 rounded-xl px-4 py-3 mb-4">
             <div className="grid grid-cols-2 gap-1 text-xs">
-              <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'İl' : 'Province'}:</span>
+              <span className="text-gray-500 dark:text-gray-400">{t('province_label', language)}:</span>
               <span className="text-gray-800 dark:text-gray-200 font-medium">{selectedCity?.name}</span>
-              <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Stüdyo' : 'Studio'}:</span>
+              <span className="text-gray-500 dark:text-gray-400">{t('studio_label', language)}:</span>
               <span className="text-gray-800 dark:text-gray-200 font-medium">{selectedLab?.name}</span>
-              <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Tarih' : 'Date'}:</span>
+              <span className="text-gray-500 dark:text-gray-400">{t('date_label', language)}:</span>
               <span className="text-gray-800 dark:text-gray-200 font-medium">{formatDate(selectedDate)}</span>
-              <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Saat' : 'Time'}:</span>
+              <span className="text-gray-500 dark:text-gray-400">{t('time_label', language)}:</span>
               <span className="text-gray-800 dark:text-gray-200 font-medium">{selectedSlot?.time_range}</span>
             </div>
           </div>
@@ -409,12 +409,12 @@ export default function UserReservationScreen() {
               disabled={submitting}
               className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60 shadow"
             >
-              {submitting ? (language === 'TR' ? 'Gönderiliyor...' : 'Submitting...') : t('submit_button', language)}
+              {submitting ? t('submitting', language) : t('submit_button', language)}
             </button>
           </form>
 
           <button onClick={() => resetToStep(4)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
-            ← {language === 'TR' ? 'Saat Seçimine Dön' : 'Back to Time Selection'}
+            ← {t('back_to_time', language)}
           </button>
         </div>
       )}
@@ -436,7 +436,7 @@ function LabCard({ lab, onClick, language, getMaxCapacity }) {
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
           {lab.description && <p className="text-xs text-gray-500 dark:text-gray-400">{lab.description}</p>}
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {language === 'TR' ? 'Kapasite' : 'Capacity'}: {getMaxCapacity(lab)}
+            {t('capacity_label', language)}: {getMaxCapacity(lab)}
             {lab.branches ? ` · ${lab.branches}` : ''}
           </p>
         </div>

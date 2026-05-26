@@ -41,6 +41,13 @@ export default function NotificationCenterScreen() {
     setShowClearConfirm(false)
   }
 
+  useEffect(() => {
+    if (!showClearConfirm) return
+    const handler = (e) => { if (e.key === 'Escape') setShowClearConfirm(false) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [showClearConfirm])
+
   const getTypeIcon = (type) => {
     switch (type) {
       case 'ALERT': return '🚨'
@@ -106,7 +113,7 @@ export default function NotificationCenterScreen() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
-              {language === 'TR' ? 'Bildirimleri Temizle' : 'Clear Notifications'}
+              {t('clear_notifications', language)}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
               {language === 'TR'
@@ -118,13 +125,13 @@ export default function NotificationCenterScreen() {
                 onClick={handleClearAll}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition"
               >
-                {language === 'TR' ? 'Evet, Temizle' : 'Yes, Clear'}
+                {t('btn_yes', language)}, {t('clear_notifications', language)}
               </button>
               <button
                 onClick={() => setShowClearConfirm(false)}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
-                {language === 'TR' ? 'Vazgeç' : 'Cancel'}
+                {t('btn_nevermind', language)}
               </button>
             </div>
           </div>

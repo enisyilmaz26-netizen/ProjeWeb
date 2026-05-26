@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
 import { INPUT_BASE } from '../lib/ui'
@@ -90,6 +90,13 @@ export default function AdminPanelScreen() {
 
   // Confirm modal
   const [confirmModal, setConfirmModal] = useState(null) // { label, onConfirm }
+
+  useEffect(() => {
+    if (!confirmModal) return
+    const handler = (e) => { if (e.key === 'Escape') setConfirmModal(null) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [confirmModal])
 
   // Notifications tab
   const [notifForm, setNotifForm] = useState({ title: '', message: '', type: 'SYSTEM' })
@@ -366,22 +373,26 @@ export default function AdminPanelScreen() {
     }
   }
 
-  const handleDeleteLab = async (id) => {
-    if (!window.confirm(language === 'TR' ? 'Bu stüdyoyu silmek istediğinizden emin misiniz?' : 'Are you sure you want to delete this studio?')) return
-    setProcessingId(id)
-    const result = await deleteLab(id)
-    setProcessingId(null)
-    if (!result.success) {
-      const errKey = result.error
-      setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || 'Error'))
-    }
+  const handleDeleteLab = (id) => {
+    setConfirmModal({
+      label: t('delete_lab_confirm', language),
+      onConfirm: async () => {
+        setProcessingId(id)
+        const result = await deleteLab(id)
+        setProcessingId(null)
+        if (!result.success) {
+          const errKey = result.error
+          setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+        }
+      }
+    })
   }
 
   const handleCreateNotification = async (e) => {
     e.preventDefault()
     setNotifError('')
     if (!notifForm.title.trim() || !notifForm.message.trim()) {
-      setNotifError(language === 'TR' ? 'Başlık ve mesaj zorunludur.' : 'Title and message are required.')
+      setNotifError(t('notif_required_fields', language))
       return
     }
     setNotifLoading(true)
@@ -399,7 +410,7 @@ export default function AdminPanelScreen() {
     if (result.success) {
       setNotifForm({ title: '', message: '', type: 'SYSTEM' })
       setNotifCity('')
-      setNotifSuccess(language === 'TR' ? 'Bildirim gönderildi.' : 'Notification sent.')
+      setNotifSuccess(t('notif_sent', language))
       setTimeout(() => setNotifSuccess(''), 3000)
     } else {
       setNotifError(result.error || 'Error')
@@ -1050,13 +1061,13 @@ export default function AdminPanelScreen() {
                 onClick={async () => { setConfirmModal(null); await confirmModal.onConfirm() }}
                 className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition"
               >
-                {language === 'TR' ? 'Evet' : 'Yes'}
+                {t('btn_yes', language)}
               </button>
               <button
                 onClick={() => setConfirmModal(null)}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
-                {language === 'TR' ? 'Vazgeç' : 'Cancel'}
+                {t('btn_nevermind', language)}
               </button>
             </div>
           </div>
