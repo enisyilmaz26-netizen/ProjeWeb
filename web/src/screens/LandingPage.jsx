@@ -29,6 +29,7 @@ export default function LandingPage({ onLoginClick }) {
     {
       value: cities.length || 7,
       label: { TR: 'İl', EN: 'Province' },
+      color: '#0A2461',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
@@ -37,34 +38,24 @@ export default function LandingPage({ onLoginClick }) {
       ),
     },
     {
-      value: labs.length || 29,
-      label: { TR: 'Stüdyo', EN: 'Studio' },
+      value: labs.length || 8,
+      label: { TR: 'Laboratuvar', EN: 'Laboratory' },
+      color: '#1565C0',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
-          <rect x="2" y="3" width="20" height="14" rx="2"/>
-          <path d="M8 21h8M12 17v4"/>
-          <circle cx="12" cy="10" r="3"/>
+          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/>
         </svg>
       ),
     },
     {
       value: '200K+',
       label: { TR: 'Hedef Öğretmen', EN: 'Target Teachers' },
+      color: '#00AEEF',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
           <circle cx="9" cy="7" r="4"/>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      ),
-    },
-    {
-      value: '3.75M€',
-      label: { TR: 'Proje Bütçesi', EN: 'Project Budget' },
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
-          <line x1="12" y1="1" x2="12" y2="23"/>
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
         </svg>
       ),
     },
@@ -235,11 +226,11 @@ export default function LandingPage({ onLoginClick }) {
         </div>
 
         {/* Stats bar */}
-        <div className="relative max-w-6xl mx-auto w-full px-4 sm:px-6 pb-10">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="relative max-w-3xl mx-auto w-full px-4 sm:px-6 pb-10">
+          <div className="grid grid-cols-3 gap-4">
             {statsData.map((s, i) => (
-              <div key={i} className="bg-[#1565C0]/8 border border-[#1565C0]/15 dark:bg-white/5 dark:border-white/10 rounded-2xl p-4 text-center">
-                <div className="flex justify-center mb-1 text-[#1565C0] dark:text-[#7DD4FC]">{s.icon}</div>
+              <div key={i} className="rounded-2xl p-5 text-center border" style={{ backgroundColor: s.color + '12', borderColor: s.color + '30' }}>
+                <div className="flex justify-center mb-2" style={{ color: s.color }}>{s.icon}</div>
                 <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">{s.value}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label[lang]}</p>
               </div>
