@@ -200,34 +200,28 @@ export default function UserReservationScreen() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3">
-              {cityLabs.map(lab => (
-                <button
-                  key={lab.id}
-                  onClick={() => handleLabSelect(lab)}
-                  className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 text-left hover:ring-2 hover:ring-[#6750A4] dark:hover:ring-[#D0BCFF] transition active:scale-[0.98]"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[#6750A4] dark:text-[#D0BCFF] text-lg">🎙</span>
+            <div className="space-y-4">
+              {/* Group labs by location */}
+              {(() => {
+                const locations = [...new Set(cityLabs.map(l => l.location || '').filter(Boolean))]
+                const hasMultipleLocations = locations.length > 1
+                if (!hasMultipleLocations) {
+                  return cityLabs.map(lab => <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} />)
+                }
+                return locations.map(loc => (
+                  <div key={loc}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-bold text-[#6750A4] dark:text-[#D0BCFF] uppercase tracking-wide">📍 {loc}</span>
+                      <div className="flex-1 h-px bg-[#6750A4]/20 dark:bg-[#D0BCFF]/20" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
-                      {lab.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{lab.description}</p>}
-                      <div className="flex gap-3 mt-1.5 flex-wrap">
-                        {lab.location && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                            <span>📍</span>{lab.location}
-                          </span>
-                        )}
-                        <span className="text-xs text-[#6750A4] dark:text-[#D0BCFF] font-medium">
-                          {language === 'TR' ? 'Kapasite' : 'Capacity'}: {getMaxCapacity(lab)}
-                        </span>
-                      </div>
+                    <div className="grid grid-cols-1 gap-3">
+                      {cityLabs.filter(l => l.location === loc).map(lab => (
+                        <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} />
+                      ))}
                     </div>
                   </div>
-                </button>
-              ))}
+                ))
+              })()}
             </div>
           )}
           <button onClick={() => resetToStep(1)} className="mt-3 text-sm text-[#6750A4] dark:text-[#D0BCFF] font-medium flex items-center gap-1">
@@ -384,6 +378,28 @@ export default function UserReservationScreen() {
         </div>
       )}
     </div>
+  )
+}
+
+function LabCard({ lab, onClick, language, getMaxCapacity }) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 text-left hover:ring-2 hover:ring-[#6750A4] dark:hover:ring-[#D0BCFF] transition active:scale-[0.98] w-full"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
+          <span className="text-[#6750A4] dark:text-[#D0BCFF] text-lg">🎙</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {language === 'TR' ? 'Kapasite' : 'Capacity'}: {getMaxCapacity(lab)}
+          </p>
+        </div>
+        <span className="text-gray-400 dark:text-gray-500 text-sm">›</span>
+      </div>
+    </button>
   )
 }
 

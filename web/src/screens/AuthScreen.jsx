@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 
 export default function AuthScreen() {
-  const { loginUser, loginAdmin, registerUser, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
+  const { loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
   const [activeTab, setActiveTab] = useState('login')
   const [loginType, setLoginType] = useState('user') // 'user' | 'admin'
 
@@ -23,6 +23,16 @@ export default function AuthScreen() {
   const [regLoading, setRegLoading] = useState(false)
   const [showRegSuccessModal, setShowRegSuccessModal] = useState(false)
   const [showKvkkModal, setShowKvkkModal] = useState(false)
+
+  // Forgot password form
+  const [forgotStep, setForgotStep] = useState(1) // 1=lookup, 2=new password
+  const [forgotForm, setForgotForm] = useState({ name: '', surname: '', email: '' })
+  const [forgotFoundUser, setForgotFoundUser] = useState(null)
+  const [forgotNewPassword, setForgotNewPassword] = useState('')
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('')
+  const [forgotError, setForgotError] = useState('')
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotSuccess, setForgotSuccess] = useState(false)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -76,7 +86,8 @@ export default function AuthScreen() {
           kvkk: false,
         })
       } else {
-        setRegError(result.error || (language === 'TR' ? 'Kayıt sırasında bir hata oluştu.' : 'An error occurred during registration.'))
+        const errKey = result.error
+        setRegError(errKey?.startsWith('err_') ? t(errKey, language) : (errKey || (language === 'TR' ? 'Kayıt sırasında bir hata oluştu.' : 'An error occurred during registration.')))
       }
     } finally {
       setRegLoading(false)
@@ -86,6 +97,54 @@ export default function AuthScreen() {
   const handleCityChange = (cityId) => {
     const city = cities.find(c => String(c.id) === String(cityId))
     setRegForm(prev => ({ ...prev, city_id: cityId, city_name: city ? city.name : '' }))
+  }
+
+  const handleForgotLookup = async (e) => {
+    e.preventDefault()
+    setForgotError('')
+    setForgotLoading(true)
+    try {
+      const result = await findUserForReset(forgotForm.name, forgotForm.surname, forgotForm.email)
+      if (result.success) {
+        setForgotFoundUser(result.data)
+        setForgotStep(2)
+      } else {
+        setForgotError(t(result.error, language))
+      }
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const handleForgotReset = async (e) => {
+    e.preventDefault()
+    setForgotError('')
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError(t('err_password_mismatch', language))
+      return
+    }
+    setForgotLoading(true)
+    try {
+      const result = await resetPassword(forgotFoundUser.id, forgotNewPassword)
+      if (result.success) {
+        setForgotSuccess(true)
+      } else {
+        setForgotError(result.error || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.'))
+      }
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const goBackToLogin = () => {
+    setActiveTab('login')
+    setForgotStep(1)
+    setForgotForm({ name: '', surname: '', email: '' })
+    setForgotFoundUser(null)
+    setForgotNewPassword('')
+    setForgotConfirmPassword('')
+    setForgotError('')
+    setForgotSuccess(false)
   }
 
   const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2C2A31] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6750A4] dark:focus:ring-[#D0BCFF] text-sm placeholder-gray-400 dark:placeholder-gray-500"
@@ -132,20 +191,22 @@ export default function AuthScreen() {
           </div>
 
           {/* Tab switcher */}
-          <div className="flex bg-gray-100 dark:bg-[#2C2A31] rounded-xl p-1 mb-6">
-            <button
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'login' ? 'bg-white dark:bg-[#6750A4] text-[#6750A4] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
-              onClick={() => setActiveTab('login')}
-            >
-              {t('btn_login', language)}
-            </button>
-            <button
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'register' ? 'bg-white dark:bg-[#6750A4] text-[#6750A4] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
-              onClick={() => setActiveTab('register')}
-            >
-              {t('btn_register', language)}
-            </button>
-          </div>
+          {activeTab !== 'forgot' && (
+            <div className="flex bg-gray-100 dark:bg-[#2C2A31] rounded-xl p-1 mb-6">
+              <button
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'login' ? 'bg-white dark:bg-[#6750A4] text-[#6750A4] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
+                onClick={() => setActiveTab('login')}
+              >
+                {t('btn_login', language)}
+              </button>
+              <button
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'register' ? 'bg-white dark:bg-[#6750A4] text-[#6750A4] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
+                onClick={() => setActiveTab('register')}
+              >
+                {t('btn_register', language)}
+              </button>
+            </div>
+          )}
 
           {/* Login Form */}
           {activeTab === 'login' && (
@@ -202,6 +263,16 @@ export default function AuthScreen() {
                   {loginLoading ? (language === 'TR' ? 'Giriş yapılıyor...' : 'Signing in...') : t('btn_login', language)}
                 </button>
               </form>
+              {loginType === 'user' && (
+                <div className="mt-3 text-center">
+                  <button
+                    onClick={() => setActiveTab('forgot')}
+                    className="text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline"
+                  >
+                    {t('forgot_password', language)}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -360,6 +431,126 @@ export default function AuthScreen() {
                   {regLoading ? (language === 'TR' ? 'Kaydediliyor...' : 'Registering...') : t('btn_register', language)}
                 </button>
               </form>
+            </div>
+          )}
+          {/* Forgot Password Form */}
+          {activeTab === 'forgot' && (
+            <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-6">
+              <div className="mb-4">
+                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">{t('forgot_password', language)}</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {forgotStep === 1 ? t('forgot_subtitle', language) : t('forgot_new_password_subtitle', language)}
+                </p>
+              </div>
+
+              {forgotSuccess ? (
+                <div className="space-y-4">
+                  <div className="flex flex-col items-center py-4">
+                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-3">
+                      <span className="text-green-600 dark:text-green-400 text-xl">✓</span>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 text-center">{t('forgot_success', language)}</p>
+                  </div>
+                  <button
+                    onClick={goBackToLogin}
+                    className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 transition"
+                  >
+                    {t('back_to_login', language)}
+                  </button>
+                </div>
+              ) : forgotStep === 1 ? (
+                <form onSubmit={handleForgotLookup} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelClass}>{t('input_name', language)} *</label>
+                      <input
+                        type="text"
+                        className={inputClass}
+                        value={forgotForm.name}
+                        onChange={e => setForgotForm(p => ({ ...p, name: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>{t('input_surname', language)} *</label>
+                      <input
+                        type="text"
+                        className={inputClass}
+                        value={forgotForm.surname}
+                        onChange={e => setForgotForm(p => ({ ...p, surname: e.target.value }))}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>{t('input_email', language)} *</label>
+                    <input
+                      type="email"
+                      className={inputClass}
+                      value={forgotForm.email}
+                      onChange={e => setForgotForm(p => ({ ...p, email: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  {forgotError && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
+                      {forgotError}
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
+                  >
+                    {forgotLoading ? (language === 'TR' ? 'Sorgulanıyor...' : 'Looking up...') : t('forgot_verify_btn', language)}
+                  </button>
+                  <button type="button" onClick={goBackToLogin} className="w-full text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline pt-1">
+                    ← {t('back_to_login', language)}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleForgotReset} className="space-y-3">
+                  <div className="bg-[#6750A4]/5 dark:bg-[#D0BCFF]/5 rounded-xl px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
+                    {forgotFoundUser?.name} {forgotFoundUser?.surname} — {forgotFoundUser?.email}
+                  </div>
+                  <div>
+                    <label className={labelClass}>{t('input_password', language)} *</label>
+                    <input
+                      type="password"
+                      className={inputClass}
+                      value={forgotNewPassword}
+                      onChange={e => setForgotNewPassword(e.target.value)}
+                      required
+                      minLength={4}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>{t('input_confirm_password', language)} *</label>
+                    <input
+                      type="password"
+                      className={inputClass}
+                      value={forgotConfirmPassword}
+                      onChange={e => setForgotConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  {forgotError && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
+                      {forgotError}
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
+                  >
+                    {forgotLoading ? (language === 'TR' ? 'Kaydediliyor...' : 'Saving...') : t('forgot_save_btn', language)}
+                  </button>
+                  <button type="button" onClick={() => { setForgotStep(1); setForgotError('') }} className="w-full text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline pt-1">
+                    ← {language === 'TR' ? 'Geri' : 'Back'}
+                  </button>
+                </form>
+              )}
             </div>
           )}
         </div>

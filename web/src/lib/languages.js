@@ -40,6 +40,15 @@ export const translations = {
   err_password_mismatch: { TR: 'Şifreler uyuşmamaktadır!', EN: 'Passwords do not match!' },
   err_user_not_found: { TR: 'Geçersiz E-posta veya Şifre!', EN: 'Invalid Email or Password!' },
   err_not_approved: { TR: 'Üyeliğiniz henüz onaylanmamıştır.', EN: 'Your membership has not been approved yet.' },
+  err_email_exists: { TR: 'Bu e-posta adresi sistemde zaten kayıtlıdır.', EN: 'This email address is already registered in the system.' },
+  err_user_not_registered: { TR: 'Bu bilgilere ait üyelik bulunamadı.', EN: 'No membership found with this information.' },
+  forgot_password: { TR: 'Şifremi Unuttum', EN: 'Forgot Password' },
+  forgot_subtitle: { TR: 'Ad, soyad ve e-posta adresinizi girin.', EN: 'Enter your first name, last name and email.' },
+  forgot_verify_btn: { TR: 'Sorgula', EN: 'Look Up' },
+  forgot_new_password_subtitle: { TR: 'Yeni şifrenizi belirleyin.', EN: 'Set your new password.' },
+  forgot_save_btn: { TR: 'Şifreyi Kaydet', EN: 'Save Password' },
+  forgot_success: { TR: 'Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.', EN: 'Your password has been updated. You can now sign in.' },
+  back_to_login: { TR: 'Giriş Sayfasına Dön', EN: 'Back to Sign In' },
 }
 
 export function t(key, lang = 'TR') {

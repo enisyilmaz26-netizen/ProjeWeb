@@ -38,6 +38,7 @@ export default function AdminPanelScreen() {
   const [search, setSearch] = useState('')
   const [filterCity, setFilterCity] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [filterLocation, setFilterLocation] = useState('')
   const [processingId, setProcessingId] = useState(null)
 
   // Time slots tab
@@ -59,6 +60,10 @@ export default function AdminPanelScreen() {
       list = list.filter(a => String(a.city_id) === String(filterCity))
     }
     if (filterStatus) list = list.filter(a => a.status === filterStatus)
+    if (filterLocation) {
+      const labIds = labs.filter(l => l.location === filterLocation).map(l => l.id)
+      list = list.filter(a => labIds.includes(a.lab_id))
+    }
     if (search.trim()) {
       const q = search.toLowerCase().trim()
       list = list.filter(a =>
@@ -70,7 +75,17 @@ export default function AdminPanelScreen() {
       )
     }
     return list
-  }, [appointments, isGlobal, adminCityId, filterCity, filterStatus, search])
+  }, [appointments, isGlobal, adminCityId, filterCity, filterStatus, filterLocation, search, labs])
+
+  // Available locations for current city scope
+  const availableLocations = useMemo(() => {
+    const scopeCityId = !isGlobal ? adminCityId : (filterCity || null)
+    const scopeLabs = scopeCityId
+      ? labs.filter(l => String(l.city_id) === String(scopeCityId))
+      : labs
+    const locs = [...new Set(scopeLabs.map(l => l.location).filter(Boolean))]
+    return locs
+  }, [labs, isGlobal, adminCityId, filterCity])
 
   // Stats
   const stats = useMemo(() => {
@@ -252,18 +267,24 @@ export default function AdminPanelScreen() {
       {activeTab === 'appointments' && (
         <div>
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-2 mb-3">
+          <div className="flex flex-col sm:flex-row gap-2 mb-3 flex-wrap">
             <input
               type="text"
               placeholder={language === 'TR' ? 'Ara...' : 'Search...'}
-              className={`${inputClass} flex-1`}
+              className={`${inputClass} flex-1 min-w-[160px]`}
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
             {isGlobal && (
-              <select className={inputClass} value={filterCity} onChange={e => setFilterCity(e.target.value)}>
+              <select className={inputClass} value={filterCity} onChange={e => { setFilterCity(e.target.value); setFilterLocation('') }}>
                 <option value="">{language === 'TR' ? 'Tüm Şehirler' : 'All Cities'}</option>
                 {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
+            {availableLocations.length > 1 && (
+              <select className={inputClass} value={filterLocation} onChange={e => setFilterLocation(e.target.value)}>
+                <option value="">{language === 'TR' ? 'Tüm Konumlar' : 'All Locations'}</option>
+                {availableLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
               </select>
             )}
             <select className={inputClass} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>

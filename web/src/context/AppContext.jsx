@@ -113,6 +113,16 @@ export function AppProvider({ children }) {
   }
 
   const registerUser = async (formData) => {
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', formData.email)
+      .maybeSingle()
+
+    if (existing) {
+      return { success: false, error: 'err_email_exists' }
+    }
+
     const { data, error } = await supabase
       .from('users')
       .insert([{
@@ -134,6 +144,31 @@ export function AppProvider({ children }) {
     if (error) {
       return { success: false, error: error.message }
     }
+    return { success: true }
+  }
+
+  const findUserForReset = async (name, surname, email) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, name, surname, email')
+      .eq('email', email)
+      .ilike('name', name.trim())
+      .ilike('surname', surname.trim())
+      .maybeSingle()
+
+    if (error || !data) {
+      return { success: false, error: 'err_user_not_registered' }
+    }
+    return { success: true, data }
+  }
+
+  const resetPassword = async (userId, newPassword) => {
+    const { error } = await supabase
+      .from('users')
+      .update({ password_hash: newPassword })
+      .eq('id', userId)
+
+    if (error) return { success: false, error: error.message }
     return { success: true }
   }
 
@@ -280,7 +315,7 @@ export function AppProvider({ children }) {
     cities, labs, appointments, admins, notifications, timeSlots, users,
     loading,
     loadAllData,
-    loginUser, loginAdmin, registerUser, logout,
+    loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, logout,
     toggleLanguage, toggleDarkMode,
     submitAppointment, approveAppointment, cancelAppointment, submitCancellationRequest,
     approveUser, revokeUser,
