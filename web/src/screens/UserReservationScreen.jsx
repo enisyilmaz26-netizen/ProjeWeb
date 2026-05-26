@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t } from '../lib/languages'
+import { t, formatDate } from '../lib/languages'
 
 function getMaxCapacity(lab) {
   if (!lab) return 1
@@ -151,7 +151,7 @@ export default function UserReservationScreen() {
         </button>
         {step >= 2 && <><span>›</span><button onClick={() => resetToStep(2)} className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{selectedCity?.name}</button></>}
         {step >= 3 && <><span>›</span><button onClick={() => resetToStep(3)} className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{selectedLab?.name}</button></>}
-        {step >= 4 && <><span>›</span><button onClick={() => resetToStep(4)} className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{selectedDate}</button></>}
+        {step >= 4 && <><span>›</span><button onClick={() => resetToStep(4)} className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{formatDate(selectedDate)}</button></>}
         {step >= 5 && <><span>›</span><span className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{selectedSlot?.time_range}</span></>}
       </div>
 
@@ -323,7 +323,7 @@ export default function UserReservationScreen() {
               <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Stüdyo' : 'Studio'}:</span>
               <span className="text-gray-800 dark:text-gray-200 font-medium">{selectedLab?.name}</span>
               <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Tarih' : 'Date'}:</span>
-              <span className="text-gray-800 dark:text-gray-200 font-medium">{selectedDate}</span>
+              <span className="text-gray-800 dark:text-gray-200 font-medium">{formatDate(selectedDate)}</span>
               <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Saat' : 'Time'}:</span>
               <span className="text-gray-800 dark:text-gray-200 font-medium">{selectedSlot?.time_range}</span>
             </div>
@@ -393,8 +393,10 @@ function LabCard({ lab, onClick, language, getMaxCapacity }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
+          {lab.description && <p className="text-xs text-gray-500 dark:text-gray-400">{lab.description}</p>}
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {language === 'TR' ? 'Kapasite' : 'Capacity'}: {getMaxCapacity(lab)}
+            {lab.branches ? ` · ${lab.branches}` : ''}
           </p>
         </div>
         <span className="text-gray-400 dark:text-gray-500 text-sm">›</span>

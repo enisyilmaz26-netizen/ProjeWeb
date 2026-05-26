@@ -56,3 +56,27 @@ export function t(key, lang = 'TR') {
   if (!entry) return key
   return entry[lang] || entry['TR'] || key
 }
+
+// Convert YYYY-MM-DD → DD.MM.YYYY
+export function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const parts = String(dateStr).split('-')
+  if (parts.length !== 3) return dateStr
+  return `${parts[2]}.${parts[1]}.${parts[0]}`
+}
+
+// Format epoch ms timestamp → DD.MM.YYYY HH:MM
+export function formatTimestamp(ts) {
+  if (!ts) return ''
+  try {
+    const d = new Date(Number(ts))
+    const day = String(d.getDate()).padStart(2, '0')
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const year = d.getFullYear()
+    const hours = String(d.getHours()).padStart(2, '0')
+    const mins = String(d.getMinutes()).padStart(2, '0')
+    return `${day}.${month}.${year} ${hours}:${mins}`
+  } catch {
+    return ts
+  }
+}

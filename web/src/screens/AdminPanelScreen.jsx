@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t } from '../lib/languages'
+import { t, formatDate } from '../lib/languages'
 
 const STATUS_COLORS = {
   PENDING: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
@@ -319,13 +319,20 @@ export default function AdminPanelScreen() {
                   <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 dark:text-gray-400 mb-3">
                     <span><span className="font-medium">{language === 'TR' ? 'Stüdyo' : 'Studio'}:</span> {appt.lab_name}</span>
                     <span><span className="font-medium">{language === 'TR' ? 'Şehir' : 'City'}:</span> {appt.city_name}</span>
-                    <span><span className="font-medium">{language === 'TR' ? 'Tarih' : 'Date'}:</span> {appt.date}</span>
+                    <span><span className="font-medium">{language === 'TR' ? 'Tarih' : 'Date'}:</span> {formatDate(appt.date)}</span>
                     <span><span className="font-medium">{language === 'TR' ? 'Saat' : 'Time'}:</span> {appt.time_slot}</span>
                     {appt.user_branch && <span><span className="font-medium">{language === 'TR' ? 'Branş' : 'Branch'}:</span> {appt.user_branch}</span>}
                     {appt.user_phone && <span><span className="font-medium">{language === 'TR' ? 'Tel' : 'Phone'}:</span> {appt.user_phone}</span>}
                     {appt.user_work_location && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Kurum' : 'Institution'}:</span> {appt.user_work_location}</span>}
                     {appt.note && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Not' : 'Note'}:</span> {appt.note}</span>}
                   </div>
+                  {appt.automations_applied && (
+                    <div className="mb-2">
+                      <span className="text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                        ⚡ {language === 'TR' ? 'Otomasyon Uygulandı' : 'Automation Applied'}
+                      </span>
+                    </div>
+                  )}
 
                   {(appt.status === 'PENDING' || appt.status === 'CANCELLATION_REQUESTED') && (
                     <div className="flex gap-2">

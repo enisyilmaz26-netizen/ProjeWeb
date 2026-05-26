@@ -64,6 +64,11 @@ export default function AuthScreen() {
       setRegError(language === 'TR' ? 'KVKK onayı zorunludur.' : 'KVKK consent is required.')
       return
     }
+    const phoneDigits = regForm.phone.replace(/\D/g, '')
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      setRegError(language === 'TR' ? 'Geçerli bir telefon numarası giriniz (10-11 rakam).' : 'Please enter a valid phone number (10-11 digits).')
+      return
+    }
     setRegLoading(true)
     try {
       const result = await registerUser({
@@ -125,7 +130,7 @@ export default function AuthScreen() {
     }
     setForgotLoading(true)
     try {
-      const result = await resetPassword(forgotFoundUser.id, forgotNewPassword)
+      const result = await resetPassword(forgotFoundUser.id, forgotFoundUser.email, forgotNewPassword)
       if (result.success) {
         setForgotSuccess(true)
       } else {

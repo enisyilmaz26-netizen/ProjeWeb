@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t } from '../lib/languages'
+import { t, formatDate } from '../lib/languages'
 
 const STATUS_COLORS = {
   PENDING: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
@@ -121,7 +121,7 @@ export default function MyProfileScreen() {
               </div>
 
               <div className="flex gap-4 text-xs text-gray-600 dark:text-gray-400 mb-2">
-                <span>📅 {appt.date}</span>
+                <span>📅 {formatDate(appt.date)}</span>
                 <span>🕐 {appt.time_slot}</span>
               </div>
 

@@ -1,38 +1,31 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useApp } from '../context/AppContext'
-import { t } from '../lib/languages'
-
-function formatTimestamp(ts) {
-  if (!ts) return ''
-  try {
-    const d = new Date(ts)
-    const day = String(d.getDate()).padStart(2, '0')
-    const month = String(d.getMonth() + 1).padStart(2, '0')
-    const hours = String(d.getHours()).padStart(2, '0')
-    const mins = String(d.getMinutes()).padStart(2, '0')
-    return `${day}.${month} ${hours}:${mins}`
-  } catch {
-    return ts
-  }
-}
+import { t, formatTimestamp } from '../lib/languages'
 
 export default function NotificationCenterScreen() {
-  const { notifications, loggedInAdmin, loggedInUser, clearNotifications, language } = useApp()
+  const { notifications, loggedInAdmin, clearNotifications, markNotificationsRead, language } = useApp()
+
+  const cityName = (loggedInAdmin?.role === 'CITY' && loggedInAdmin?.city_name) ? loggedInAdmin.city_name : null
 
   let visibleNotifications = notifications
-  if (loggedInAdmin && loggedInAdmin.role === 'CITY' && loggedInAdmin.city_id) {
-    // Find city name
-    const cityFilter = loggedInAdmin.city_name || ''
-    if (cityFilter) {
-      visibleNotifications = notifications.filter(n =>
-        (n.title || '').includes(cityFilter) || (n.message || '').includes(cityFilter)
-      )
-    }
+  if (cityName) {
+    visibleNotifications = notifications.filter(n =>
+      (n.title || '').includes(cityName) || (n.message || '').includes(cityName)
+    )
   }
+
+  // Mark visible unread notifications as read when screen opens
+  useEffect(() => {
+    const unreadIds = visibleNotifications.filter(n => !n.is_read).map(n => n.id)
+    if (unreadIds.length > 0) {
+      markNotificationsRead(unreadIds)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleClearAll = async () => {
     if (!window.confirm(language === 'TR' ? 'Tüm bildirimler silinsin mi?' : 'Clear all notifications?')) return
-    await clearNotifications()
+    await clearNotifications(cityName)
   }
 
   const getTypeIcon = (type) => {
@@ -46,7 +39,6 @@ export default function NotificationCenterScreen() {
 
   return (
     <div className="px-4 py-4">
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">{t('notifications_header', language)}</h2>
         {visibleNotifications.length > 0 && (
@@ -75,7 +67,7 @@ export default function NotificationCenterScreen() {
                   : notif.type === 'REMINDER'
                   ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-500'
                   : 'bg-white dark:bg-[#1D1B20] border-[#6750A4] dark:border-[#D0BCFF]'
-              } ${!notif.is_read ? 'ring-1 ring-[#6750A4]/30 dark:ring-[#D0BCFF]/20' : ''}`}
+              }`}
             >
               <div className="flex items-start gap-3">
                 <span className="text-xl flex-shrink-0 mt-0.5">{getTypeIcon(notif.type)}</span>
@@ -89,11 +81,6 @@ export default function NotificationCenterScreen() {
                   <p className={`text-xs mt-1 ${notif.type === 'ALERT' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
                     {notif.message}
                   </p>
-                  {!notif.is_read && (
-                    <span className="inline-block mt-1.5 text-[10px] bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 text-[#6750A4] dark:text-[#D0BCFF] rounded-full px-2 py-0.5">
-                      {language === 'TR' ? 'Yeni' : 'New'}
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
