@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
+import AppLogo from '../components/AppLogo'
 
 const NAV_LINKS = [
   { href: '#proje', label: { TR: 'Proje', EN: 'Project' } },
@@ -129,7 +130,7 @@ export default function LandingPage({ onLoginClick }) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
           {/* Logo */}
           <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2.5">
-            <ProjectLogo size={36} />
+            <AppLogo size={36} />
             <div className="leading-tight hidden sm:block">
               <p className={`font-bold text-sm ${scrolled ? 'text-gray-900 dark:text-white' : 'text-white'}`}>ÖÖL Rezervasyon</p>
               <p className={`text-[10px] ${scrolled ? 'text-gray-500 dark:text-gray-400' : 'text-white/70'}`}>MEB ÖGEDEP</p>
@@ -399,7 +400,7 @@ export default function LandingPage({ onLoginClick }) {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-3">
-              <ProjectLogo size={40} />
+              <AppLogo size={40} />
               <div>
                 <p className="font-bold text-sm text-white">Öğretmen Öğrenme Laboratuvarları</p>
                 <p className="text-xs text-gray-400">MEB ÖGEDEP Dijital Ekosistemi Projesi</p>
@@ -425,30 +426,5 @@ export default function LandingPage({ onLoginClick }) {
         </div>
       </footer>
     </div>
-  )
-}
-
-// ── Proje Logo SVG ──
-function ProjectLogo({ size = 40 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Background */}
-      <rect width="40" height="40" rx="10" fill="#6750A4"/>
-      {/* Screen shape */}
-      <rect x="7" y="10" width="22" height="14" rx="2" fill="white" fillOpacity="0.15"/>
-      <rect x="8" y="11" width="20" height="12" rx="1.5" fill="white" fillOpacity="0.9"/>
-      {/* Record dot */}
-      <circle cx="13" cy="17" r="3" fill="#6750A4"/>
-      <circle cx="13" cy="17" r="1.5" fill="#D0BCFF"/>
-      {/* Sound waves */}
-      <path d="M19 14.5C20.5 15.5 20.5 18.5 19 19.5" stroke="#6750A4" strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M21.5 13C23.5 14.5 23.5 19.5 21.5 21" stroke="#6750A4" strokeWidth="1.2" strokeLinecap="round"/>
-      {/* Stand */}
-      <rect x="16" y="24" width="1.5" height="3" fill="white" fillOpacity="0.5"/>
-      <rect x="13" y="27" width="7" height="1.5" rx="0.75" fill="white" fillOpacity="0.5"/>
-      {/* Recording indicator */}
-      <circle cx="30" cy="12" r="4" fill="#E53E3E"/>
-      <circle cx="30" cy="12" r="2" fill="white"/>
-    </svg>
   )
 }

@@ -60,7 +60,6 @@ export function AppProvider({ children }) {
   const [cities, setCities] = useState([])
   const [labs, setLabs] = useState([])
   const [appointments, setAppointments] = useState([])
-  const [admins, setAdmins] = useState([])
   const [notifications, setNotifications] = useState([])
   const [timeSlots, setTimeSlots] = useState([])
   const [users, setUsers] = useState([])
@@ -92,7 +91,6 @@ export function AppProvider({ children }) {
         { data: citiesData },
         { data: labsData },
         { data: appointmentsData },
-        { data: adminsData },
         { data: notificationsData },
         { data: timeSlotsData },
         { data: usersData },
@@ -100,7 +98,6 @@ export function AppProvider({ children }) {
         supabase.from('cities').select('*').order('name'),
         supabase.from('laboratories').select('*').order('name'),
         supabase.from('appointments').select('*').order('created_timestamp', { ascending: false }),
-        supabase.from('admins').select('*'),
         supabase.from('notifications').select('*').order('timestamp', { ascending: false }),
         supabase.from('city_time_slots').select('*').order('id'),
         supabase.from('users').select('*').order('name'),
@@ -108,7 +105,6 @@ export function AppProvider({ children }) {
       if (citiesData) setCities(citiesData)
       if (labsData) setLabs(labsData)
       if (appointmentsData) setAppointments(appointmentsData)
-      if (adminsData) setAdmins(adminsData)
       if (notificationsData) setNotifications(notificationsData)
       if (timeSlotsData) setTimeSlots(timeSlotsData)
       if (usersData) setUsers(usersData)
@@ -459,7 +455,7 @@ export function AppProvider({ children }) {
   const value = {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
-    cities, labs, appointments, admins, notifications, timeSlots, users,
+    cities, labs, appointments, notifications, timeSlots, users,
     loading,
     loadAllData,
     loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
