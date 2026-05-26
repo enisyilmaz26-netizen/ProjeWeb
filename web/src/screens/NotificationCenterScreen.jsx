@@ -60,7 +60,7 @@ export default function NotificationCenterScreen() {
       </div>
 
       {visibleNotifications.length === 0 ? (
-        <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-12 text-center">
+        <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-12 text-center">
           <div className="text-4xl mb-3">🔔</div>
           <p className="text-gray-500 dark:text-gray-400 text-sm">{t('notifications_empty', language)}</p>
         </div>
@@ -74,7 +74,7 @@ export default function NotificationCenterScreen() {
                   ? 'bg-red-50 dark:bg-red-900/10 border-red-500'
                   : notif.type === 'REMINDER'
                   ? 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-500'
-                  : 'bg-white dark:bg-[#252035] border-[#6750A4] dark:border-[#D0BCFF]'
+                  : 'bg-white dark:bg-[#0D1E3D] border-[#1565C0] dark:border-[#7DD4FC]'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -99,7 +99,7 @@ export default function NotificationCenterScreen() {
       {/* Clear confirm modal */}
       {showClearConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
               {language === 'TR' ? 'Bildirimleri Temizle' : 'Clear Notifications'}
             </h3>

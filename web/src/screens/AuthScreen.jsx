@@ -157,13 +157,13 @@ export default function AuthScreen({ onBack }) {
     setForgotSuccess(false)
   }
 
-  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2C2A31] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6750A4] dark:focus:ring-[#D0BCFF] text-sm placeholder-gray-400 dark:placeholder-gray-500"
+  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC] text-sm placeholder-gray-400 dark:placeholder-gray-500"
   const labelClass = "block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
 
   return (
-    <div className="min-h-screen bg-[#FEF7FF] dark:bg-[#141218] flex flex-col">
+    <div className="min-h-screen bg-[#EFF8FF] dark:bg-[#060E26] flex flex-col">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#6750A4] dark:bg-[#1E1635] shadow">
+      <div className="flex items-center justify-between px-4 py-3 bg-[#1565C0] dark:bg-[#061A3A] shadow">
         {onBack ? (
           <button onClick={onBack} className="text-white/80 hover:text-white flex items-center gap-1 text-xs font-medium transition">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -172,7 +172,7 @@ export default function AuthScreen({ onBack }) {
         ) : <div />}
         <div className="text-center">
           <h1 className="text-white font-bold text-sm leading-tight">{t('app_title', language)}</h1>
-          <p className="text-purple-200 dark:text-[#D0BCFF] text-xs">{t('app_subtitle', language)}</p>
+          <p className="text-blue-200 dark:text-[#7DD4FC] text-xs">{t('app_subtitle', language)}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -207,15 +207,15 @@ export default function AuthScreen({ onBack }) {
 
           {/* Tab switcher */}
           {activeTab !== 'forgot' && (
-            <div className="flex bg-gray-100 dark:bg-[#2C2A31] rounded-xl p-1 mb-6">
+            <div className="flex bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-6">
               <button
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'login' ? 'bg-white dark:bg-[#6750A4] text-[#6750A4] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'login' ? 'bg-white dark:bg-[#1565C0] text-[#1565C0] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
                 onClick={() => setActiveTab('login')}
               >
                 {t('btn_login', language)}
               </button>
               <button
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'register' ? 'bg-white dark:bg-[#6750A4] text-[#6750A4] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'register' ? 'bg-white dark:bg-[#1565C0] text-[#1565C0] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
                 onClick={() => setActiveTab('register')}
               >
                 {t('btn_register', language)}
@@ -225,18 +225,18 @@ export default function AuthScreen({ onBack }) {
 
           {/* Login Form */}
           {activeTab === 'login' && (
-            <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-6">
+            <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow p-6">
               {/* Login type selector */}
               <div className="flex gap-2 mb-4">
                 <button
                   onClick={() => setLoginType('user')}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${loginType === 'user' ? 'bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] border-[#6750A4] dark:border-[#D0BCFF]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}`}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${loginType === 'user' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-[#1565C0] dark:border-[#7DD4FC]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}`}
                 >
                   {language === 'TR' ? 'Öğretmen Girişi' : 'Teacher Login'}
                 </button>
                 <button
                   onClick={() => setLoginType('admin')}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${loginType === 'admin' ? 'bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] border-[#6750A4] dark:border-[#D0BCFF]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}`}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${loginType === 'admin' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-[#1565C0] dark:border-[#7DD4FC]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}`}
                 >
                   {language === 'TR' ? 'Yönetici Girişi' : 'Admin Login'}
                 </button>
@@ -273,7 +273,7 @@ export default function AuthScreen({ onBack }) {
                 <button
                   type="submit"
                   disabled={loginLoading}
-                  className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
+                  className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                 >
                   {loginLoading ? (language === 'TR' ? 'Giriş yapılıyor...' : 'Signing in...') : t('btn_login', language)}
                 </button>
@@ -282,7 +282,7 @@ export default function AuthScreen({ onBack }) {
                 <div className="mt-3 text-center">
                   <button
                     onClick={() => setActiveTab('forgot')}
-                    className="text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline"
+                    className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline"
                   >
                     {t('forgot_password', language)}
                   </button>
@@ -293,7 +293,7 @@ export default function AuthScreen({ onBack }) {
 
           {/* Register Form */}
           {activeTab === 'register' && (
-            <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-6">
+            <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow p-6">
               <form onSubmit={handleRegister} className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -413,19 +413,19 @@ export default function AuthScreen({ onBack }) {
                 </div>
 
                 {/* KVKK */}
-                <div className="bg-gray-50 dark:bg-[#2C2A31] rounded-xl p-3">
+                <div className="bg-gray-50 dark:bg-[#0E1A30] rounded-xl p-3">
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={regForm.kvkk}
                       onChange={e => setRegForm(p => ({ ...p, kvkk: e.target.checked }))}
-                      className="mt-0.5 accent-[#6750A4]"
+                      className="mt-0.5 accent-[#1565C0]"
                     />
                     <span className="text-xs text-gray-700 dark:text-gray-300">
                       <button
                         type="button"
                         onClick={() => setShowKvkkModal(true)}
-                        className="text-[#6750A4] dark:text-[#D0BCFF] underline font-semibold hover:opacity-80"
+                        className="text-[#1565C0] dark:text-[#7DD4FC] underline font-semibold hover:opacity-80"
                       >
                         {language === 'TR' ? 'KVKK Aydınlatma Metni' : 'KVKK Consent Text'}
                       </button>
@@ -443,7 +443,7 @@ export default function AuthScreen({ onBack }) {
                 <button
                   type="submit"
                   disabled={regLoading}
-                  className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
+                  className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                 >
                   {regLoading ? (language === 'TR' ? 'Kaydediliyor...' : 'Registering...') : t('btn_register', language)}
                 </button>
@@ -452,7 +452,7 @@ export default function AuthScreen({ onBack }) {
           )}
           {/* Forgot Password Form */}
           {activeTab === 'forgot' && (
-            <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-6">
+            <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow p-6">
               <div className="mb-4">
                 <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">{t('forgot_password', language)}</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -470,7 +470,7 @@ export default function AuthScreen({ onBack }) {
                   </div>
                   <button
                     onClick={goBackToLogin}
-                    className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 transition"
+                    className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
                   >
                     {t('back_to_login', language)}
                   </button>
@@ -517,17 +517,17 @@ export default function AuthScreen({ onBack }) {
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
+                    className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                   >
                     {forgotLoading ? (language === 'TR' ? 'Sorgulanıyor...' : 'Looking up...') : t('forgot_verify_btn', language)}
                   </button>
-                  <button type="button" onClick={goBackToLogin} className="w-full text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline pt-1">
+                  <button type="button" onClick={goBackToLogin} className="w-full text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline pt-1">
                     ← {t('back_to_login', language)}
                   </button>
                 </form>
               ) : (
                 <form onSubmit={handleForgotReset} className="space-y-3">
-                  <div className="bg-[#6750A4]/5 dark:bg-[#D0BCFF]/5 rounded-xl px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
+                  <div className="bg-[#1565C0]/5 dark:bg-[#7DD4FC]/5 rounded-xl px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
                     {forgotFoundUser?.name} {forgotFoundUser?.surname} — {forgotFoundUser?.email}
                   </div>
                   <div>
@@ -559,11 +559,11 @@ export default function AuthScreen({ onBack }) {
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
+                    className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                   >
                     {forgotLoading ? (language === 'TR' ? 'Kaydediliyor...' : 'Saving...') : t('forgot_save_btn', language)}
                   </button>
-                  <button type="button" onClick={() => { setForgotStep(1); setForgotError('') }} className="w-full text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline pt-1">
+                  <button type="button" onClick={() => { setForgotStep(1); setForgotError('') }} className="w-full text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline pt-1">
                     ← {language === 'TR' ? 'Geri' : 'Back'}
                   </button>
                 </form>
@@ -577,7 +577,7 @@ export default function AuthScreen({ onBack }) {
       {/* KVKK Modal */}
       {showKvkkModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{maxHeight: '80vh'}}>
+          <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{maxHeight: '80vh'}}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
               <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
                 {language === 'TR' ? 'KVKK Aydınlatma Metni' : 'KVKK Information Text'}
@@ -654,7 +654,7 @@ export default function AuthScreen({ onBack }) {
                       <li>İşlenen verilerin münhasıran otomatik sistemler aracılığıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme,</li>
                       <li>Kanuna aykırı işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme.</li>
                     </ul>
-                    <p className="mt-2">Taleplerinizi <span className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">ögedep@meb.gov.tr</span> adresine iletebilirsiniz.</p>
+                    <p className="mt-2">Taleplerinizi <span className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">ögedep@meb.gov.tr</span> adresine iletebilirsiniz.</p>
                   </div>
                 </>
               ) : (
@@ -719,7 +719,7 @@ export default function AuthScreen({ onBack }) {
                       <li>To object to a result arising exclusively through automated systems,</li>
                       <li>To demand compensation if you suffer damage due to unlawful processing.</li>
                     </ul>
-                    <p className="mt-2">You can submit your requests to <span className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">ögedep@meb.gov.tr</span>.</p>
+                    <p className="mt-2">You can submit your requests to <span className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">ögedep@meb.gov.tr</span>.</p>
                   </div>
                 </>
               )}
@@ -727,7 +727,7 @@ export default function AuthScreen({ onBack }) {
             <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
               <button
                 onClick={() => { setRegForm(p => ({ ...p, kvkk: true })); setShowKvkkModal(false) }}
-                className="flex-1 py-2.5 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 transition"
+                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
               >
                 {language === 'TR' ? 'Okudum, Onaylıyorum' : 'I Read and Agree'}
               </button>
@@ -744,7 +744,7 @@ export default function AuthScreen({ onBack }) {
 
       {showRegSuccessModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
+          <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
             <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-green-600 dark:text-green-400 text-2xl">✓</span>
             </div>
@@ -758,7 +758,7 @@ export default function AuthScreen({ onBack }) {
             </p>
             <button
               onClick={() => { setShowRegSuccessModal(false); setActiveTab('login') }}
-              className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 transition"
+              className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
             >
               OK
             </button>

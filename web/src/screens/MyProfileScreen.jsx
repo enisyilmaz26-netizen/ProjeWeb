@@ -6,7 +6,7 @@ const STATUS_COLORS = {
   PENDING: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
   APPROVED: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-  CANCELLATION_REQUESTED: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+  CANCELLATION_REQUESTED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
   COMPLETED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
 }
 
@@ -150,7 +150,7 @@ export default function MyProfileScreen() {
   if (!loggedInUser) return null
 
   const initials = `${(loggedInUser.name || '?').charAt(0)}${(loggedInUser.surname || '').charAt(0)}`.toUpperCase()
-  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2C2A31] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6750A4] dark:focus:ring-[#D0BCFF] text-sm"
+  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC] text-sm"
   const labelClass = "block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"
 
   return (
@@ -163,10 +163,10 @@ export default function MyProfileScreen() {
       )}
 
       {/* Profile Card */}
-      <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-5 mb-5">
+      <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-5 mb-5">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#6750A4] dark:bg-[#D0BCFF] flex items-center justify-center flex-shrink-0">
-            <span className="text-white dark:text-[#141218] text-xl font-bold">{initials}</span>
+          <div className="w-16 h-16 rounded-2xl bg-[#1565C0] dark:bg-[#7DD4FC] flex items-center justify-center flex-shrink-0">
+            <span className="text-white dark:text-[#060E26] text-xl font-bold">{initials}</span>
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">{loggedInUser.name} {loggedInUser.surname}</h2>
@@ -175,7 +175,7 @@ export default function MyProfileScreen() {
           {!editMode && (
             <button
               onClick={startEdit}
-              className="flex-shrink-0 text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition"
+              className="flex-shrink-0 text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
             >
               ✏️ {language === 'TR' ? 'Düzenle' : 'Edit'}
             </button>
@@ -216,7 +216,7 @@ export default function MyProfileScreen() {
               <p className="text-red-600 dark:text-red-400 text-xs">{editError}</p>
             )}
             <div className="flex gap-2 pt-1">
-              <button type="submit" disabled={editLoading} className="flex-1 py-2.5 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm disabled:opacity-60 hover:opacity-90 transition">
+              <button type="submit" disabled={editLoading} className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm disabled:opacity-60 hover:opacity-90 transition">
                 {editLoading ? '...' : (language === 'TR' ? 'Kaydet' : 'Save')}
               </button>
               <button type="button" onClick={() => setEditMode(false)} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition">
@@ -241,7 +241,7 @@ export default function MyProfileScreen() {
       </div>
 
       {/* Password Change */}
-      <div className="bg-white dark:bg-[#252035] rounded-2xl shadow mb-5">
+      <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow mb-5">
         <button
           onClick={() => { setShowPwChange(p => !p); setPwError(''); setPwForm({ current: '', newPw: '', confirm: '' }) }}
           className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -264,7 +264,7 @@ export default function MyProfileScreen() {
               <input type="password" className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} required />
             </div>
             {pwError && <p className="text-red-600 dark:text-red-400 text-xs">{pwError}</p>}
-            <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60">
+            <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60">
               {pwLoading ? '...' : (language === 'TR' ? 'Şifreyi Güncelle' : 'Update Password')}
             </button>
           </form>
@@ -279,7 +279,7 @@ export default function MyProfileScreen() {
       </div>
 
       {upcomingAppointments.length === 0 ? (
-        <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">
+        <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">
           {language === 'TR' ? 'Yaklaşan randevu yok.' : 'No upcoming appointments.'}
         </div>
       ) : (
@@ -319,7 +319,7 @@ export default function MyProfileScreen() {
       {/* Cancel Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">
               {language === 'TR' ? 'İptal Talebi' : 'Cancellation Request'}
             </h3>
@@ -327,7 +327,7 @@ export default function MyProfileScreen() {
               {language === 'TR' ? 'İptal sebebinizi belirtin (isteğe bağlı).' : 'State your cancellation reason (optional).'}
             </p>
             <textarea
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2C2A31] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6750A4] text-sm resize-none mb-4"
+              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] text-sm resize-none mb-4"
               rows={4}
               placeholder={language === 'TR' ? 'İptal sebebinizi yazın...' : 'Write your reason...'}
               value={cancelReason}
@@ -357,7 +357,7 @@ export default function MyProfileScreen() {
 
 function AppointmentCard({ appt, language, canCancel, onCancelClick }) {
   return (
-    <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
+    <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
         <div>
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{appt.lab_name}</p>
@@ -372,7 +372,7 @@ function AppointmentCard({ appt, language, canCancel, onCancelClick }) {
         <span>🕐 {appt.time_slot}</span>
       </div>
       {appt.note && appt.status === 'CANCELLATION_REQUESTED' && (
-        <p className="text-xs text-purple-600 dark:text-purple-400 mb-2">
+        <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
           {language === 'TR' ? 'İptal notu' : 'Cancel reason'}: {appt.note}
         </p>
       )}
@@ -390,7 +390,7 @@ function AppointmentCard({ appt, language, canCancel, onCancelClick }) {
 
 function ProfileField({ label, value, valueClass }) {
   return (
-    <div className="bg-gray-50 dark:bg-[#2C2A31] rounded-xl px-3 py-2">
+    <div className="bg-gray-50 dark:bg-[#0E1A30] rounded-xl px-3 py-2">
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{label}</p>
       <p className={`text-sm font-medium text-gray-800 dark:text-gray-200 ${valueClass || ''}`}>{value || '—'}</p>
     </div>

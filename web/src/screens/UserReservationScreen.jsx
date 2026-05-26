@@ -155,7 +155,7 @@ export default function UserReservationScreen() {
     else if (s <= 4) { setSelectedSlot(null); setStep(4) }
   }
 
-  const cardClass = "bg-white dark:bg-[#252035] rounded-2xl shadow p-4 mb-4"
+  const cardClass = "bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4"
 
   return (
     <div className="px-4 py-4">
@@ -169,13 +169,13 @@ export default function UserReservationScreen() {
 
       {/* Breadcrumb / Progress */}
       <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-4 flex-wrap">
-        <button onClick={() => resetToStep(1)} className={`font-medium ${step >= 1 ? 'text-[#6750A4] dark:text-[#D0BCFF]' : ''}`}>
+        <button onClick={() => resetToStep(1)} className={`font-medium ${step >= 1 ? 'text-[#1565C0] dark:text-[#7DD4FC]' : ''}`}>
           {t('select_city', language)}
         </button>
-        {step >= 2 && <><span>›</span><button onClick={() => resetToStep(2)} className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{selectedCity?.name}</button></>}
-        {step >= 3 && <><span>›</span><button onClick={() => resetToStep(3)} className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{selectedLab?.name}</button></>}
-        {step >= 4 && <><span>›</span><button onClick={() => resetToStep(4)} className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{formatDate(selectedDate)}</button></>}
-        {step >= 5 && <><span>›</span><span className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{selectedSlot?.time_range}</span></>}
+        {step >= 2 && <><span>›</span><button onClick={() => resetToStep(2)} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedCity?.name}</button></>}
+        {step >= 3 && <><span>›</span><button onClick={() => resetToStep(3)} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedLab?.name}</button></>}
+        {step >= 4 && <><span>›</span><button onClick={() => resetToStep(4)} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{formatDate(selectedDate)}</button></>}
+        {step >= 5 && <><span>›</span><span className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedSlot?.time_range}</span></>}
       </div>
 
       {/* Step 1: City Selection */}
@@ -194,11 +194,11 @@ export default function UserReservationScreen() {
                 <button
                   key={city.id}
                   onClick={() => handleCitySelect(city)}
-                  className="bg-white dark:bg-[#252035] rounded-2xl shadow p-5 text-left hover:ring-2 hover:ring-[#6750A4] dark:hover:ring-[#D0BCFF] transition active:scale-[0.98]"
+                  className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-5 text-left hover:ring-2 hover:ring-[#1565C0] dark:hover:ring-[#7DD4FC] transition active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center">
-                      <span className="text-[#6750A4] dark:text-[#D0BCFF] font-bold text-lg">{city.name?.charAt(0)}</span>
+                    <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center">
+                      <span className="text-[#1565C0] dark:text-[#7DD4FC] font-bold text-lg">{city.name?.charAt(0)}</span>
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{city.name}</p>
@@ -237,8 +237,8 @@ export default function UserReservationScreen() {
                     {locations.map(loc => (
                       <div key={loc}>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-bold text-[#6750A4] dark:text-[#D0BCFF] uppercase tracking-wide">📍 {loc}</span>
-                          <div className="flex-1 h-px bg-[#6750A4]/20 dark:bg-[#D0BCFF]/20" />
+                          <span className="text-xs font-bold text-[#1565C0] dark:text-[#7DD4FC] uppercase tracking-wide">📍 {loc}</span>
+                          <div className="flex-1 h-px bg-[#1565C0]/20 dark:bg-[#7DD4FC]/20" />
                         </div>
                         <div className="grid grid-cols-1 gap-3">
                           {cityLabs.filter(l => l.location === loc).map(lab => (
@@ -255,7 +255,7 @@ export default function UserReservationScreen() {
               })()}
             </div>
           )}
-          <button onClick={() => resetToStep(1)} className="mt-3 text-sm text-[#6750A4] dark:text-[#D0BCFF] font-medium flex items-center gap-1">
+          <button onClick={() => resetToStep(1)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
             ← {language === 'TR' ? 'Şehir Seçimine Dön' : 'Back to City Selection'}
           </button>
         </div>
@@ -267,8 +267,8 @@ export default function UserReservationScreen() {
           <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{t('select_date', language)}</h2>
           <div className={cardClass}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-[#6750A4] dark:text-[#D0BCFF] text-lg">🎙</span>
+              <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">🎙</span>
               </div>
               <div>
                 <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{selectedLab?.name}</p>
@@ -282,7 +282,7 @@ export default function UserReservationScreen() {
               max={getMaxDate()}
               value={selectedDate}
               onChange={e => handleDateSelect(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2C2A31] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6750A4] dark:focus:ring-[#D0BCFF] text-sm"
+              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC] text-sm"
             />
             {dateError && (
               <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{dateError}</p>
@@ -291,7 +291,7 @@ export default function UserReservationScreen() {
               {language === 'TR' ? 'Hafta sonları ve 60 günden ileri tarihler seçilemez.' : 'Weekends and dates beyond 60 days are not available.'}
             </p>
           </div>
-          <button onClick={() => resetToStep(2)} className="mt-1 text-sm text-[#6750A4] dark:text-[#D0BCFF] font-medium flex items-center gap-1">
+          <button onClick={() => resetToStep(2)} className="mt-1 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
             ← {language === 'TR' ? 'Stüdyo Seçimine Dön' : 'Back to Studio Selection'}
           </button>
         </div>
@@ -301,8 +301,8 @@ export default function UserReservationScreen() {
       {step === 4 && (
         <div>
           <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{t('select_time_slot', language)}</h2>
-          <div className="bg-[#6750A4]/5 dark:bg-[#D0BCFF]/5 rounded-xl px-3 py-2 mb-3 text-xs text-gray-600 dark:text-gray-400 flex gap-2 flex-wrap">
-            <span className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">{selectedLab?.name}</span>
+          <div className="bg-[#1565C0]/5 dark:bg-[#7DD4FC]/5 rounded-xl px-3 py-2 mb-3 text-xs text-gray-600 dark:text-gray-400 flex gap-2 flex-wrap">
+            <span className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedLab?.name}</span>
             <span>•</span>
             <span>{selectedDate}</span>
             <span>•</span>
@@ -326,7 +326,7 @@ export default function UserReservationScreen() {
                     className={`rounded-2xl p-4 text-left border-2 transition active:scale-[0.98] ${
                       avail.full
                         ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed'
-                        : 'bg-white dark:bg-[#252035] border-transparent hover:border-[#6750A4] dark:hover:border-[#D0BCFF] shadow'
+                        : 'bg-white dark:bg-[#0D1E3D] border-transparent hover:border-[#1565C0] dark:hover:border-[#7DD4FC] shadow'
                     }`}
                   >
                     <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{normalizeSlot(slot.time_range)}</p>
@@ -342,7 +342,7 @@ export default function UserReservationScreen() {
               })}
             </div>
           )}
-          <button onClick={() => resetToStep(3)} className="mt-3 text-sm text-[#6750A4] dark:text-[#D0BCFF] font-medium flex items-center gap-1">
+          <button onClick={() => resetToStep(3)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
             ← {language === 'TR' ? 'Tarih Seçimine Dön' : 'Back to Date Selection'}
           </button>
         </div>
@@ -354,7 +354,7 @@ export default function UserReservationScreen() {
           <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{t('personal_details_header', language)}</h2>
 
           {/* Summary card */}
-          <div className="bg-[#6750A4]/8 dark:bg-[#D0BCFF]/8 border border-[#6750A4]/20 dark:border-[#D0BCFF]/20 rounded-xl px-4 py-3 mb-4">
+          <div className="bg-[#1565C0]/8 dark:bg-[#7DD4FC]/8 border border-[#1565C0]/20 dark:border-[#7DD4FC]/20 rounded-xl px-4 py-3 mb-4">
             <div className="grid grid-cols-2 gap-1 text-xs">
               <span className="text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Şehir' : 'City'}:</span>
               <span className="text-gray-800 dark:text-gray-200 font-medium">{selectedCity?.name}</span>
@@ -368,7 +368,7 @@ export default function UserReservationScreen() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 space-y-3">
+            <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <InfoField label={t('input_name', language)} value={loggedInUser?.name} />
                 <InfoField label={t('input_surname', language)} value={loggedInUser?.surname} />
@@ -386,7 +386,7 @@ export default function UserReservationScreen() {
               <div>
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('input_note', language)}</label>
                 <textarea
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2C2A31] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6750A4] dark:focus:ring-[#D0BCFF] text-sm resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC] text-sm resize-none"
                   rows={3}
                   value={note}
                   onChange={e => setNote(e.target.value)}
@@ -404,13 +404,13 @@ export default function UserReservationScreen() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60 shadow"
+              className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60 shadow"
             >
               {submitting ? (language === 'TR' ? 'Gönderiliyor...' : 'Submitting...') : t('submit_button', language)}
             </button>
           </form>
 
-          <button onClick={() => resetToStep(4)} className="mt-3 text-sm text-[#6750A4] dark:text-[#D0BCFF] font-medium flex items-center gap-1">
+          <button onClick={() => resetToStep(4)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
             ← {language === 'TR' ? 'Saat Seçimine Dön' : 'Back to Time Selection'}
           </button>
         </div>
@@ -423,11 +423,11 @@ function LabCard({ lab, onClick, language, getMaxCapacity }) {
   return (
     <button
       onClick={onClick}
-      className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 text-left hover:ring-2 hover:ring-[#6750A4] dark:hover:ring-[#D0BCFF] transition active:scale-[0.98] w-full"
+      className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 text-left hover:ring-2 hover:ring-[#1565C0] dark:hover:ring-[#7DD4FC] transition active:scale-[0.98] w-full"
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
-          <span className="text-[#6750A4] dark:text-[#D0BCFF] text-lg">🎙</span>
+        <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
+          <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">🎙</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
@@ -447,7 +447,7 @@ function InfoField({ label, value }) {
   return (
     <div>
       <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</label>
-      <div className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#2C2A31] text-gray-800 dark:text-gray-200 text-sm min-h-[38px] flex items-center">
+      <div className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#0E1A30] text-gray-800 dark:text-gray-200 text-sm min-h-[38px] flex items-center">
         {value || '—'}
       </div>
     </div>

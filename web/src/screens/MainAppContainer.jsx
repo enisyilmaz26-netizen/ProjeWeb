@@ -29,9 +29,9 @@ export default function MainAppContainer() {
   const tabs = isAdmin ? adminTabs : userTabs
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FEF7FF] dark:bg-[#141218]">
+    <div className="min-h-screen flex flex-col bg-[#EFF8FF] dark:bg-[#060E26]">
       {/* Top Navigation Bar */}
-      <header className="bg-[#6750A4] dark:bg-[#1E1635] shadow sticky top-0 z-40">
+      <header className="bg-[#1565C0] dark:bg-[#061A3A] shadow sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
           {/* Left: user info */}
           <div className="flex items-center gap-2 min-w-0">
@@ -46,7 +46,7 @@ export default function MainAppContainer() {
           {/* Center: title */}
           <div className="text-center flex-1 min-w-0">
             <h1 className="text-white font-bold text-sm leading-tight truncate">{t('app_title', language)}</h1>
-            <p className="text-purple-200 dark:text-[#D0BCFF] text-xs truncate hidden sm:block">{t('app_subtitle', language)}</p>
+            <p className="text-blue-200 dark:text-[#7DD4FC] text-xs truncate hidden sm:block">{t('app_subtitle', language)}</p>
           </div>
 
           {/* Right: controls */}
@@ -99,8 +99,8 @@ export default function MainAppContainer() {
 
       {/* Loading indicator */}
       {loading && (
-        <div className="h-0.5 bg-[#6750A4]/20 dark:bg-[#D0BCFF]/20 overflow-hidden">
-          <div className="h-full bg-[#6750A4] dark:bg-[#D0BCFF] animate-pulse w-full" />
+        <div className="h-0.5 bg-[#1565C0]/20 dark:bg-[#7DD4FC]/20 overflow-hidden">
+          <div className="h-full bg-[#1565C0] dark:bg-[#7DD4FC] animate-pulse w-full" />
         </div>
       )}
 

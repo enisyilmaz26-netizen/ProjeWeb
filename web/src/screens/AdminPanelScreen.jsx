@@ -6,7 +6,7 @@ const STATUS_COLORS = {
   PENDING: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
   APPROVED: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-  CANCELLATION_REQUESTED: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+  CANCELLATION_REQUESTED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
   COMPLETED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
 }
 
@@ -426,7 +426,7 @@ export default function AdminPanelScreen() {
     setFilterDateFrom(''); setFilterDateTo(''); setVisibleCount(PAGE_SIZE)
   }
 
-  const inputClass = "px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2C2A31] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6750A4] dark:focus:ring-[#D0BCFF] text-sm"
+  const inputClass = "px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC] text-sm"
 
   const tabs = [
     { key: 'appointments', label: language === 'TR' ? 'Randevular' : 'Appointments' },
@@ -447,10 +447,10 @@ export default function AdminPanelScreen() {
       )}
 
       {/* Admin header */}
-      <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 mb-4">
+      <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center">
-            <span className="text-[#6750A4] dark:text-[#D0BCFF] text-xl">⚙️</span>
+          <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center">
+            <span className="text-[#1565C0] dark:text-[#7DD4FC] text-xl">⚙️</span>
           </div>
           <div>
             <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{loggedInAdmin?.name || loggedInAdmin?.email}</p>
@@ -465,11 +465,11 @@ export default function AdminPanelScreen() {
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={() => { setShowAdminPwChange(p => !p); setAdminPwError(''); setAdminPwForm({ current: '', newPw: '', confirm: '' }) }}
-              className="text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition"
+              className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
             >
               🔒 {t('change_password', language)}
             </button>
-            <button onClick={loadAllData} className="text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition">
+            <button onClick={loadAllData} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition">
               {language === 'TR' ? '↻ Yenile' : '↻ Refresh'}
             </button>
           </div>
@@ -494,7 +494,7 @@ export default function AdminPanelScreen() {
             </div>
             {adminPwError && <p className="text-red-500 dark:text-red-400 text-xs">{adminPwError}</p>}
             <div className="flex gap-2">
-              <button type="submit" disabled={adminPwLoading} className="py-2 px-4 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl disabled:opacity-60 hover:opacity-90 transition">
+              <button type="submit" disabled={adminPwLoading} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60 hover:opacity-90 transition">
                 {adminPwLoading ? '...' : (language === 'TR' ? 'Şifreyi Güncelle' : 'Update Password')}
               </button>
               <button type="button" onClick={() => setShowAdminPwChange(false)} className="py-2 px-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">
@@ -514,14 +514,14 @@ export default function AdminPanelScreen() {
       </div>
 
       {/* Tab Bar */}
-      <div className="flex bg-gray-100 dark:bg-[#2C2A31] rounded-xl p-1 mb-4 overflow-x-auto gap-1 scrollbar-hide">
+      <div className="flex bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-4 overflow-x-auto gap-1 scrollbar-hide">
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition whitespace-nowrap ${
               activeTab === tab.key
-                ? 'bg-white dark:bg-[#6750A4] text-[#6750A4] dark:text-white shadow'
+                ? 'bg-white dark:bg-[#1565C0] text-[#1565C0] dark:text-white shadow'
                 : 'text-gray-500 dark:text-gray-400'
             }`}
           >
@@ -571,7 +571,7 @@ export default function AdminPanelScreen() {
               <span className="text-xs text-gray-400">—</span>
               <input type="date" className={inputClass} value={filterDateTo} min={filterDateFrom || undefined} onChange={e => { setFilterDateTo(e.target.value); setVisibleCount(PAGE_SIZE) }} />
               {(search || filterCity || filterStatus || filterLocation || filterDateFrom || filterDateTo) && (
-                <button onClick={resetFilters} className="text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline">
+                <button onClick={resetFilters} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
                   {language === 'TR' ? 'Filtreleri Temizle' : 'Clear Filters'}
                 </button>
               )}
@@ -586,7 +586,7 @@ export default function AdminPanelScreen() {
             {filteredAppointments.length > 0 && (
               <button
                 onClick={() => exportToCSV(filteredAppointments, language)}
-                className="text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition"
+                className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
               >
                 ⬇ {t('export_csv', language)}
               </button>
@@ -594,14 +594,14 @@ export default function AdminPanelScreen() {
           </div>
 
           {filteredAppointments.length === 0 ? (
-            <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+            <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
               {t('no_appointments', language)}
             </div>
           ) : (
             <>
               <div className="space-y-3">
                 {filteredAppointments.slice(0, visibleCount).map(appt => (
-                  <div key={appt.id} className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
+                  <div key={appt.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">
@@ -652,7 +652,7 @@ export default function AdminPanelScreen() {
               {filteredAppointments.length > visibleCount && (
                 <button
                   onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-                  className="w-full mt-3 py-3 border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 text-[#6750A4] dark:text-[#D0BCFF] rounded-xl text-sm font-medium hover:bg-[#6750A4]/5 transition"
+                  className="w-full mt-3 py-3 border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 text-[#1565C0] dark:text-[#7DD4FC] rounded-xl text-sm font-medium hover:bg-[#1565C0]/5 transition"
                 >
                   {language === 'TR' ? `Daha Fazla Göster (${filteredAppointments.length - visibleCount} kaldı)` : `Show More (${filteredAppointments.length - visibleCount} remaining)`}
                 </button>
@@ -667,7 +667,7 @@ export default function AdminPanelScreen() {
         <div>
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Stüdyolar' : 'Studios'}</h3>
-            <button onClick={() => { setShowAddLab(true); setEditingLabId(null); setLabError('') }} className="py-2 px-4 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl hover:opacity-90 transition">
+            <button onClick={() => { setShowAddLab(true); setEditingLabId(null); setLabError('') }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
               + {language === 'TR' ? 'Stüdyo Ekle' : 'Add Studio'}
             </button>
           </div>
@@ -680,11 +680,11 @@ export default function AdminPanelScreen() {
           )}
 
           {showAddLab && (
-            <form onSubmit={handleAddLab} className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 mb-4 space-y-3">
+            <form onSubmit={handleAddLab} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4 space-y-3">
               <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Yeni Stüdyo' : 'New Studio'}</h4>
               <LabFormFields form={labForm} setForm={setLabForm} cities={cities} inputClass={inputClass} language={language} showCity={isGlobal} />
               <div className="flex gap-2">
-                <button type="submit" className="flex-1 py-2 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl">{language === 'TR' ? 'Kaydet' : 'Save'}</button>
+                <button type="submit" className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl">{language === 'TR' ? 'Kaydet' : 'Save'}</button>
                 <button type="button" onClick={() => { setShowAddLab(false); setLabError('') }} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{language === 'TR' ? 'İptal' : 'Cancel'}</button>
               </div>
             </form>
@@ -695,29 +695,29 @@ export default function AdminPanelScreen() {
               const city = cities.find(c => String(c.id) === String(lab.city_id))
               const isEditing = editingLabId === lab.id
               return (
-                <div key={lab.id} className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
+                <div key={lab.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
                   {isEditing ? (
                     <form onSubmit={handleUpdateLab} className="space-y-3">
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Stüdyoyu Düzenle' : 'Edit Studio'}</h4>
                       <LabFormFields form={editLabForm} setForm={setEditLabForm} cities={cities} inputClass={inputClass} language={language} showCity={false} />
                       <div className="flex gap-2">
-                        <button type="submit" className="flex-1 py-2 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl">{language === 'TR' ? 'Kaydet' : 'Save'}</button>
+                        <button type="submit" className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl">{language === 'TR' ? 'Kaydet' : 'Save'}</button>
                         <button type="button" onClick={() => setEditingLabId(null)} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{language === 'TR' ? 'İptal' : 'Cancel'}</button>
                       </div>
                     </form>
                   ) : (
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[#6750A4] dark:text-[#D0BCFF] text-lg">🎙</span>
+                      <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">🎙</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{city?.name}{lab.location ? ` • ${lab.location}` : ''}</p>
                         {lab.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{lab.description}</p>}
-                        <p className="text-xs text-[#6750A4] dark:text-[#D0BCFF] mt-0.5">{language === 'TR' ? 'Kapasite' : 'Capacity'}: {lab.capacity_per_slot}{lab.branches ? ` · ${lab.branches}` : ''}</p>
+                        <p className="text-xs text-[#1565C0] dark:text-[#7DD4FC] mt-0.5">{language === 'TR' ? 'Kapasite' : 'Capacity'}: {lab.capacity_per_slot}{lab.branches ? ` · ${lab.branches}` : ''}</p>
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
-                        <button onClick={() => startEditLab(lab)} className="text-[#6750A4] dark:text-[#D0BCFF] text-xs p-1.5 hover:bg-[#6750A4]/10 rounded-lg transition">✏️</button>
+                        <button onClick={() => startEditLab(lab)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition">✏️</button>
                         <button onClick={() => handleDeleteLab(lab.id)} disabled={processingId === lab.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40">🗑</button>
                       </div>
                     </div>
@@ -733,7 +733,7 @@ export default function AdminPanelScreen() {
       {activeTab === 'slots' && (
         <div>
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{language === 'TR' ? 'Saat Dilimi Yönetimi' : 'Time Slot Management'}</h3>
-          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 mb-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4">
             <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{language === 'TR' ? 'Yeni Saat Dilimi Ekle' : 'Add New Time Slot'}</h4>
             <div className="flex flex-col sm:flex-row gap-2">
               {isGlobal && (
@@ -743,7 +743,7 @@ export default function AdminPanelScreen() {
                 </select>
               )}
               <input type="text" placeholder={language === 'TR' ? 'Örn: 09:00 - 10:00' : 'E.g.: 09:00 - 10:00'} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
-              <button onClick={handleAddSlot} className="py-2 px-4 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl hover:opacity-90 transition">
+              <button onClick={handleAddSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
                 + {language === 'TR' ? 'Ekle' : 'Add'}
               </button>
             </div>
@@ -756,7 +756,7 @@ export default function AdminPanelScreen() {
               if (citySlots.length === 0) return null
               return (
                 <div key={city.id} className="mb-4">
-                  <h4 className="text-xs font-bold text-[#6750A4] dark:text-[#D0BCFF] mb-2 uppercase tracking-wide">{city.name}</h4>
+                  <h4 className="text-xs font-bold text-[#1565C0] dark:text-[#7DD4FC] mb-2 uppercase tracking-wide">{city.name}</h4>
                   <div className="space-y-2">
                     {citySlots.map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)}
                   </div>
@@ -767,7 +767,7 @@ export default function AdminPanelScreen() {
             <div className="space-y-2">
               {visibleSlots.map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)}
               {visibleSlots.length === 0 && (
-                <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+                <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
                   {language === 'TR' ? 'Henüz saat dilimi eklenmemiş.' : 'No time slots added yet.'}
                 </div>
               )}
@@ -793,7 +793,7 @@ export default function AdminPanelScreen() {
             {language === 'TR' ? 'Onay Bekleyenler' : 'Pending Approval'} ({pendingUsers.length})
           </h3>
           {pendingUsers.length === 0 ? (
-            <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">
+            <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">
               {language === 'TR' ? 'Onay bekleyen kullanıcı yok.' : 'No users pending approval.'}
             </div>
           ) : (
@@ -808,7 +808,7 @@ export default function AdminPanelScreen() {
             {language === 'TR' ? 'Onaylı Üyeler' : 'Approved Members'} ({approvedUsers.length})
           </h3>
           {approvedUsers.length === 0 ? (
-            <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+            <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
               {language === 'TR' ? 'Onaylı üye yok.' : 'No approved members.'}
             </div>
           ) : (
@@ -836,7 +836,7 @@ export default function AdminPanelScreen() {
                 {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               {statsCity && (
-                <button onClick={() => setStatsCity('')} className="text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline whitespace-nowrap">
+                <button onClick={() => setStatsCity('')} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline whitespace-nowrap">
                   {language === 'TR' ? 'Temizle' : 'Clear'}
                 </button>
               )}
@@ -844,7 +844,7 @@ export default function AdminPanelScreen() {
           )}
 
           {/* Studio Usage Ranking */}
-          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_studio_usage', language)}</h3>
             {studioStats.length === 0 ? (
               <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
@@ -860,7 +860,7 @@ export default function AdminPanelScreen() {
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                         <div
-                          className="bg-[#6750A4] dark:bg-[#D0BCFF] h-2 rounded-full transition-all"
+                          className="bg-[#1565C0] dark:bg-[#7DD4FC] h-2 rounded-full transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -872,7 +872,7 @@ export default function AdminPanelScreen() {
           </div>
 
           {/* Status Distribution */}
-          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_status_dist', language)}</h3>
             {statusStats.length === 0 ? (
               <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
@@ -906,7 +906,7 @@ export default function AdminPanelScreen() {
           </div>
 
           {/* Monthly Trend */}
-          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_monthly', language)}</h3>
             {monthlyStats.every(m => m.count === 0) ? (
               <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
@@ -921,7 +921,7 @@ export default function AdminPanelScreen() {
                         <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">{m.count > 0 ? m.count : ''}</span>
                         <div className="w-full flex items-end" style={{ height: '72px' }}>
                           <div
-                            className="w-full bg-[#6750A4] dark:bg-[#D0BCFF] rounded-t-md transition-all"
+                            className="w-full bg-[#1565C0] dark:bg-[#7DD4FC] rounded-t-md transition-all"
                             style={{ height: `${Math.max(heightPct, m.count > 0 ? 4 : 0)}%` }}
                           />
                         </div>
@@ -935,7 +935,7 @@ export default function AdminPanelScreen() {
           </div>
 
           {/* Busiest Time Slots */}
-          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_slots', language)}</h3>
             {slotStats.length === 0 ? (
               <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p>
@@ -970,7 +970,7 @@ export default function AdminPanelScreen() {
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">
             {language === 'TR' ? 'Yeni Bildirim Gönder' : 'Send New Notification'}
           </h3>
-          <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
             <form onSubmit={handleCreateNotification} className="space-y-3">
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Tür' : 'Type'}</label>
@@ -988,7 +988,7 @@ export default function AdminPanelScreen() {
                     {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                   {notifCity && (
-                    <p className="text-xs text-[#6750A4] dark:text-[#D0BCFF] mt-1">
+                    <p className="text-xs text-[#1565C0] dark:text-[#7DD4FC] mt-1">
                       {language === 'TR' ? '📍 Yalnızca seçilen şehrin kullanıcılarına gönderilecek.' : '📍 Will be sent only to users in the selected city.'}
                     </p>
                   )}
@@ -1021,7 +1021,7 @@ export default function AdminPanelScreen() {
               <button
                 type="submit"
                 disabled={notifLoading}
-                className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60"
+                className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60"
               >
                 {notifLoading ? '...' : (language === 'TR' ? '🔔 Bildirimi Gönder' : '🔔 Send Notification')}
               </button>
@@ -1071,7 +1071,7 @@ function LabFormFields({ form, setForm, cities, inputClass, language, showCity }
 
 function StatCard({ label, value, color }) {
   return (
-    <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4 text-center">
+    <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 text-center">
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{label}</p>
     </div>
@@ -1080,7 +1080,7 @@ function StatCard({ label, value, color }) {
 
 function SlotItem({ slot, processingId, onRemove, language }) {
   return (
-    <div className="bg-white dark:bg-[#252035] rounded-xl shadow px-4 py-3 flex items-center justify-between">
+    <div className="bg-white dark:bg-[#0D1E3D] rounded-xl shadow px-4 py-3 flex items-center justify-between">
       <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">{slot.time_range}</span>
       <button onClick={() => onRemove(slot.id)} disabled={processingId === slot.id} className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40">
         {processingId === slot.id ? '...' : (language === 'TR' ? 'Sil' : 'Delete')}
@@ -1091,10 +1091,10 @@ function SlotItem({ slot, processingId, onRemove, language }) {
 
 function UserCard({ user, language, processingId, onApprove, onRevoke, showApprove, showRevoke }) {
   return (
-    <div className="bg-white dark:bg-[#252035] rounded-2xl shadow p-4">
+    <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
       <div className="flex items-start gap-3 mb-2">
-        <div className="w-10 h-10 rounded-full bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
-          <span className="text-[#6750A4] dark:text-[#D0BCFF] font-bold text-sm">{(user.name || '?').charAt(0).toUpperCase()}</span>
+        <div className="w-10 h-10 rounded-full bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
+          <span className="text-[#1565C0] dark:text-[#7DD4FC] font-bold text-sm">{(user.name || '?').charAt(0).toUpperCase()}</span>
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{user.name} {user.surname}</p>
