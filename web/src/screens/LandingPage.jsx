@@ -191,7 +191,7 @@ export default function LandingPage({ onLoginClick }) {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#4A3880] via-[#6750A4] to-[#8B6FD4]">
+      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#4A3880] via-[#6750A4] to-[#8B6FD4] dark:from-[#1A0D3A] dark:via-[#2D1A5E] dark:to-[#3D2A7A]">
         {/* Decorative circles */}
         <div className="absolute top-20 right-10 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-20 left-10 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
