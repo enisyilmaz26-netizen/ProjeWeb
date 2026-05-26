@@ -286,7 +286,7 @@ export default function LandingPage({ onLoginClick }) {
           </div>
 
           {/* Competency framework box */}
-          <div className="mt-14 bg-gradient-to-r from-[#6750A4] to-[#8B6FD4] rounded-3xl p-8 sm:p-10 text-white">
+          <div className="mt-14 bg-gradient-to-r from-[#6750A4] to-[#8B6FD4] dark:from-[#1A0D3A] dark:via-[#2D1A5E] dark:to-[#3D2A7A] rounded-3xl p-8 sm:p-10 text-white">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
               {[
                 { val: '3', label: { TR: 'Temel Yeterlik Alanı', EN: 'Core Competency Area' } },
