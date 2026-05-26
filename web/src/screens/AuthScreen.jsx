@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 
-export default function AuthScreen() {
+export default function AuthScreen({ onBack }) {
   const { loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
   const [activeTab, setActiveTab] = useState('login')
   const [loginType, setLoginType] = useState('user') // 'user' | 'admin'
@@ -163,7 +163,12 @@ export default function AuthScreen() {
     <div className="min-h-screen bg-[#FEF7FF] dark:bg-[#141218] flex flex-col">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#6750A4] dark:bg-[#1D1B20] shadow">
-        <div />
+        {onBack ? (
+          <button onClick={onBack} className="text-white/80 hover:text-white flex items-center gap-1 text-xs font-medium transition">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            {language === 'TR' ? 'Geri' : 'Back'}
+          </button>
+        ) : <div />}
         <div className="text-center">
           <h1 className="text-white font-bold text-sm leading-tight">{t('app_title', language)}</h1>
           <p className="text-purple-200 dark:text-[#D0BCFF] text-xs">{t('app_subtitle', language)}</p>
@@ -190,8 +195,8 @@ export default function AuthScreen() {
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-[#6750A4] dark:bg-[#D0BCFF] rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-white dark:text-[#141218] text-2xl font-bold">L</span>
+            <div className="flex justify-center mb-3">
+              <AuthLogo />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
               {activeTab === 'login' ? t('login_title', language) : t('register_title', language)}
@@ -630,5 +635,23 @@ export default function AuthScreen() {
         </div>
       )}
     </div>
+  )
+}
+
+function AuthLogo() {
+  return (
+    <svg width="64" height="64" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="10" fill="#6750A4"/>
+      <rect x="7" y="10" width="22" height="14" rx="2" fill="white" fillOpacity="0.15"/>
+      <rect x="8" y="11" width="20" height="12" rx="1.5" fill="white" fillOpacity="0.9"/>
+      <circle cx="13" cy="17" r="3" fill="#6750A4"/>
+      <circle cx="13" cy="17" r="1.5" fill="#D0BCFF"/>
+      <path d="M19 14.5C20.5 15.5 20.5 18.5 19 19.5" stroke="#6750A4" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M21.5 13C23.5 14.5 23.5 19.5 21.5 21" stroke="#6750A4" strokeWidth="1.2" strokeLinecap="round"/>
+      <rect x="16" y="24" width="1.5" height="3" fill="white" fillOpacity="0.5"/>
+      <rect x="13" y="27" width="7" height="1.5" rx="0.75" fill="white" fillOpacity="0.5"/>
+      <circle cx="30" cy="12" r="4" fill="#E53E3E"/>
+      <circle cx="30" cy="12" r="2" fill="white"/>
+    </svg>
   )
 }
