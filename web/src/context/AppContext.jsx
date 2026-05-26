@@ -235,6 +235,22 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const changePassword = async (userId, email, currentPassword, newPassword) => {
+    const { data } = await supabase.from('users').select('password_hash').eq('id', userId).single()
+    if (!data) return { success: false, error: 'err_user_not_found' }
+
+    const currentHashed = await hashPassword(currentPassword, email)
+    const isHashMatch = data.password_hash === currentHashed
+    const isPlainMatch = !isHashMatch && data.password_hash === currentPassword
+
+    if (!isHashMatch && !isPlainMatch) return { success: false, error: 'err_current_password_wrong' }
+
+    const newHashed = await hashPassword(newPassword, email)
+    const { error } = await supabase.from('users').update({ password_hash: newHashed }).eq('id', userId)
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  }
+
   const updateUserProfile = async (userId, updates) => {
     const { error } = await supabase.from('users').update(updates).eq('id', userId)
     if (error) return { success: false, error: error.message }
@@ -277,6 +293,13 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     setAppointments(prev => [data, ...prev])
     return { success: true, data }
+  }
+
+  const markAppointmentCompleted = async (id) => {
+    const { error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id)
+    if (error) return { success: false, error: error.message }
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'COMPLETED' } : a))
+    return { success: true }
   }
 
   const approveAppointment = async (id) => {
@@ -419,9 +442,9 @@ export function AppProvider({ children }) {
     cities, labs, appointments, admins, notifications, timeSlots, users,
     loading,
     loadAllData,
-    loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, logout,
+    loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, changePassword, logout,
     toggleLanguage, toggleDarkMode,
-    submitAppointment, approveAppointment, cancelAppointment, submitCancellationRequest,
+    submitAppointment, approveAppointment, cancelAppointment, submitCancellationRequest, markAppointmentCompleted,
     approveUser, revokeUser,
     markNotificationsRead, clearNotifications, createNotification,
     addTimeSlot, removeTimeSlot,

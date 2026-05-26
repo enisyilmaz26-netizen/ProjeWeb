@@ -7,6 +7,7 @@ const STATUS_COLORS = {
   APPROVED: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
   CANCELLATION_REQUESTED: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+  COMPLETED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
 }
 
 const STATUS_LABELS = {
@@ -14,6 +15,7 @@ const STATUS_LABELS = {
   APPROVED: { TR: 'Onaylandı', EN: 'Approved' },
   CANCELLED: { TR: 'İptal Edildi', EN: 'Cancelled' },
   CANCELLATION_REQUESTED: { TR: 'İptal Talebi', EN: 'Cancel Requested' },
+  COMPLETED: { TR: 'Tamamlandı', EN: 'Completed' },
 }
 
 function statusLabel(status, lang) {
@@ -26,13 +28,15 @@ export default function AdminPanelScreen() {
   const {
     loggedInAdmin, language,
     appointments, cities, labs, users, timeSlots,
-    approveAppointment, cancelAppointment,
+    approveAppointment, cancelAppointment, markAppointmentCompleted,
     approveUser, revokeUser,
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab,
     createNotification,
     loadAllData,
   } = useApp()
+
+  const todayStr = new Date().toISOString().split('T')[0]
 
   const isGlobal = loggedInAdmin?.role === 'GLOBAL'
   const adminCityId = loggedInAdmin?.city_id
@@ -145,6 +149,7 @@ export default function AdminPanelScreen() {
   // Handlers
   const handleApprove = async (id) => { setProcessingId(id); await approveAppointment(id); setProcessingId(null) }
   const handleCancel = async (id) => { setProcessingId(id); await cancelAppointment(id); setProcessingId(null) }
+  const handleMarkCompleted = async (id) => { setProcessingId(id); await markAppointmentCompleted(id); setProcessingId(null) }
   const handleApproveUser = async (id) => { setProcessingId(id); await approveUser(id); setProcessingId(null) }
   const handleRevokeUser = async (id) => { setProcessingId(id); await revokeUser(id); setProcessingId(null) }
 
@@ -270,7 +275,7 @@ export default function AdminPanelScreen() {
 
   const tabs = [
     { key: 'appointments', label: language === 'TR' ? 'Randevular' : 'Appointments' },
-    ...(isGlobal ? [{ key: 'studios', label: language === 'TR' ? 'Stüdyolar' : 'Studios' }] : []),
+    { key: 'studios', label: language === 'TR' ? 'Stüdyolar' : 'Studios' },
     { key: 'slots', label: language === 'TR' ? 'Saat Dilimleri' : 'Time Slots' },
     { key: 'user_approvals', label: language === 'TR' ? 'Üye Onayları' : 'User Approvals' },
     { key: 'notifications', label: language === 'TR' ? 'Bildirim Gönder' : 'Send Notification' },
@@ -354,6 +359,7 @@ export default function AdminPanelScreen() {
                 <option value="">{language === 'TR' ? 'Tüm Durumlar' : 'All Statuses'}</option>
                 <option value="PENDING">{language === 'TR' ? 'Beklemede' : 'Pending'}</option>
                 <option value="APPROVED">{language === 'TR' ? 'Onaylandı' : 'Approved'}</option>
+                <option value="COMPLETED">{language === 'TR' ? 'Tamamlandı' : 'Completed'}</option>
                 <option value="CANCELLED">{language === 'TR' ? 'İptal Edildi' : 'Cancelled'}</option>
                 <option value="CANCELLATION_REQUESTED">{language === 'TR' ? 'İptal Talebi' : 'Cancel Requested'}</option>
               </select>
@@ -427,9 +433,14 @@ export default function AdminPanelScreen() {
                         </button>
                       </div>
                     )}
-                    {appt.status === 'APPROVED' && (
+                    {appt.status === 'APPROVED' && appt.date >= todayStr && (
                       <button onClick={() => handleCancel(appt.id)} disabled={processingId === appt.id} className="w-full py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
                         {processingId === appt.id ? '...' : t('action_cancel', language)}
+                      </button>
+                    )}
+                    {appt.status === 'APPROVED' && appt.date < todayStr && (
+                      <button onClick={() => handleMarkCompleted(appt.id)} disabled={processingId === appt.id} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
+                        {processingId === appt.id ? '...' : t('mark_completed', language)}
                       </button>
                     )}
                   </div>
@@ -448,8 +459,8 @@ export default function AdminPanelScreen() {
         </div>
       )}
 
-      {/* STUDIOS TAB (GLOBAL only) */}
-      {activeTab === 'studios' && isGlobal && (
+      {/* STUDIOS TAB */}
+      {activeTab === 'studios' && (
         <div>
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Stüdyolar' : 'Studios'}</h3>
@@ -468,7 +479,7 @@ export default function AdminPanelScreen() {
           {showAddLab && (
             <form onSubmit={handleAddLab} className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 mb-4 space-y-3">
               <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Yeni Stüdyo' : 'New Studio'}</h4>
-              <LabFormFields form={labForm} setForm={setLabForm} cities={cities} inputClass={inputClass} language={language} showCity />
+              <LabFormFields form={labForm} setForm={setLabForm} cities={cities} inputClass={inputClass} language={language} showCity={isGlobal} />
               <div className="flex gap-2">
                 <button type="submit" className="flex-1 py-2 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl">{language === 'TR' ? 'Kaydet' : 'Save'}</button>
                 <button type="button" onClick={() => { setShowAddLab(false); setLabError('') }} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{language === 'TR' ? 'İptal' : 'Cancel'}</button>

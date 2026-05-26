@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate } from '../lib/languages'
+import { t, formatDate, translations } from '../lib/languages'
 
 const STATUS_COLORS = {
   PENDING: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
   APPROVED: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
   CANCELLATION_REQUESTED: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+  COMPLETED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
 }
 
 const STATUS_LABELS = {
@@ -14,10 +15,11 @@ const STATUS_LABELS = {
   APPROVED: { TR: 'Onaylandı', EN: 'Approved' },
   CANCELLED: { TR: 'İptal Edildi', EN: 'Cancelled' },
   CANCELLATION_REQUESTED: { TR: 'İptal Talebi', EN: 'Cancel Requested' },
+  COMPLETED: { TR: 'Tamamlandı', EN: 'Completed' },
 }
 
 export default function MyProfileScreen() {
-  const { loggedInUser, appointments, submitCancellationRequest, updateUserProfile, language } = useApp()
+  const { loggedInUser, appointments, submitCancellationRequest, updateUserProfile, changePassword, language } = useApp()
 
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelTargetId, setCancelTargetId] = useState(null)
@@ -25,6 +27,12 @@ export default function MyProfileScreen() {
   const [submitting, setSubmitting] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [showPast, setShowPast] = useState(false)
+
+  // Password change
+  const [showPwChange, setShowPwChange] = useState(false)
+  const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' })
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError] = useState('')
 
   // Profile editing
   const [editMode, setEditMode] = useState(false)
@@ -71,6 +79,31 @@ export default function MyProfileScreen() {
       setCancelReason('')
       setSuccessMsg(language === 'TR' ? 'İptal talebiniz iletildi.' : 'Your cancellation request has been submitted.')
       setTimeout(() => setSuccessMsg(''), 4000)
+    }
+  }
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    setPwError('')
+    if (pwForm.newPw !== pwForm.confirm) {
+      setPwError(t('err_password_mismatch', language))
+      return
+    }
+    if (pwForm.newPw.length < 4) {
+      setPwError(language === 'TR' ? 'Şifre en az 4 karakter olmalıdır.' : 'Password must be at least 4 characters.')
+      return
+    }
+    setPwLoading(true)
+    const result = await changePassword(loggedInUser.id, loggedInUser.email, pwForm.current, pwForm.newPw)
+    setPwLoading(false)
+    if (result.success) {
+      setShowPwChange(false)
+      setPwForm({ current: '', newPw: '', confirm: '' })
+      setSuccessMsg(t('password_changed', language))
+      setTimeout(() => setSuccessMsg(''), 4000)
+    } else {
+      const errKey = result.error
+      setPwError(translations[errKey] ? t(errKey, language) : (errKey || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.')))
     }
   }
 
@@ -204,6 +237,37 @@ export default function MyProfileScreen() {
               valueClass={loggedInUser.is_approved ? 'text-green-600 dark:text-green-400 font-medium' : 'text-orange-500'}
             />
           </div>
+        )}
+      </div>
+
+      {/* Password Change */}
+      <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow mb-5">
+        <button
+          onClick={() => { setShowPwChange(p => !p); setPwError(''); setPwForm({ current: '', newPw: '', confirm: '' }) }}
+          className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          <span>🔒 {t('change_password', language)}</span>
+          <span className="text-gray-400">{showPwChange ? '▲' : '▼'}</span>
+        </button>
+        {showPwChange && (
+          <form onSubmit={handleChangePassword} className="px-5 pb-5 space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
+            <div>
+              <label className={labelClass}>{t('current_password', language)} *</label>
+              <input type="password" className={inputClass} value={pwForm.current} onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))} required />
+            </div>
+            <div>
+              <label className={labelClass}>{t('new_password', language)} *</label>
+              <input type="password" className={inputClass} value={pwForm.newPw} onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={4} />
+            </div>
+            <div>
+              <label className={labelClass}>{t('input_confirm_password', language)} *</label>
+              <input type="password" className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} required />
+            </div>
+            {pwError && <p className="text-red-600 dark:text-red-400 text-xs">{pwError}</p>}
+            <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60">
+              {pwLoading ? '...' : (language === 'TR' ? 'Şifreyi Güncelle' : 'Update Password')}
+            </button>
+          </form>
         )}
       </div>
 
