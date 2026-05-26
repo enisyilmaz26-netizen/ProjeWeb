@@ -303,6 +303,85 @@ export default function LandingPage({ onLoginClick }) {
               {lang === 'TR' ? 'Dijital Öğretmen Yeterlikleri Çerçevesi' : 'Digital Teacher Competencies Framework'}
             </p>
           </div>
+
+          {/* ÖÖL Detay Kutusu */}
+          <div className="mt-10 bg-gray-50 dark:bg-[#1A1530] rounded-3xl p-8 sm:p-10 border border-gray-100 dark:border-[#3A3558]">
+            <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">
+              {lang === 'TR' ? 'Öğretmen Öğrenme Laboratuvarları' : 'Teacher Learning Labs'}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-7">
+              {lang === 'TR'
+                ? 'MEB ÖGEDEP bünyesinde kurulan laboratuvarlar, öğretmenlerin dijital eğitim ekosistemiyle ilgili kapasitelerini geliştirmek amacıyla tasarlanmıştır. 7 ilde 8 laboratuvarda öğretmenler; yeni dijital öğretim fikirlerini keşfedebilir, bu fikirleri sınıf ortamına hızla uygulayabilir ve mesleki iş birliği kültürünü güçlendirebilir.'
+                : 'Established within MEB ÖGEDEP, the labs are designed to develop teachers\' capacity in the digital education ecosystem. Across 8 labs in 7 provinces, teachers can discover new digital teaching ideas, quickly apply them to classroom settings, and strengthen professional collaboration culture.'}
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+              {[
+                {
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                      <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                    </svg>
+                  ),
+                  title: { TR: 'Temel Amaç', EN: 'Core Purpose' },
+                  desc: { TR: 'Dijital eğitim fikirlerini keşfetme, sınıf ortamına hızla uygulama ve mesleki iş birliği kültürünü güçlendirme.', EN: 'Discover digital education ideas, quickly apply them to the classroom, and strengthen professional collaboration culture.' },
+                },
+                {
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                      <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                    </svg>
+                  ),
+                  title: { TR: 'Teknik Donanım', EN: 'Technical Equipment' },
+                  desc: { TR: 'Ses ve video kayıt cihazları, çekim sonrası içerik düzenleme yazılımları ve ileri teknoloji altyapısı.', EN: 'Audio and video recording equipment, post-production editing software, and advanced technology infrastructure.' },
+                },
+                {
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+                    </svg>
+                  ),
+                  title: { TR: 'Kapsam', EN: 'Coverage' },
+                  desc: { TR: "Ankara, İstanbul, İzmir, Gaziantep, Mersin, Erzurum ve Rize'de toplam 8 laboratuvar.", EN: '8 laboratories in total across Ankara, Istanbul, Izmir, Gaziantep, Mersin, Erzurum, and Rize.' },
+                },
+                {
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                  ),
+                  title: { TR: 'Kazanımlar', EN: 'Outcomes' },
+                  desc: { TR: 'Dijital içerik üretimi, materyal geliştirme, teknoloji destekli öğretim uygulamaları ve dijital beceri güçlendirme.', EN: 'Digital content production, material development, technology-supported teaching, and digital skills strengthening.' },
+                },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-3 p-4 bg-white dark:bg-[#252035] rounded-2xl border border-gray-100 dark:border-[#3A3558]">
+                  <div className="w-9 h-9 flex-shrink-0 bg-[#6750A4]/10 dark:bg-[#D0BCFF]/15 rounded-xl flex items-center justify-center text-[#6750A4] dark:text-[#D0BCFF]">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{item.title[lang]}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc[lang]}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-center">
+              <a
+                href="https://ogedep.eba.gov.tr/ogretmen-ogrenme-laboratuvarlari/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-7 py-3 bg-[#6750A4] hover:bg-[#5a4595] dark:bg-[#D0BCFF] dark:hover:bg-[#c4afff] text-white dark:text-[#141218] font-semibold rounded-2xl text-sm transition shadow-lg hover:shadow-purple-300/40 active:scale-95"
+              >
+                {lang === 'TR' ? 'Daha Fazla Detay' : 'Learn More'}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
