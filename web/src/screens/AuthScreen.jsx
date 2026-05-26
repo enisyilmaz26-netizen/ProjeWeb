@@ -589,10 +589,140 @@ export default function AuthScreen({ onBack }) {
                 ✕
               </button>
             </div>
-            <div className="overflow-y-auto px-6 py-4 flex-1">
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {t('kvkk_text', language)}
-              </p>
+            <div className="overflow-y-auto px-6 py-4 flex-1 space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              {language === 'TR' ? (
+                <>
+                  <p className="font-bold text-gray-900 dark:text-gray-100 text-center">KİŞİSEL VERİLERİN KORUNMASI KANUNU KAPSAMINDA AYDINLATMA METNİ</p>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">1. Veri Sorumlusu</p>
+                    <p>6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, kişisel verileriniz; veri sorumlusu sıfatıyla Millî Eğitim Bakanlığı Öğretmen Geliştirme Politikaları Genel Müdürlüğü (ÖGEDEP) tarafından işlenecektir.</p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">2. İşlenen Kişisel Veriler</p>
+                    <p className="mb-1">Sistemimiz aracılığıyla aşağıdaki kişisel verileriniz işlenmektedir:</p>
+                    <ul className="list-disc list-inside space-y-0.5 pl-2">
+                      <li>Ad, soyad</li>
+                      <li>E-posta adresi</li>
+                      <li>Telefon numarası</li>
+                      <li>Branş bilgisi</li>
+                      <li>Çalışılan kurum adı ve ilçe</li>
+                      <li>İl / şehir bilgisi</li>
+                      <li>Randevu tarihleri ve seçilen stüdyo / laboratuvar bilgileri</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">3. Kişisel Verilerin İşlenme Amacı</p>
+                    <p className="mb-1">Kişisel verileriniz;</p>
+                    <ul className="list-disc list-inside space-y-0.5 pl-2">
+                      <li>Öğretmen Öğrenme Laboratuvarlarına (ÖÖL) randevu oluşturulması ve yönetilmesi,</li>
+                      <li>Üyelik başvurusunun değerlendirilmesi ve onaylanması,</li>
+                      <li>Sistem güvenliği ve yetkisiz erişimlerin önlenmesi,</li>
+                      <li>Yönetici bildirimleri ve iletişim süreçlerinin yürütülmesi</li>
+                    </ul>
+                    <p className="mt-1">amaçlarıyla işlenmektedir.</p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">4. Hukuki Dayanak</p>
+                    <p>Kişisel verileriniz; KVKK'nın 5. maddesi kapsamında "kanunlarda açıkça öngörülmesi" ve "ilgili kişinin temel hak ve özgürlüklerine zarar vermemek kaydıyla, veri sorumlusunun meşru menfaatleri için zorunlu olması" hukuki sebeplerine dayanılarak işlenmektedir.</p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">5. Kişisel Verilerin Aktarılması</p>
+                    <p>Kişisel verileriniz; yetkili kamu kurum ve kuruluşları haricinde üçüncü taraflarla paylaşılmamaktadır. Sistem altyapısı için kullanılan bulut hizmet sağlayıcısı, uluslararası teknik güvenlik standartlarına uygun şekilde hizmet vermekte olup veri aktarımları şifreli kanallar üzerinden gerçekleştirilmektedir.</p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">6. Veri Güvenliği</p>
+                    <p>Kişisel verileriniz SHA-256 kriptografik algoritması ile şifrelenerek saklanmakta; yetkisiz erişimlere karşı teknik ve idari güvenlik tedbirleri uygulanmaktadır. Şifreler hiçbir koşulda açık metin olarak depolanmamaktadır.</p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">7. Veri Sahibinin Hakları (KVKK Madde 11)</p>
+                    <p className="mb-1">KVKK'nın 11. maddesi uyarınca aşağıdaki haklara sahipsiniz:</p>
+                    <ul className="list-disc list-inside space-y-0.5 pl-2">
+                      <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme,</li>
+                      <li>İşlenmişse buna ilişkin bilgi talep etme,</li>
+                      <li>İşlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
+                      <li>Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme,</li>
+                      <li>Eksik veya yanlış işlenmesi hâlinde düzeltilmesini isteme,</li>
+                      <li>Kanunda öngörülen koşulların varlığı hâlinde silinmesini veya yok edilmesini isteme,</li>
+                      <li>Yapılan işlemlerin aktarıldığı üçüncü kişilere bildirilmesini isteme,</li>
+                      <li>İşlenen verilerin münhasıran otomatik sistemler aracılığıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme,</li>
+                      <li>Kanuna aykırı işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme.</li>
+                    </ul>
+                    <p className="mt-2">Taleplerinizi <span className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">ögedep@meb.gov.tr</span> adresine iletebilirsiniz.</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="font-bold text-gray-900 dark:text-gray-100 text-center">PERSONAL DATA PROTECTION LAW (KVKK) DISCLOSURE TEXT</p>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">1. Data Controller</p>
+                    <p>Pursuant to the Personal Data Protection Law No. 6698 ("KVKK"), your personal data will be processed by the Directorate General of Teacher Development Policies (ÖGEDEP) of the Ministry of National Education as the data controller.</p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">2. Personal Data Processed</p>
+                    <p className="mb-1">The following personal data is processed through our system:</p>
+                    <ul className="list-disc list-inside space-y-0.5 pl-2">
+                      <li>First and last name</li>
+                      <li>Email address</li>
+                      <li>Phone number</li>
+                      <li>Branch information</li>
+                      <li>Institution name and district</li>
+                      <li>City information</li>
+                      <li>Appointment dates and selected studio / laboratory information</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">3. Purposes of Processing</p>
+                    <ul className="list-disc list-inside space-y-0.5 pl-2">
+                      <li>Creating and managing appointments for Teacher Learning Labs (ÖÖL),</li>
+                      <li>Evaluating and approving membership applications,</li>
+                      <li>System security and prevention of unauthorized access,</li>
+                      <li>Admin notifications and communication processes.</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">4. Legal Basis</p>
+                    <p>Your personal data is processed based on Article 5 of KVKK: "explicitly provided for by law" and "necessary for the legitimate interests of the data controller, provided that this does not harm the fundamental rights and freedoms of the data subject."</p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">5. Data Transfers</p>
+                    <p>Your personal data is not shared with third parties outside of authorized public institutions. The cloud service provider used for the system infrastructure operates in accordance with international technical security standards, and data transfers are carried out through encrypted channels.</p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">6. Data Security</p>
+                    <p>Your personal data is stored encrypted using the SHA-256 cryptographic algorithm; technical and administrative security measures are implemented against unauthorized access. Passwords are never stored in plain text.</p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">7. Rights of the Data Subject (KVKK Article 11)</p>
+                    <p className="mb-1">Pursuant to Article 11 of KVKK, you have the following rights:</p>
+                    <ul className="list-disc list-inside space-y-0.5 pl-2">
+                      <li>To learn whether your personal data has been processed,</li>
+                      <li>To request information if it has been processed,</li>
+                      <li>To learn the purpose of processing and whether it is used for its purpose,</li>
+                      <li>To know the third parties to whom it is transferred domestically or abroad,</li>
+                      <li>To request correction if it is incomplete or incorrectly processed,</li>
+                      <li>To request deletion or destruction under conditions stipulated by law,</li>
+                      <li>To request notification of the operations to third parties to whom data is transferred,</li>
+                      <li>To object to a result arising exclusively through automated systems,</li>
+                      <li>To demand compensation if you suffer damage due to unlawful processing.</li>
+                    </ul>
+                    <p className="mt-2">You can submit your requests to <span className="font-medium text-[#6750A4] dark:text-[#D0BCFF]">ögedep@meb.gov.tr</span>.</p>
+                  </div>
+                </>
+              )}
             </div>
             <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
               <button

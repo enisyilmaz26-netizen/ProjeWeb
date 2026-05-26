@@ -26,7 +26,7 @@ export const translations = {
   submit_button: { TR: 'Randevu Talebi Oluştur', EN: 'Create Reservation Request' },
   login_title: { TR: 'Sisteme Giriş Yap', EN: 'Sign In' },
   login_subtitle: { TR: 'Öğretmen Öğrenme Laboratuvarları Rezervasyon Sistemi', EN: 'Teacher Learning Labs Reservation System' },
-  register_title: { TR: 'Yeni Üye Kaydı', EN: 'Create Account' },
+  register_title: { TR: 'Yeni Üye', EN: 'Create Account' },
   btn_login: { TR: 'Giriş Yap', EN: 'Sign In' },
   btn_register: { TR: 'Kayıt Ol', EN: 'Create Account' },
   action_approve: { TR: 'Onayla', EN: 'Approve' },
