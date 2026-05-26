@@ -158,7 +158,7 @@ export function AppProvider({ children }) {
         ...appointmentData,
         status: 'PENDING',
         automations_applied: false,
-        created_timestamp: new Date().toISOString(),
+        created_timestamp: Date.now(),
       }])
       .select()
       .single()
