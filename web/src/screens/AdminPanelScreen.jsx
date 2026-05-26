@@ -92,6 +92,9 @@ export default function AdminPanelScreen() {
   // User approvals tab
   const [userSearch, setUserSearch] = useState('')
 
+  // Stats tab
+  const [statsCity, setStatsCity] = useState('')
+
   // Notifications tab
   const [notifForm, setNotifForm] = useState({ title: '', message: '', type: 'SYSTEM' })
   const [notifCity, setNotifCity] = useState('')
@@ -111,9 +114,9 @@ export default function AdminPanelScreen() {
   // Scoped appointments (city filter only — used for stats)
   const scopedAppointments = useMemo(() => {
     if (!isGlobal && adminCityId) return appointments.filter(a => String(a.city_id) === String(adminCityId))
-    if (isGlobal && filterCity) return appointments.filter(a => String(a.city_id) === String(filterCity))
+    if (isGlobal && statsCity) return appointments.filter(a => String(a.city_id) === String(statsCity))
     return appointments
-  }, [appointments, isGlobal, adminCityId, filterCity])
+  }, [appointments, isGlobal, adminCityId, statsCity])
 
   // Stats
   const studioStats = useMemo(() => {
@@ -724,6 +727,25 @@ export default function AdminPanelScreen() {
       {/* STATS TAB */}
       {activeTab === 'stats' && (
         <div className="space-y-4">
+          {/* Global admin city filter for stats */}
+          {isGlobal && (
+            <div className="flex items-center gap-3">
+              <select
+                className={`${inputClass} flex-1`}
+                value={statsCity}
+                onChange={e => setStatsCity(e.target.value)}
+              >
+                <option value="">{language === 'TR' ? 'Tüm Şehirler' : 'All Cities'}</option>
+                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              {statsCity && (
+                <button onClick={() => setStatsCity('')} className="text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline whitespace-nowrap">
+                  {language === 'TR' ? 'Temizle' : 'Clear'}
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Studio Usage Ranking */}
           <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_studio_usage', language)}</h3>

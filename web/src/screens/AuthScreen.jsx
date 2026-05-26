@@ -390,6 +390,7 @@ export default function AuthScreen() {
                     value={regForm.password}
                     onChange={e => setRegForm(p => ({ ...p, password: e.target.value }))}
                     required
+                    minLength={4}
                   />
                 </div>
 
@@ -401,6 +402,7 @@ export default function AuthScreen() {
                     value={regForm.confirmPassword}
                     onChange={e => setRegForm(p => ({ ...p, confirmPassword: e.target.value }))}
                     required
+                    minLength={4}
                   />
                 </div>
 

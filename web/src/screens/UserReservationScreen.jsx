@@ -210,19 +210,27 @@ export default function UserReservationScreen() {
                 if (!hasMultipleLocations) {
                   return cityLabs.map(lab => <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} />)
                 }
-                return locations.map(loc => (
-                  <div key={loc}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-bold text-[#6750A4] dark:text-[#D0BCFF] uppercase tracking-wide">📍 {loc}</span>
-                      <div className="flex-1 h-px bg-[#6750A4]/20 dark:bg-[#D0BCFF]/20" />
-                    </div>
-                    <div className="grid grid-cols-1 gap-3">
-                      {cityLabs.filter(l => l.location === loc).map(lab => (
-                        <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} />
-                      ))}
-                    </div>
-                  </div>
-                ))
+                const noLocationLabs = cityLabs.filter(l => !l.location)
+                return (
+                  <>
+                    {locations.map(loc => (
+                      <div key={loc}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-bold text-[#6750A4] dark:text-[#D0BCFF] uppercase tracking-wide">📍 {loc}</span>
+                          <div className="flex-1 h-px bg-[#6750A4]/20 dark:bg-[#D0BCFF]/20" />
+                        </div>
+                        <div className="grid grid-cols-1 gap-3">
+                          {cityLabs.filter(l => l.location === loc).map(lab => (
+                            <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {noLocationLabs.map(lab => (
+                      <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} />
+                    ))}
+                  </>
+                )
               })()}
             </div>
           )}

@@ -7,7 +7,7 @@ import MyProfileScreen from './MyProfileScreen'
 import NotificationCenterScreen from './NotificationCenterScreen'
 
 export default function MainAppContainer() {
-  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications } = useApp()
+  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading } = useApp()
   const isAdmin = loggedInAdmin !== null
   const [activeTab, setActiveTab] = useState(isAdmin ? 'admin' : 'book')
 
@@ -96,6 +96,13 @@ export default function MainAppContainer() {
           ))}
         </div>
       </header>
+
+      {/* Loading indicator */}
+      {loading && (
+        <div className="h-0.5 bg-[#6750A4]/20 dark:bg-[#D0BCFF]/20 overflow-hidden">
+          <div className="h-full bg-[#6750A4] dark:bg-[#D0BCFF] animate-pulse w-full" />
+        </div>
+      )}
 
       {/* Screen Content */}
       <main className="flex-1 overflow-auto">

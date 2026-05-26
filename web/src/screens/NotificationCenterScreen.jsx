@@ -3,9 +3,11 @@ import { useApp } from '../context/AppContext'
 import { t, formatTimestamp } from '../lib/languages'
 
 export default function NotificationCenterScreen() {
-  const { notifications, loggedInAdmin, clearNotifications, markNotificationsRead, language } = useApp()
+  const { notifications, loggedInAdmin, clearNotifications, markNotificationsRead, language, cities } = useApp()
 
-  const cityName = (loggedInAdmin?.role === 'CITY' && loggedInAdmin?.city_name) ? loggedInAdmin.city_name : null
+  // Look up city name via city_id (admins table may only have city_id, not city_name)
+  const adminCity = cities.find(c => String(c.id) === String(loggedInAdmin?.city_id))
+  const cityName = (loggedInAdmin?.role === 'CITY' && adminCity) ? adminCity.name : null
 
   let visibleNotifications = notifications
   if (cityName) {
@@ -74,7 +76,7 @@ export default function NotificationCenterScreen() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <p className={`font-semibold text-sm ${notif.type === 'ALERT' ? 'text-red-700 dark:text-red-300' : 'text-gray-900 dark:text-gray-100'}`}>
-                      {notif.title}
+                      {(notif.title || '').replace(/^\[[^\]]+\]\s*/, '')}
                     </p>
                     <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{formatTimestamp(notif.timestamp)}</span>
                   </div>
