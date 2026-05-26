@@ -204,7 +204,7 @@ export default function LandingPage({ onLoginClick }) {
             {lang === 'TR' ? 'IPA III — MEB ÖGEDEP Dijital Ekosistemi Projesi' : 'IPA III — MEB ÖGEDEP Digital Ecosystem Project'}
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6" style={{ fontFamily: "'Poppins', sans-serif" }}>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6">
             {lang === 'TR'
               ? <>Öğretmenler<br /><span className="text-[#D0BCFF]">Dijital Dönüşümün</span><br />Öncüsüdür</>
               : <>Teachers Are the<br /><span className="text-[#D0BCFF]">Pioneers of</span><br />Digital Transformation</>
