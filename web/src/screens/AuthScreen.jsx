@@ -22,6 +22,7 @@ export default function AuthScreen() {
   const [regError, setRegError] = useState('')
   const [regLoading, setRegLoading] = useState(false)
   const [showRegSuccessModal, setShowRegSuccessModal] = useState(false)
+  const [showKvkkModal, setShowKvkkModal] = useState(false)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -325,7 +326,6 @@ export default function AuthScreen() {
 
                 {/* KVKK */}
                 <div className="bg-gray-50 dark:bg-[#2C2A31] rounded-xl p-3">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('kvkk_text', language)}</p>
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -333,7 +333,16 @@ export default function AuthScreen() {
                       onChange={e => setRegForm(p => ({ ...p, kvkk: e.target.checked }))}
                       className="mt-0.5 accent-[#6750A4]"
                     />
-                    <span className="text-xs text-gray-700 dark:text-gray-300">{t('kvkk_checkbox_label', language)}</span>
+                    <span className="text-xs text-gray-700 dark:text-gray-300">
+                      <button
+                        type="button"
+                        onClick={() => setShowKvkkModal(true)}
+                        className="text-[#6750A4] dark:text-[#D0BCFF] underline font-semibold hover:opacity-80"
+                      >
+                        {language === 'TR' ? 'KVKK Aydınlatma Metni' : 'KVKK Consent Text'}
+                      </button>
+                      {language === 'TR' ? "'ni okudum ve kabul ediyorum. *" : " — I have read and agree. *"}
+                    </span>
                   </label>
                 </div>
 
@@ -357,6 +366,44 @@ export default function AuthScreen() {
       </div>
 
       {/* Registration Success Modal */}
+      {/* KVKK Modal */}
+      {showKvkkModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{maxHeight: '80vh'}}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+                {language === 'TR' ? 'KVKK Aydınlatma Metni' : 'KVKK Information Text'}
+              </h3>
+              <button
+                onClick={() => setShowKvkkModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold leading-none"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto px-6 py-4 flex-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                {t('kvkk_text', language)}
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+              <button
+                onClick={() => { setRegForm(p => ({ ...p, kvkk: true })); setShowKvkkModal(false) }}
+                className="flex-1 py-2.5 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 transition"
+              >
+                {language === 'TR' ? 'Okudum, Onaylıyorum' : 'I Read and Agree'}
+              </button>
+              <button
+                onClick={() => setShowKvkkModal(false)}
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                {language === 'TR' ? 'Kapat' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showRegSuccessModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
