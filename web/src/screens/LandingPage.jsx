@@ -95,7 +95,12 @@ export default function LandingPage({ onLoginClick }) {
     {
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          <rect x="2" y="3" width="20" height="13" rx="2"/>
+          <path d="M8 21h8M12 16v5"/>
+          <line x1="5" y1="8" x2="9" y2="8"/>
+          <line x1="11" y1="8" x2="19" y2="8"/>
+          <line x1="5" y1="12" x2="13" y2="12"/>
+          <line x1="15" y1="12" x2="19" y2="12"/>
         </svg>
       ),
       title: { TR: 'Post Prodüksiyon Lab', EN: 'Post-Production Lab' },
@@ -126,7 +131,7 @@ export default function LandingPage({ onLoginClick }) {
     <div className="min-h-screen bg-white dark:bg-[#0F0D13] text-gray-800 dark:text-gray-100" style={{ fontFamily: "'Poppins', sans-serif" }}>
 
       {/* ── HEADER ── */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 dark:bg-[#1D1B20]/95 backdrop-blur shadow-md' : 'bg-transparent'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 dark:bg-[#1E1635]/95 backdrop-blur shadow-md' : 'bg-transparent'}`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
           {/* Logo */}
           <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2.5">
@@ -175,7 +180,7 @@ export default function LandingPage({ onLoginClick }) {
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="md:hidden bg-white dark:bg-[#1D1B20] border-t border-gray-100 dark:border-gray-700 px-4 pb-4 pt-2 space-y-1">
+          <div className="md:hidden bg-white dark:bg-[#1E1635] border-t border-gray-100 dark:border-[#2E2550] px-4 pb-4 pt-2 space-y-1">
             {NAV_LINKS.map(l => (
               <button key={l.href} onClick={() => { scrollTo(l.href.slice(1)); setMenuOpen(false) }} className="block w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
                 {l.label[lang]}
@@ -270,12 +275,12 @@ export default function LandingPage({ onLoginClick }) {
           {/* Feature cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((f, i) => (
-              <div key={i} className="group p-6 bg-gray-50 dark:bg-[#1D1B20] rounded-2xl hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-gray-100 dark:border-gray-800">
-                <div className="w-12 h-12 bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 rounded-xl flex items-center justify-center text-[#6750A4] dark:text-[#D0BCFF] mb-4 group-hover:bg-[#6750A4] group-hover:text-white dark:group-hover:bg-[#D0BCFF] dark:group-hover:text-[#141218] transition-all">
+              <div key={i} className="group p-6 bg-gray-50 dark:bg-[#252035] rounded-2xl hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-gray-100 dark:border-[#3A3558]">
+                <div className="w-12 h-12 bg-[#6750A4]/10 dark:bg-[#D0BCFF]/15 rounded-xl flex items-center justify-center text-[#6750A4] dark:text-[#D0BCFF] mb-4 group-hover:bg-[#6750A4] group-hover:text-white dark:group-hover:bg-[#7B5EA7] dark:group-hover:text-white transition-all">
                   {f.icon}
                 </div>
                 <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2">{f.title[lang]}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc[lang]}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-300 leading-relaxed">{f.desc[lang]}</p>
               </div>
             ))}
           </div>
@@ -320,22 +325,22 @@ export default function LandingPage({ onLoginClick }) {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {cities.length > 0 ? cities.map(city => (
-              <div key={city.id} className="bg-white dark:bg-[#1D1B20] rounded-2xl p-5 border border-gray-100 dark:border-gray-800 hover:border-[#6750A4]/40 dark:hover:border-[#D0BCFF]/40 hover:shadow-md transition-all group">
-                <div className="w-10 h-10 bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 rounded-xl flex items-center justify-center mb-3">
+              <div key={city.id} className="bg-white dark:bg-[#252035] rounded-2xl p-5 border border-gray-100 dark:border-[#3A3558] hover:border-[#6750A4]/40 dark:hover:border-[#9B7FD4] hover:shadow-md transition-all group">
+                <div className="w-10 h-10 bg-[#6750A4]/10 dark:bg-[#D0BCFF]/15 rounded-xl flex items-center justify-center mb-3">
                   <span className="text-[#6750A4] dark:text-[#D0BCFF] font-extrabold text-lg">{city.name.charAt(0)}</span>
                 </div>
                 <p className="font-bold text-gray-900 dark:text-white text-sm">{city.name}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
                   {cityLabCount(city.id)} {lang === 'TR' ? 'stüdyo' : 'studio'}
                 </p>
                 <div className="mt-3 flex gap-1 flex-wrap">
                   {labs.filter(l => String(l.city_id) === String(city.id)).slice(0, 2).map(lab => (
-                    <span key={lab.id} className="text-[9px] bg-[#6750A4]/8 dark:bg-[#D0BCFF]/8 text-[#6750A4] dark:text-[#D0BCFF] px-2 py-0.5 rounded-full font-medium">
+                    <span key={lab.id} className="text-[9px] bg-[#6750A4]/10 dark:bg-[#D0BCFF]/15 text-[#6750A4] dark:text-[#D0BCFF] px-2 py-0.5 rounded-full font-medium">
                       {lab.name.split(' - ')[1]?.split(' ')[0] || lab.name.split(' ')[0]}
                     </span>
                   ))}
                   {cityLabCount(city.id) > 2 && (
-                    <span className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
+                    <span className="text-[9px] bg-gray-100 dark:bg-[#3A3558] text-gray-500 dark:text-gray-300 px-2 py-0.5 rounded-full">
                       +{cityLabCount(city.id) - 2}
                     </span>
                   )}
@@ -344,7 +349,7 @@ export default function LandingPage({ onLoginClick }) {
             )) : (
               // Placeholder while loading
               Array.from({ length: 7 }).map((_, i) => (
-                <div key={i} className="bg-white dark:bg-[#1D1B20] rounded-2xl p-5 border border-gray-100 dark:border-gray-800 animate-pulse h-28" />
+                <div key={i} className="bg-white dark:bg-[#252035] rounded-2xl p-5 border border-gray-100 dark:border-[#3A3558] animate-pulse h-28" />
               ))
             )}
           </div>

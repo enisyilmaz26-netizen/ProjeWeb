@@ -31,7 +31,7 @@ export default function MainAppContainer() {
   return (
     <div className="min-h-screen flex flex-col bg-[#FEF7FF] dark:bg-[#141218]">
       {/* Top Navigation Bar */}
-      <header className="bg-[#6750A4] dark:bg-[#1D1B20] shadow sticky top-0 z-40">
+      <header className="bg-[#6750A4] dark:bg-[#1E1635] shadow sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
           {/* Left: user info */}
           <div className="flex items-center gap-2 min-w-0">

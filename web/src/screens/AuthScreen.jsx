@@ -163,7 +163,7 @@ export default function AuthScreen({ onBack }) {
   return (
     <div className="min-h-screen bg-[#FEF7FF] dark:bg-[#141218] flex flex-col">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#6750A4] dark:bg-[#1D1B20] shadow">
+      <div className="flex items-center justify-between px-4 py-3 bg-[#6750A4] dark:bg-[#1E1635] shadow">
         {onBack ? (
           <button onClick={onBack} className="text-white/80 hover:text-white flex items-center gap-1 text-xs font-medium transition">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
