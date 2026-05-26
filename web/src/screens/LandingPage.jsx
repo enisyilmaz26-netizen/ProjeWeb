@@ -191,7 +191,7 @@ export default function LandingPage({ onLoginClick }) {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-r from-[#0A2461] via-[#1565C0] to-[#00AEEF] dark:from-[#020A22] dark:via-[#071A48] dark:to-[#0D3A8A]">
+      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-r from-[#00AEEF] via-[#1565C0] to-[#0A2461] dark:from-[#0D3A8A] dark:via-[#071A48] dark:to-[#020A22]">
         {/* Decorative circles */}
         <div className="absolute top-20 right-10 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-20 left-10 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
@@ -480,7 +480,7 @@ export default function LandingPage({ onLoginClick }) {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-gradient-to-r from-[#0A2461] via-[#1565C0] to-[#00AEEF] dark:from-[#020A22] dark:via-[#071A48] dark:to-[#0D3A8A] text-white py-12 px-4 sm:px-6">
+      <footer className="bg-gradient-to-r from-[#00AEEF] via-[#1565C0] to-[#0A2461] dark:from-[#0D3A8A] dark:via-[#071A48] dark:to-[#020A22] text-white py-12 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-3">
