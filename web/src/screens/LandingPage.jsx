@@ -480,32 +480,36 @@ export default function LandingPage({ onLoginClick }) {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-gradient-to-r from-[#00AEEF] via-[#1565C0] to-[#0A2461] dark:from-[#0D3A8A] dark:via-[#071A48] dark:to-[#020A22] text-white py-12 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
+      <footer className="bg-[#0A2461] dark:bg-[#020A22] text-white">
+        {/* Üst bölüm — beyaz arkaplan */}
+        <div className="bg-white dark:bg-[#061A3A] px-4 sm:px-6 py-8">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <AppLogo size={40} />
+              <AppLogo size={48} />
               <div>
-                <p className="font-bold text-sm text-white">Öğretmen Öğrenme Laboratuvarları</p>
-                <p className="text-xs text-white/70">Öğretmen Eğitimi Dijital Ekosistemi Projesi</p>
+                <p className="font-bold text-sm text-gray-900 dark:text-white">Öğretmen Öğrenme Laboratuvarları</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Öğretmen Eğitimi Dijital Ekosistemi Projesi</p>
               </div>
             </div>
             <div className="flex gap-4">
               {NAV_LINKS.map(l => (
-                <button key={l.href} onClick={() => scrollTo(l.href.slice(1))} className="text-xs text-white/70 hover:text-white transition">
+                <button key={l.href} onClick={() => scrollTo(l.href.slice(1))} className="text-xs text-gray-500 dark:text-gray-400 hover:text-[#1565C0] dark:hover:text-[#7DD4FC] transition">
                   {l.label[lang]}
                 </button>
               ))}
             </div>
           </div>
+        </div>
 
-          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <p className="text-xs text-gray-500 max-w-lg leading-relaxed">
+        {/* Alt bölüm — koyu arkaplan */}
+        <div className="px-4 sm:px-6 py-6">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <p className="text-xs text-white/60 max-w-lg leading-relaxed">
               {lang === 'TR'
                 ? 'Bu proje AB ve Türkiye Cumhuriyeti tarafından ortaklaşa finanse edilmektedir. Burada ifade edilen görüşler Avrupa Birliği\'nin, T.C. Milli Eğitim Bakanlığı\'nın veya UNICEF\'in resmi tutumunu yansıtmaz.'
                 : 'This project is co-funded by the EU and the Republic of Turkey. The views expressed here do not necessarily reflect the official positions of the European Union, the Turkish Ministry of National Education, or UNICEF.'}
             </p>
-            <p className="text-xs text-white/50 whitespace-nowrap">© {new Date().getFullYear()} MEB ÖGEDEP</p>
+            <p className="text-xs text-white/40 whitespace-nowrap">© {new Date().getFullYear()} MEB ÖGEDEP</p>
           </div>
         </div>
       </footer>
