@@ -240,8 +240,35 @@ export default function AdminPanelScreen() {
   }, [labs, isGlobal, adminCityId])
 
   // Handlers
-  const handleApprove = async (id) => { setProcessingId(id); await approveAppointment(id); setProcessingId(null) }
-  const handleCancel = async (id) => { setProcessingId(id); await cancelAppointment(id); setProcessingId(null) }
+  const handleApprove = async (id) => {
+    setProcessingId(id)
+    await approveAppointment(id)
+    const appt = appointments.find(a => a.id === id)
+    if (appt) {
+      const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
+      await createNotification({
+        title: `${prefix}${language === 'TR' ? 'Randevunuz Onaylandı' : 'Appointment Approved'}`,
+        message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`,
+        type: 'SYSTEM',
+      })
+    }
+    setProcessingId(null)
+  }
+
+  const handleCancel = async (id) => {
+    setProcessingId(id)
+    await cancelAppointment(id)
+    const appt = appointments.find(a => a.id === id)
+    if (appt) {
+      const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
+      await createNotification({
+        title: `${prefix}${language === 'TR' ? 'Randevunuz İptal Edildi' : 'Appointment Cancelled'}`,
+        message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`,
+        type: 'ALERT',
+      })
+    }
+    setProcessingId(null)
+  }
   const handleMarkCompleted = async (id) => { setProcessingId(id); await markAppointmentCompleted(id); setProcessingId(null) }
   const handleApproveUser = async (id) => { setProcessingId(id); await approveUser(id); setProcessingId(null) }
   const handleRevokeUser = async (id) => { setProcessingId(id); await revokeUser(id); setProcessingId(null) }
@@ -540,9 +567,9 @@ export default function AdminPanelScreen() {
             {/* Date range */}
             <div className="flex flex-wrap gap-2 items-center">
               <span className="text-xs text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Tarih:' : 'Date:'}</span>
-              <input type="date" className={inputClass} value={filterDateFrom} onChange={e => { setFilterDateFrom(e.target.value); setVisibleCount(PAGE_SIZE) }} />
+              <input type="date" className={inputClass} value={filterDateFrom} max={filterDateTo || undefined} onChange={e => { setFilterDateFrom(e.target.value); setVisibleCount(PAGE_SIZE) }} />
               <span className="text-xs text-gray-400">—</span>
-              <input type="date" className={inputClass} value={filterDateTo} onChange={e => { setFilterDateTo(e.target.value); setVisibleCount(PAGE_SIZE) }} />
+              <input type="date" className={inputClass} value={filterDateTo} min={filterDateFrom || undefined} onChange={e => { setFilterDateTo(e.target.value); setVisibleCount(PAGE_SIZE) }} />
               {(search || filterCity || filterStatus || filterLocation || filterDateFrom || filterDateTo) && (
                 <button onClick={resetFilters} className="text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline">
                   {language === 'TR' ? 'Filtreleri Temizle' : 'Clear Filters'}
@@ -598,13 +625,6 @@ export default function AdminPanelScreen() {
                       {appt.note && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Not' : 'Note'}:</span> {appt.note}</span>}
                     </div>
 
-                    {appt.automations_applied && (
-                      <div className="mb-2">
-                        <span className="text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
-                          ⚡ {language === 'TR' ? 'Otomasyon Uygulandı' : 'Automation Applied'}
-                        </span>
-                      </div>
-                    )}
 
                     {(appt.status === 'PENDING' || appt.status === 'CANCELLATION_REQUESTED') && (
                       <div className="flex gap-2">

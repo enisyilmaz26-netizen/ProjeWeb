@@ -119,10 +119,10 @@ export default function LandingPage({ onLoginClick }) {
   ]
 
   const steps = [
-    { num: '01', title: { TR: 'Kayıt Ol', EN: 'Register' }, desc: { TR: 'Sisteme üye olun. Branş, kurum ve şehir bilgilerinizi girin.', EN: 'Register on the system. Enter your branch, institution, and city information.' } },
-    { num: '02', title: { TR: 'Onay Bekle', EN: 'Wait for Approval' }, desc: { TR: 'Şehir yöneticiniz üyeliğinizi inceler ve onaylar.', EN: 'Your city administrator reviews and approves your membership.' } },
-    { num: '03', title: { TR: 'Randevu Al', EN: 'Book a Slot' }, desc: { TR: 'Şehrinizde bulunan stüdyolardan tarih ve saat seçerek randevunuzu oluşturun.', EN: 'Choose a date and time from studios in your city and create your reservation.' } },
-    { num: '04', title: { TR: 'Stüdyonu Kullan', EN: 'Use the Studio' }, desc: { TR: 'Onaylanan randevunuzla stüdyoya gelin, dijital içerik üretin.', EN: 'Come to the studio with your approved reservation and produce digital content.' } },
+    { title: { TR: 'Kayıt Ol', EN: 'Register' }, desc: { TR: 'Sisteme üye olun. Branş, kurum ve şehir bilgilerinizi girin.', EN: 'Register on the system. Enter your branch, institution, and city information.' } },
+    { title: { TR: 'Onay Bekle', EN: 'Wait for Approval' }, desc: { TR: 'Şehir yöneticiniz üyeliğinizi inceler ve onaylar.', EN: 'Your city administrator reviews and approves your membership.' } },
+    { title: { TR: 'Randevu Al', EN: 'Book a Slot' }, desc: { TR: 'Şehrinizde bulunan stüdyolardan tarih ve saat seçerek randevunuzu oluşturun.', EN: 'Choose a date and time from studios in your city and create your reservation.' } },
+    { title: { TR: 'Stüdyonu Kullan', EN: 'Use the Studio' }, desc: { TR: 'Onaylanan randevunuzla stüdyoya gelin, dijital içerik üretin.', EN: 'Come to the studio with your approved reservation and produce digital content.' } },
   ]
 
   const cityLabCount = (cityId) => labs.filter(l => String(l.city_id) === String(cityId)).length

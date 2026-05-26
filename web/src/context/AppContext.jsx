@@ -209,6 +209,14 @@ export function AppProvider({ children }) {
       is_approved: false,
     }])
     if (error) return { success: false, error: error.message }
+
+    await supabase.from('notifications').insert([{
+      title: `[${formData.city_name}] ${language === 'TR' ? 'Yeni Üye Başvurusu' : 'New Member Request'}`,
+      message: `${formData.name} ${formData.surname} (${formData.email}) kayıt talebinde bulundu.`,
+      type: 'SYSTEM',
+      timestamp: Date.now(),
+      is_read: false,
+    }])
     return { success: true }
   }
 
