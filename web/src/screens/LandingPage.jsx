@@ -480,19 +480,19 @@ export default function LandingPage({ onLoginClick }) {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-[#070E1E] dark:bg-black text-white py-12 px-4 sm:px-6">
+      <footer className="bg-gradient-to-r from-[#0A2461] via-[#1565C0] to-[#00AEEF] dark:from-[#020A22] dark:via-[#071A48] dark:to-[#0D3A8A] text-white py-12 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-3">
               <AppLogo size={40} />
               <div>
                 <p className="font-bold text-sm text-white">Öğretmen Öğrenme Laboratuvarları</p>
-                <p className="text-xs text-gray-400">Öğretmen Eğitimi Dijital Ekosistemi Projesi</p>
+                <p className="text-xs text-white/70">Öğretmen Eğitimi Dijital Ekosistemi Projesi</p>
               </div>
             </div>
             <div className="flex gap-4">
               {NAV_LINKS.map(l => (
-                <button key={l.href} onClick={() => scrollTo(l.href.slice(1))} className="text-xs text-gray-400 hover:text-white transition">
+                <button key={l.href} onClick={() => scrollTo(l.href.slice(1))} className="text-xs text-white/70 hover:text-white transition">
                   {l.label[lang]}
                 </button>
               ))}
@@ -505,7 +505,7 @@ export default function LandingPage({ onLoginClick }) {
                 ? 'Bu proje AB ve Türkiye Cumhuriyeti tarafından ortaklaşa finanse edilmektedir. Burada ifade edilen görüşler Avrupa Birliği\'nin, T.C. Milli Eğitim Bakanlığı\'nın veya UNICEF\'in resmi tutumunu yansıtmaz.'
                 : 'This project is co-funded by the EU and the Republic of Turkey. The views expressed here do not necessarily reflect the official positions of the European Union, the Turkish Ministry of National Education, or UNICEF.'}
             </p>
-            <p className="text-xs text-gray-600 whitespace-nowrap">© {new Date().getFullYear()} MEB ÖGEDEP</p>
+            <p className="text-xs text-white/50 whitespace-nowrap">© {new Date().getFullYear()} MEB ÖGEDEP</p>
           </div>
         </div>
       </footer>
