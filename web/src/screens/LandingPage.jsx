@@ -38,19 +38,21 @@ export default function LandingPage({ onLoginClick }) {
       ),
     },
     {
-      value: labs.length || 8,
+      value: 8,
       label: { TR: 'Laboratuvar', EN: 'Laboratory' },
       color: '#1565C0',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
-          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/>
+          <path d="M9 3h6"/>
+          <path d="M10 3v7l-4.5 9.5a1 1 0 0 0 .9 1.5h11.2a1 1 0 0 0 .9-1.5L14 10V3"/>
+          <path d="M7.5 16.5h9"/>
         </svg>
       ),
     },
     {
       value: '200K+',
       label: { TR: 'Hedef Öğretmen', EN: 'Target Teachers' },
-      color: '#00AEEF',
+      color: '#0A2461',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -229,7 +231,7 @@ export default function LandingPage({ onLoginClick }) {
         <div className="relative max-w-3xl mx-auto w-full px-4 sm:px-6 pb-10">
           <div className="grid grid-cols-3 gap-4">
             {statsData.map((s, i) => (
-              <div key={i} className="rounded-2xl p-5 text-center border" style={{ backgroundColor: s.color + '12', borderColor: s.color + '30' }}>
+              <div key={i} className="rounded-2xl p-5 text-center bg-white/80 dark:bg-white/10 backdrop-blur border" style={{ borderColor: s.color + '50' }}>
                 <div className="flex justify-center mb-2" style={{ color: s.color }}>{s.icon}</div>
                 <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">{s.value}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label[lang]}</p>
