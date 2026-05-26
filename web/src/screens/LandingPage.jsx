@@ -376,7 +376,7 @@ export default function LandingPage({ onLoginClick }) {
               {steps.map((s, i) => (
                 <div key={i} className="text-center relative">
                   <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#6750A4] to-[#8B6FD4] rounded-2xl flex flex-col items-center justify-center mb-4 shadow-lg shadow-purple-200 dark:shadow-purple-900/30">
-                    <span className="text-white/50 text-[9px] font-bold leading-none">{s.num}</span>
+                    <span className="text-white/50 text-[9px] font-bold leading-none">{lang === 'TR' ? 'ADIM' : 'STEP'}</span>
                     <span className="text-white font-extrabold text-lg leading-tight">{i + 1}</span>
                   </div>
                   <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2">{s.title[lang]}</h3>
