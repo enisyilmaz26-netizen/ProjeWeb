@@ -235,6 +235,26 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const changeAdminPassword = async (adminId, email, currentPassword, newPassword) => {
+    const { data } = await supabase.from('admins').select('password_hash').eq('id', adminId).single()
+    if (!data) return { success: false, error: 'err_user_not_found' }
+
+    const currentHashed = await hashPassword(currentPassword, email)
+    let passwordOk = false
+    if (data.password_hash) {
+      passwordOk = data.password_hash === currentHashed || data.password_hash === currentPassword
+    } else {
+      passwordOk = currentPassword === 'admin123'
+    }
+    if (!passwordOk) return { success: false, error: 'err_current_password_wrong' }
+
+    const newHashed = await hashPassword(newPassword, email)
+    const { error } = await supabase.from('admins').update({ password_hash: newHashed }).eq('id', adminId)
+    if (error) return { success: false, error: error.message }
+    setLoggedInAdmin(prev => ({ ...prev, password_hash: newHashed }))
+    return { success: true }
+  }
+
   const changePassword = async (userId, email, currentPassword, newPassword) => {
     const { data } = await supabase.from('users').select('password_hash').eq('id', userId).single()
     if (!data) return { success: false, error: 'err_user_not_found' }
@@ -442,7 +462,7 @@ export function AppProvider({ children }) {
     cities, labs, appointments, admins, notifications, timeSlots, users,
     loading,
     loadAllData,
-    loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, changePassword, logout,
+    loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
     toggleLanguage, toggleDarkMode,
     submitAppointment, approveAppointment, cancelAppointment, submitCancellationRequest, markAppointmentCompleted,
     approveUser, revokeUser,

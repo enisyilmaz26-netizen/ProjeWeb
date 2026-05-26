@@ -57,6 +57,7 @@ export default function AdminPanelScreen() {
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab,
     createNotification,
+    changeAdminPassword,
     loadAllData,
   } = useApp()
 
@@ -91,6 +92,13 @@ export default function AdminPanelScreen() {
 
   // User approvals tab
   const [userSearch, setUserSearch] = useState('')
+
+  // Admin password change
+  const [showAdminPwChange, setShowAdminPwChange] = useState(false)
+  const [adminPwForm, setAdminPwForm] = useState({ current: '', newPw: '', confirm: '' })
+  const [adminPwLoading, setAdminPwLoading] = useState(false)
+  const [adminPwError, setAdminPwError] = useState('')
+  const [adminPwSuccess, setAdminPwSuccess] = useState('')
 
   // Stats tab
   const [statsCity, setStatsCity] = useState('')
@@ -361,6 +369,31 @@ export default function AdminPanelScreen() {
     }
   }
 
+  const handleAdminPwChange = async (e) => {
+    e.preventDefault()
+    setAdminPwError('')
+    if (adminPwForm.newPw !== adminPwForm.confirm) {
+      setAdminPwError(t('err_password_mismatch', language))
+      return
+    }
+    if (adminPwForm.newPw.length < 4) {
+      setAdminPwError(language === 'TR' ? 'Şifre en az 4 karakter olmalıdır.' : 'Password must be at least 4 characters.')
+      return
+    }
+    setAdminPwLoading(true)
+    const result = await changeAdminPassword(loggedInAdmin.id, loggedInAdmin.email, adminPwForm.current, adminPwForm.newPw)
+    setAdminPwLoading(false)
+    if (result.success) {
+      setAdminPwForm({ current: '', newPw: '', confirm: '' })
+      setShowAdminPwChange(false)
+      setAdminPwSuccess(t('password_changed', language))
+      setTimeout(() => setAdminPwSuccess(''), 4000)
+    } else {
+      const errKey = result.error
+      setAdminPwError(translations[errKey] ? t(errKey, language) : (errKey || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.')))
+    }
+  }
+
   const resetFilters = () => {
     setSearch(''); setFilterCity(''); setFilterStatus(''); setFilterLocation('')
     setFilterDateFrom(''); setFilterDateTo(''); setVisibleCount(PAGE_SIZE)
@@ -379,6 +412,13 @@ export default function AdminPanelScreen() {
 
   return (
     <div className="px-4 py-4">
+      {adminPwSuccess && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between">
+          <span>{adminPwSuccess}</span>
+          <button onClick={() => setAdminPwSuccess('')} className="ml-2 text-green-500">✕</button>
+        </div>
+      )}
+
       {/* Admin header */}
       <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 mb-4">
         <div className="flex items-center gap-3">
@@ -395,10 +435,47 @@ export default function AdminPanelScreen() {
               })()}
             </p>
           </div>
-          <button onClick={loadAllData} className="ml-auto text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition">
-            {language === 'TR' ? '↻ Yenile' : '↻ Refresh'}
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => { setShowAdminPwChange(p => !p); setAdminPwError(''); setAdminPwForm({ current: '', newPw: '', confirm: '' }) }}
+              className="text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition"
+            >
+              🔒 {t('change_password', language)}
+            </button>
+            <button onClick={loadAllData} className="text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition">
+              {language === 'TR' ? '↻ Yenile' : '↻ Refresh'}
+            </button>
+          </div>
         </div>
+
+        {/* Inline password change form */}
+        {showAdminPwChange && (
+          <form onSubmit={handleAdminPwChange} className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('current_password', language)} *</label>
+                <input type="password" className={inputClass} value={adminPwForm.current} onChange={e => setAdminPwForm(p => ({ ...p, current: e.target.value }))} required />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('new_password', language)} *</label>
+                <input type="password" className={inputClass} value={adminPwForm.newPw} onChange={e => setAdminPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={4} />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_confirm_password', language)} *</label>
+                <input type="password" className={inputClass} value={adminPwForm.confirm} onChange={e => setAdminPwForm(p => ({ ...p, confirm: e.target.value }))} required />
+              </div>
+            </div>
+            {adminPwError && <p className="text-red-500 dark:text-red-400 text-xs">{adminPwError}</p>}
+            <div className="flex gap-2">
+              <button type="submit" disabled={adminPwLoading} className="py-2 px-4 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl disabled:opacity-60 hover:opacity-90 transition">
+                {adminPwLoading ? '...' : (language === 'TR' ? 'Şifreyi Güncelle' : 'Update Password')}
+              </button>
+              <button type="button" onClick={() => setShowAdminPwChange(false)} className="py-2 px-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">
+                {language === 'TR' ? 'Vazgeç' : 'Cancel'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Stats */}
