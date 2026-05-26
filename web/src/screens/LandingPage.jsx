@@ -137,8 +137,8 @@ export default function LandingPage({ onLoginClick }) {
           <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2.5">
             <AppLogo size={36} />
             <div className="leading-tight hidden sm:block">
-              <p className={`font-bold text-sm ${scrolled ? 'text-gray-900 dark:text-white' : 'text-white'}`}>ÖÖL Rezervasyon</p>
-              <p className={`text-[10px] ${scrolled ? 'text-gray-500 dark:text-gray-400' : 'text-white/70'}`}>MEB ÖGEDEP</p>
+              <p className={`font-bold text-xs ${scrolled ? 'text-gray-900 dark:text-white' : 'text-white'}`}>Öğretmen Öğrenme Laboratuvarı</p>
+              <p className={`text-[10px] ${scrolled ? 'text-gray-500 dark:text-gray-400' : 'text-white/70'}`}>Randevu Sistemi | MEB ÖGEDEP</p>
             </div>
           </button>
 
