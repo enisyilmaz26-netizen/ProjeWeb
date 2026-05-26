@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 
 const AppContext = createContext(null)
 
-// SHA-256 via Web Crypto API — no extra dependency needed
+// SHA-256 via Web Crypto API
 async function hashPassword(password, salt = '') {
   try {
     const encoder = new TextEncoder()
@@ -24,6 +24,31 @@ function loadFromStorage(key) {
   } catch {
     return null
   }
+}
+
+// Module-level rate limit tracker (cleared on page refresh — intentional)
+const loginAttempts = {}
+
+function checkRateLimit(email) {
+  const now = Date.now()
+  const entry = loginAttempts[email]
+  if (entry && entry.lockUntil > now) {
+    return { locked: true, secs: Math.ceil((entry.lockUntil - now) / 1000) }
+  }
+  return { locked: false }
+}
+
+function recordFailedAttempt(email) {
+  if (!loginAttempts[email]) loginAttempts[email] = { count: 0, lockUntil: 0 }
+  loginAttempts[email].count++
+  if (loginAttempts[email].count >= 5) {
+    loginAttempts[email].lockUntil = Date.now() + 60000
+    loginAttempts[email].count = 0
+  }
+}
+
+function clearAttempts(email) {
+  delete loginAttempts[email]
 }
 
 export function AppProvider({ children }) {
@@ -52,9 +77,7 @@ export function AppProvider({ children }) {
     else localStorage.removeItem('session_admin')
   }, [loggedInAdmin])
 
-  useEffect(() => {
-    localStorage.setItem('app_language', JSON.stringify(language))
-  }, [language])
+  useEffect(() => { localStorage.setItem('app_language', JSON.stringify(language)) }, [language])
 
   useEffect(() => {
     localStorage.setItem('app_dark_mode', JSON.stringify(isDarkMode))
@@ -105,21 +128,26 @@ export function AppProvider({ children }) {
 
   // AUTH ACTIONS
   const loginUser = async (email, password) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single()
+    const rl = checkRateLimit(email)
+    if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
-    if (error || !data) return { success: false, error: 'err_user_not_found' }
+    const { data, error } = await supabase
+      .from('users').select('*').eq('email', email).single()
+
+    if (error || !data) {
+      recordFailedAttempt(email)
+      return { success: false, error: 'err_user_not_found' }
+    }
 
     const hashed = await hashPassword(password, email)
     const isHashMatch = data.password_hash === hashed
     const isPlainMatch = !isHashMatch && data.password_hash === password
 
-    if (!isHashMatch && !isPlainMatch) return { success: false, error: 'err_user_not_found' }
+    if (!isHashMatch && !isPlainMatch) {
+      recordFailedAttempt(email)
+      return { success: false, error: 'err_user_not_found' }
+    }
 
-    // Silently upgrade plain-text passwords to hashed on successful login
     if (isPlainMatch) {
       await supabase.from('users').update({ password_hash: hashed }).eq('id', data.id)
       data.password_hash = hashed
@@ -127,67 +155,63 @@ export function AppProvider({ children }) {
 
     if (!data.is_approved) return { success: false, error: 'err_not_approved' }
 
+    clearAttempts(email)
     setLoggedInUser(data)
     return { success: true }
   }
 
   const loginAdmin = async (email, password) => {
-    const { data, error } = await supabase
-      .from('admins')
-      .select('*')
-      .eq('email', email)
-      .single()
+    const rl = checkRateLimit(email)
+    if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
-    if (error || !data) return { success: false, error: 'err_user_not_found' }
+    const { data, error } = await supabase
+      .from('admins').select('*').eq('email', email).single()
+
+    if (error || !data) {
+      recordFailedAttempt(email)
+      return { success: false, error: 'err_user_not_found' }
+    }
 
     const hashed = await hashPassword(password, email)
-
     let passwordOk = false
     if (data.password_hash) {
-      // Admin has a stored hash — compare with hash (or plain-text for backward compat)
       passwordOk = data.password_hash === hashed || data.password_hash === password
-      // Silently upgrade plain-text admin password to hash
       if (data.password_hash === password) {
         await supabase.from('admins').update({ password_hash: hashed }).eq('id', data.id)
       }
     } else {
-      // Legacy: no password_hash column on admin — accept hardcoded default
       passwordOk = password === 'admin123'
     }
 
-    if (!passwordOk) return { success: false, error: 'err_user_not_found' }
+    if (!passwordOk) {
+      recordFailedAttempt(email)
+      return { success: false, error: 'err_user_not_found' }
+    }
 
+    clearAttempts(email)
     setLoggedInAdmin(data)
     return { success: true }
   }
 
   const registerUser = async (formData) => {
     const { data: existing } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', formData.email)
-      .maybeSingle()
-
+      .from('users').select('id').eq('email', formData.email).maybeSingle()
     if (existing) return { success: false, error: 'err_email_exists' }
 
     const hashed = await hashPassword(formData.password, formData.email)
-
-    const { error } = await supabase
-      .from('users')
-      .insert([{
-        name: formData.name,
-        surname: formData.surname,
-        email: formData.email,
-        password_hash: hashed,
-        branch: formData.branch,
-        work_location: formData.work_location,
-        phone: formData.phone,
-        city_id: formData.city_id,
-        city_name: formData.city_name,
-        district: formData.district,
-        is_approved: false,
-      }])
-
+    const { error } = await supabase.from('users').insert([{
+      name: formData.name,
+      surname: formData.surname,
+      email: formData.email,
+      password_hash: hashed,
+      branch: formData.branch,
+      work_location: formData.work_location,
+      phone: formData.phone,
+      city_id: formData.city_id,
+      city_name: formData.city_name,
+      district: formData.district,
+      is_approved: false,
+    }])
     if (error) return { success: false, error: error.message }
     return { success: true }
   }
@@ -200,19 +224,22 @@ export function AppProvider({ children }) {
       .ilike('name', name.trim())
       .ilike('surname', surname.trim())
       .maybeSingle()
-
     if (error || !data) return { success: false, error: 'err_user_not_registered' }
     return { success: true, data }
   }
 
   const resetPassword = async (userId, email, newPassword) => {
     const hashed = await hashPassword(newPassword, email)
-    const { error } = await supabase
-      .from('users')
-      .update({ password_hash: hashed })
-      .eq('id', userId)
-
+    const { error } = await supabase.from('users').update({ password_hash: hashed }).eq('id', userId)
     if (error) return { success: false, error: error.message }
+    return { success: true }
+  }
+
+  const updateUserProfile = async (userId, updates) => {
+    const { error } = await supabase.from('users').update(updates).eq('id', userId)
+    if (error) return { success: false, error: error.message }
+    setLoggedInUser(prev => ({ ...prev, ...updates }))
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u))
     return { success: true }
   }
 
@@ -226,6 +253,16 @@ export function AppProvider({ children }) {
 
   // APPOINTMENT ACTIONS
   const submitAppointment = async (appointmentData) => {
+    // Prevent duplicate: same user + lab + date + slot already PENDING or APPROVED
+    const duplicate = appointments.find(a =>
+      a.user_email === appointmentData.user_email &&
+      String(a.lab_id) === String(appointmentData.lab_id) &&
+      a.date === appointmentData.date &&
+      a.time_slot === appointmentData.time_slot &&
+      (a.status === 'PENDING' || a.status === 'APPROVED')
+    )
+    if (duplicate) return { success: false, error: 'err_duplicate_appointment' }
+
     const { data, error } = await supabase
       .from('appointments')
       .insert([{
@@ -243,16 +280,14 @@ export function AppProvider({ children }) {
   }
 
   const approveAppointment = async (id) => {
-    const { error } = await supabase
-      .from('appointments').update({ status: 'APPROVED' }).eq('id', id)
+    const { error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id)
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'APPROVED' } : a))
     return { success: true }
   }
 
   const cancelAppointment = async (id) => {
-    const { error } = await supabase
-      .from('appointments').update({ status: 'CANCELLED' }).eq('id', id)
+    const { error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id)
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
     return { success: true }
@@ -295,7 +330,6 @@ export function AppProvider({ children }) {
   const clearNotifications = async (cityName = null) => {
     let query = supabase.from('notifications').delete()
     if (cityName) {
-      // City admins only delete notifications that mention their city
       query = query.or(`title.ilike.%${cityName}%,message.ilike.%${cityName}%`)
     } else {
       query = query.neq('id', 0)
@@ -312,6 +346,17 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const createNotification = async ({ title, message, type }) => {
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert([{ title, message, type, timestamp: Date.now(), is_read: false }])
+      .select()
+      .single()
+    if (error) return { success: false, error: error.message }
+    setNotifications(prev => [data, ...prev])
+    return { success: true }
+  }
+
   // TIME SLOT ACTIONS
   const addTimeSlot = async (cityId, timeRange) => {
     const { data, error } = await supabase
@@ -325,13 +370,22 @@ export function AppProvider({ children }) {
   }
 
   const removeTimeSlot = async (id) => {
+    const slot = timeSlots.find(s => s.id === id)
+    if (slot) {
+      const hasActive = appointments.some(a =>
+        String(a.city_id) === String(slot.city_id) &&
+        a.time_slot === slot.time_range &&
+        (a.status === 'PENDING' || a.status === 'APPROVED')
+      )
+      if (hasActive) return { success: false, error: 'err_slot_has_appointments' }
+    }
     const { error } = await supabase.from('city_time_slots').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
     setTimeSlots(prev => prev.filter(s => s.id !== id))
     return { success: true }
   }
 
-  // LAB ACTIONS (GLOBAL admin)
+  // LAB ACTIONS
   const addLab = async (labData) => {
     const { data, error } = await supabase.from('laboratories').insert([labData]).select().single()
     if (error) return { success: false, error: error.message }
@@ -339,7 +393,20 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const updateLab = async (id, updates) => {
+    const { error } = await supabase.from('laboratories').update(updates).eq('id', id)
+    if (error) return { success: false, error: error.message }
+    setLabs(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l))
+    return { success: true }
+  }
+
   const deleteLab = async (id) => {
+    const hasActive = appointments.some(a =>
+      String(a.lab_id) === String(id) &&
+      (a.status === 'PENDING' || a.status === 'APPROVED')
+    )
+    if (hasActive) return { success: false, error: 'err_lab_has_appointments' }
+
     const { error } = await supabase.from('laboratories').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
     setLabs(prev => prev.filter(l => l.id !== id))
@@ -352,13 +419,13 @@ export function AppProvider({ children }) {
     cities, labs, appointments, admins, notifications, timeSlots, users,
     loading,
     loadAllData,
-    loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, logout,
+    loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, logout,
     toggleLanguage, toggleDarkMode,
     submitAppointment, approveAppointment, cancelAppointment, submitCancellationRequest,
     approveUser, revokeUser,
-    markNotificationsRead, clearNotifications,
+    markNotificationsRead, clearNotifications, createNotification,
     addTimeSlot, removeTimeSlot,
-    addLab, deleteLab,
+    addLab, updateLab, deleteLab,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

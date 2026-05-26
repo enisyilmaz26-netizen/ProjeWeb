@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate } from '../lib/languages'
+import { t, formatDate, translations } from '../lib/languages'
 
 function getMaxCapacity(lab) {
   if (!lab) return 1
@@ -121,7 +121,9 @@ export default function UserReservationScreen() {
       setSelectedSlot(null)
       setNote('')
     } else {
-      setErrorMsg(result.error || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.'))
+      const errKey = result.error
+      const errMsg = (errKey && translations[errKey]) ? t(errKey, language) : (errKey || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.'))
+      setErrorMsg(errMsg)
     }
   }
 

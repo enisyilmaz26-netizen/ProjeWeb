@@ -46,7 +46,11 @@ export default function AuthScreen() {
         result = await loginUser(loginEmail, loginPassword)
       }
       if (!result.success) {
-        setLoginError(t(result.error, language))
+        if (result.error === 'err_rate_limited') {
+          setLoginError(t('err_rate_limited', language).replace('{secs}', result.secs))
+        } else {
+          setLoginError(t(result.error, language))
+        }
       }
     } finally {
       setLoginLoading(false)

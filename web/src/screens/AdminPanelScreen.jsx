@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate } from '../lib/languages'
+import { t, formatDate, translations } from '../lib/languages'
 
 const STATUS_COLORS = {
   PENDING: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
@@ -20,6 +20,8 @@ function statusLabel(status, lang) {
   return STATUS_LABELS[status]?.[lang] || status
 }
 
+const PAGE_SIZE = 50
+
 export default function AdminPanelScreen() {
   const {
     loggedInAdmin, language,
@@ -27,7 +29,8 @@ export default function AdminPanelScreen() {
     approveAppointment, cancelAppointment,
     approveUser, revokeUser,
     addTimeSlot, removeTimeSlot,
-    addLab, deleteLab,
+    addLab, updateLab, deleteLab,
+    createNotification,
     loadAllData,
   } = useApp()
 
@@ -35,10 +38,15 @@ export default function AdminPanelScreen() {
   const adminCityId = loggedInAdmin?.city_id
 
   const [activeTab, setActiveTab] = useState('appointments')
+
+  // Appointments filters
   const [search, setSearch] = useState('')
   const [filterCity, setFilterCity] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterLocation, setFilterLocation] = useState('')
+  const [filterDateFrom, setFilterDateFrom] = useState('')
+  const [filterDateTo, setFilterDateTo] = useState('')
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [processingId, setProcessingId] = useState(null)
 
   // Time slots tab
@@ -50,6 +58,26 @@ export default function AdminPanelScreen() {
   const [showAddLab, setShowAddLab] = useState(false)
   const [labForm, setLabForm] = useState({ name: '', description: '', capacity_per_slot: 1, location: '', branches: '', city_id: '' })
   const [labError, setLabError] = useState('')
+  const [editingLabId, setEditingLabId] = useState(null)
+  const [editLabForm, setEditLabForm] = useState({})
+
+  // User approvals tab
+  const [userSearch, setUserSearch] = useState('')
+
+  // Notifications tab
+  const [notifForm, setNotifForm] = useState({ title: '', message: '', type: 'SYSTEM' })
+  const [notifLoading, setNotifLoading] = useState(false)
+  const [notifSuccess, setNotifSuccess] = useState('')
+  const [notifError, setNotifError] = useState('')
+
+  // Available locations for current city scope
+  const availableLocations = useMemo(() => {
+    const scopeCityId = !isGlobal ? adminCityId : (filterCity || null)
+    const scopeLabs = scopeCityId
+      ? labs.filter(l => String(l.city_id) === String(scopeCityId))
+      : labs
+    return [...new Set(scopeLabs.map(l => l.location).filter(Boolean))]
+  }, [labs, isGlobal, adminCityId, filterCity])
 
   // Filtered appointments
   const filteredAppointments = useMemo(() => {
@@ -64,6 +92,8 @@ export default function AdminPanelScreen() {
       const labIds = labs.filter(l => l.location === filterLocation).map(l => l.id)
       list = list.filter(a => labIds.includes(a.lab_id))
     }
+    if (filterDateFrom) list = list.filter(a => a.date >= filterDateFrom)
+    if (filterDateTo) list = list.filter(a => a.date <= filterDateTo)
     if (search.trim()) {
       const q = search.toLowerCase().trim()
       list = list.filter(a =>
@@ -75,17 +105,7 @@ export default function AdminPanelScreen() {
       )
     }
     return list
-  }, [appointments, isGlobal, adminCityId, filterCity, filterStatus, filterLocation, search, labs])
-
-  // Available locations for current city scope
-  const availableLocations = useMemo(() => {
-    const scopeCityId = !isGlobal ? adminCityId : (filterCity || null)
-    const scopeLabs = scopeCityId
-      ? labs.filter(l => String(l.city_id) === String(scopeCityId))
-      : labs
-    const locs = [...new Set(scopeLabs.map(l => l.location).filter(Boolean))]
-    return locs
-  }, [labs, isGlobal, adminCityId, filterCity])
+  }, [appointments, isGlobal, adminCityId, filterCity, filterStatus, filterLocation, filterDateFrom, filterDateTo, search, labs])
 
   // Stats
   const stats = useMemo(() => {
@@ -99,52 +119,34 @@ export default function AdminPanelScreen() {
     }
   }, [appointments, isGlobal, adminCityId])
 
-  // Pending users (for user_approvals tab)
+  // Users
   const pendingUsers = useMemo(() => {
-    if (isGlobal) return users.filter(u => !u.is_approved)
-    return users.filter(u => !u.is_approved && String(u.city_id) === String(adminCityId))
-  }, [users, isGlobal, adminCityId])
+    const base = isGlobal ? users.filter(u => !u.is_approved) : users.filter(u => !u.is_approved && String(u.city_id) === String(adminCityId))
+    if (!userSearch.trim()) return base
+    const q = userSearch.toLowerCase()
+    return base.filter(u => `${u.name} ${u.surname} ${u.email}`.toLowerCase().includes(q))
+  }, [users, isGlobal, adminCityId, userSearch])
 
   const approvedUsers = useMemo(() => {
-    if (isGlobal) return users.filter(u => u.is_approved)
-    return users.filter(u => u.is_approved && String(u.city_id) === String(adminCityId))
-  }, [users, isGlobal, adminCityId])
+    const base = isGlobal ? users.filter(u => u.is_approved) : users.filter(u => u.is_approved && String(u.city_id) === String(adminCityId))
+    if (!userSearch.trim()) return base
+    const q = userSearch.toLowerCase()
+    return base.filter(u => `${u.name} ${u.surname} ${u.email}`.toLowerCase().includes(q))
+  }, [users, isGlobal, adminCityId, userSearch])
 
-  // City slots
   const visibleSlots = useMemo(() => {
-    if (isGlobal) return timeSlots
-    return timeSlots.filter(s => String(s.city_id) === String(adminCityId))
+    return isGlobal ? timeSlots : timeSlots.filter(s => String(s.city_id) === String(adminCityId))
   }, [timeSlots, isGlobal, adminCityId])
 
-  // Labs for studio tab
   const visibleLabs = useMemo(() => {
-    if (isGlobal) return labs
-    return labs.filter(l => String(l.city_id) === String(adminCityId))
+    return isGlobal ? labs : labs.filter(l => String(l.city_id) === String(adminCityId))
   }, [labs, isGlobal, adminCityId])
 
-  const handleApprove = async (id) => {
-    setProcessingId(id)
-    await approveAppointment(id)
-    setProcessingId(null)
-  }
-
-  const handleCancel = async (id) => {
-    setProcessingId(id)
-    await cancelAppointment(id)
-    setProcessingId(null)
-  }
-
-  const handleApproveUser = async (id) => {
-    setProcessingId(id)
-    await approveUser(id)
-    setProcessingId(null)
-  }
-
-  const handleRevokeUser = async (id) => {
-    setProcessingId(id)
-    await revokeUser(id)
-    setProcessingId(null)
-  }
+  // Handlers
+  const handleApprove = async (id) => { setProcessingId(id); await approveAppointment(id); setProcessingId(null) }
+  const handleCancel = async (id) => { setProcessingId(id); await cancelAppointment(id); setProcessingId(null) }
+  const handleApproveUser = async (id) => { setProcessingId(id); await approveUser(id); setProcessingId(null) }
+  const handleRevokeUser = async (id) => { setProcessingId(id); await revokeUser(id); setProcessingId(null) }
 
   const handleAddSlot = async () => {
     setSlotError('')
@@ -164,8 +166,12 @@ export default function AdminPanelScreen() {
 
   const handleRemoveSlot = async (id) => {
     setProcessingId(id)
-    await removeTimeSlot(id)
+    const result = await removeTimeSlot(id)
     setProcessingId(null)
+    if (!result.success) {
+      const errKey = result.error
+      setSlotError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || 'Error'))
+    }
   }
 
   const handleAddLab = async (e) => {
@@ -176,7 +182,6 @@ export default function AdminPanelScreen() {
       setLabError(language === 'TR' ? 'Şehir ve stüdyo adı zorunludur.' : 'City and studio name are required.')
       return
     }
-    const city = cities.find(c => String(c.id) === String(cityId))
     const result = await addLab({
       name: labForm.name,
       description: labForm.description,
@@ -193,11 +198,72 @@ export default function AdminPanelScreen() {
     }
   }
 
+  const startEditLab = (lab) => {
+    setEditingLabId(lab.id)
+    setEditLabForm({
+      name: lab.name || '',
+      description: lab.description || '',
+      capacity_per_slot: lab.capacity_per_slot || 1,
+      location: lab.location || '',
+      branches: lab.branches || '',
+    })
+    setLabError('')
+  }
+
+  const handleUpdateLab = async (e) => {
+    e.preventDefault()
+    setLabError('')
+    if (!editLabForm.name.trim()) {
+      setLabError(language === 'TR' ? 'Stüdyo adı zorunludur.' : 'Studio name is required.')
+      return
+    }
+    const result = await updateLab(editingLabId, {
+      name: editLabForm.name,
+      description: editLabForm.description,
+      capacity_per_slot: Number(editLabForm.capacity_per_slot) || 1,
+      location: editLabForm.location,
+      branches: editLabForm.branches,
+    })
+    if (result.success) {
+      setEditingLabId(null)
+    } else {
+      setLabError(result.error || 'Error')
+    }
+  }
+
   const handleDeleteLab = async (id) => {
     if (!window.confirm(language === 'TR' ? 'Bu stüdyoyu silmek istediğinizden emin misiniz?' : 'Are you sure you want to delete this studio?')) return
     setProcessingId(id)
-    await deleteLab(id)
+    const result = await deleteLab(id)
     setProcessingId(null)
+    if (!result.success) {
+      const errKey = result.error
+      setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || 'Error'))
+    }
+  }
+
+  const handleCreateNotification = async (e) => {
+    e.preventDefault()
+    setNotifError('')
+    if (!notifForm.title.trim() || !notifForm.message.trim()) {
+      setNotifError(language === 'TR' ? 'Başlık ve mesaj zorunludur.' : 'Title and message are required.')
+      return
+    }
+    setNotifLoading(true)
+    const result = await createNotification(notifForm)
+    setNotifLoading(false)
+    if (result.success) {
+      setNotifForm({ title: '', message: '', type: 'SYSTEM' })
+      setNotifSuccess(language === 'TR' ? 'Bildirim gönderildi.' : 'Notification sent.')
+      setTimeout(() => setNotifSuccess(''), 3000)
+    } else {
+      setNotifError(result.error || 'Error')
+    }
+  }
+
+  const resetFilters = () => {
+    setSearch(''); setFilterCity(''); setFilterStatus(''); setFilterLocation('')
+    setFilterDateFrom(''); setFilterDateTo(''); setVisibleCount(PAGE_SIZE)
   }
 
   const inputClass = "px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2C2A31] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6750A4] dark:focus:ring-[#D0BCFF] text-sm"
@@ -207,6 +273,7 @@ export default function AdminPanelScreen() {
     ...(isGlobal ? [{ key: 'studios', label: language === 'TR' ? 'Stüdyolar' : 'Studios' }] : []),
     { key: 'slots', label: language === 'TR' ? 'Saat Dilimleri' : 'Time Slots' },
     { key: 'user_approvals', label: language === 'TR' ? 'Üye Onayları' : 'User Approvals' },
+    { key: 'notifications', label: language === 'TR' ? 'Bildirim Gönder' : 'Send Notification' },
   ]
 
   return (
@@ -220,19 +287,14 @@ export default function AdminPanelScreen() {
           <div>
             <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{loggedInAdmin?.name || loggedInAdmin?.email}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {loggedInAdmin?.role === 'GLOBAL'
-                ? (language === 'TR' ? 'Genel Yönetici' : 'Global Admin')
-                : (language === 'TR' ? 'Şehir Yöneticisi' : 'City Admin')}
+              {isGlobal ? (language === 'TR' ? 'Genel Yönetici' : 'Global Admin') : (language === 'TR' ? 'Şehir Yöneticisi' : 'City Admin')}
               {!isGlobal && loggedInAdmin?.city_id && (() => {
                 const c = cities.find(x => String(x.id) === String(loggedInAdmin.city_id))
                 return c ? ` — ${c.name}` : ''
               })()}
             </p>
           </div>
-          <button
-            onClick={loadAllData}
-            className="ml-auto text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition"
-          >
+          <button onClick={loadAllData} className="ml-auto text-xs text-[#6750A4] dark:text-[#D0BCFF] border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 rounded-lg px-3 py-1.5 hover:bg-[#6750A4]/5 transition">
             {language === 'TR' ? '↻ Yenile' : '↻ Refresh'}
           </button>
         </div>
@@ -267,103 +329,121 @@ export default function AdminPanelScreen() {
       {activeTab === 'appointments' && (
         <div>
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-2 mb-3 flex-wrap">
-            <input
-              type="text"
-              placeholder={language === 'TR' ? 'Ara...' : 'Search...'}
-              className={`${inputClass} flex-1 min-w-[160px]`}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-            {isGlobal && (
-              <select className={inputClass} value={filterCity} onChange={e => { setFilterCity(e.target.value); setFilterLocation('') }}>
-                <option value="">{language === 'TR' ? 'Tüm Şehirler' : 'All Cities'}</option>
-                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          <div className="flex flex-col gap-2 mb-3">
+            <div className="flex flex-wrap gap-2">
+              <input
+                type="text"
+                placeholder={language === 'TR' ? 'Ad, e-posta, stüdyo ara...' : 'Search name, email, studio...'}
+                className={`${inputClass} flex-1 min-w-[160px]`}
+                value={search}
+                onChange={e => { setSearch(e.target.value); setVisibleCount(PAGE_SIZE) }}
+              />
+              {isGlobal && (
+                <select className={inputClass} value={filterCity} onChange={e => { setFilterCity(e.target.value); setFilterLocation(''); setVisibleCount(PAGE_SIZE) }}>
+                  <option value="">{language === 'TR' ? 'Tüm Şehirler' : 'All Cities'}</option>
+                  {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              )}
+              {availableLocations.length > 1 && (
+                <select className={inputClass} value={filterLocation} onChange={e => { setFilterLocation(e.target.value); setVisibleCount(PAGE_SIZE) }}>
+                  <option value="">{language === 'TR' ? 'Tüm Konumlar' : 'All Locations'}</option>
+                  {availableLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+                </select>
+              )}
+              <select className={inputClass} value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setVisibleCount(PAGE_SIZE) }}>
+                <option value="">{language === 'TR' ? 'Tüm Durumlar' : 'All Statuses'}</option>
+                <option value="PENDING">{language === 'TR' ? 'Beklemede' : 'Pending'}</option>
+                <option value="APPROVED">{language === 'TR' ? 'Onaylandı' : 'Approved'}</option>
+                <option value="CANCELLED">{language === 'TR' ? 'İptal Edildi' : 'Cancelled'}</option>
+                <option value="CANCELLATION_REQUESTED">{language === 'TR' ? 'İptal Talebi' : 'Cancel Requested'}</option>
               </select>
-            )}
-            {availableLocations.length > 1 && (
-              <select className={inputClass} value={filterLocation} onChange={e => setFilterLocation(e.target.value)}>
-                <option value="">{language === 'TR' ? 'Tüm Konumlar' : 'All Locations'}</option>
-                {availableLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-              </select>
-            )}
-            <select className={inputClass} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-              <option value="">{language === 'TR' ? 'Tüm Durumlar' : 'All Statuses'}</option>
-              <option value="PENDING">{language === 'TR' ? 'Beklemede' : 'Pending'}</option>
-              <option value="APPROVED">{language === 'TR' ? 'Onaylandı' : 'Approved'}</option>
-              <option value="CANCELLED">{language === 'TR' ? 'İptal Edildi' : 'Cancelled'}</option>
-              <option value="CANCELLATION_REQUESTED">{language === 'TR' ? 'İptal Talebi' : 'Cancel Requested'}</option>
-            </select>
+            </div>
+            {/* Date range */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Tarih:' : 'Date:'}</span>
+              <input type="date" className={inputClass} value={filterDateFrom} onChange={e => { setFilterDateFrom(e.target.value); setVisibleCount(PAGE_SIZE) }} />
+              <span className="text-xs text-gray-400">—</span>
+              <input type="date" className={inputClass} value={filterDateTo} onChange={e => { setFilterDateTo(e.target.value); setVisibleCount(PAGE_SIZE) }} />
+              {(search || filterCity || filterStatus || filterLocation || filterDateFrom || filterDateTo) && (
+                <button onClick={resetFilters} className="text-xs text-[#6750A4] dark:text-[#D0BCFF] hover:underline">
+                  {language === 'TR' ? 'Filtreleri Temizle' : 'Clear Filters'}
+                </button>
+              )}
+            </div>
           </div>
+
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+            {filteredAppointments.length} {language === 'TR' ? 'kayıt' : 'records'}
+            {filteredAppointments.length > visibleCount && ` (${visibleCount} ${language === 'TR' ? 'gösteriliyor' : 'shown'})`}
+          </p>
 
           {filteredAppointments.length === 0 ? (
             <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
               {t('no_appointments', language)}
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredAppointments.map(appt => (
-                <div key={appt.id} className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">
-                        {appt.user_name} {appt.user_surname}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{appt.user_email}</p>
-                    </div>
-                    <span className={`text-xs font-medium px-2 py-1 rounded-lg flex-shrink-0 ${STATUS_COLORS[appt.status] || ''}`}>
-                      {statusLabel(appt.status, language)}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 dark:text-gray-400 mb-3">
-                    <span><span className="font-medium">{language === 'TR' ? 'Stüdyo' : 'Studio'}:</span> {appt.lab_name}</span>
-                    <span><span className="font-medium">{language === 'TR' ? 'Şehir' : 'City'}:</span> {appt.city_name}</span>
-                    <span><span className="font-medium">{language === 'TR' ? 'Tarih' : 'Date'}:</span> {formatDate(appt.date)}</span>
-                    <span><span className="font-medium">{language === 'TR' ? 'Saat' : 'Time'}:</span> {appt.time_slot}</span>
-                    {appt.user_branch && <span><span className="font-medium">{language === 'TR' ? 'Branş' : 'Branch'}:</span> {appt.user_branch}</span>}
-                    {appt.user_phone && <span><span className="font-medium">{language === 'TR' ? 'Tel' : 'Phone'}:</span> {appt.user_phone}</span>}
-                    {appt.user_work_location && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Kurum' : 'Institution'}:</span> {appt.user_work_location}</span>}
-                    {appt.note && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Not' : 'Note'}:</span> {appt.note}</span>}
-                  </div>
-                  {appt.automations_applied && (
-                    <div className="mb-2">
-                      <span className="text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
-                        ⚡ {language === 'TR' ? 'Otomasyon Uygulandı' : 'Automation Applied'}
+            <>
+              <div className="space-y-3">
+                {filteredAppointments.slice(0, visibleCount).map(appt => (
+                  <div key={appt.id} className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">
+                          {appt.user_name} {appt.user_surname}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{appt.user_email}</p>
+                      </div>
+                      <span className={`text-xs font-medium px-2 py-1 rounded-lg flex-shrink-0 ${STATUS_COLORS[appt.status] || ''}`}>
+                        {statusLabel(appt.status, language)}
                       </span>
                     </div>
-                  )}
 
-                  {(appt.status === 'PENDING' || appt.status === 'CANCELLATION_REQUESTED') && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleApprove(appt.id)}
-                        disabled={processingId === appt.id}
-                        className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60"
-                      >
-                        {processingId === appt.id ? '...' : t('action_approve', language)}
-                      </button>
-                      <button
-                        onClick={() => handleCancel(appt.id)}
-                        disabled={processingId === appt.id}
-                        className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60"
-                      >
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                      <span><span className="font-medium">{language === 'TR' ? 'Stüdyo' : 'Studio'}:</span> {appt.lab_name}</span>
+                      <span><span className="font-medium">{language === 'TR' ? 'Şehir' : 'City'}:</span> {appt.city_name}</span>
+                      <span><span className="font-medium">{language === 'TR' ? 'Tarih' : 'Date'}:</span> {formatDate(appt.date)}</span>
+                      <span><span className="font-medium">{language === 'TR' ? 'Saat' : 'Time'}:</span> {appt.time_slot}</span>
+                      {appt.user_branch && <span><span className="font-medium">{language === 'TR' ? 'Branş' : 'Branch'}:</span> {appt.user_branch}</span>}
+                      {appt.user_phone && <span><span className="font-medium">{language === 'TR' ? 'Tel' : 'Phone'}:</span> {appt.user_phone}</span>}
+                      {appt.user_work_location && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Kurum' : 'Institution'}:</span> {appt.user_work_location}</span>}
+                      {appt.note && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Not' : 'Note'}:</span> {appt.note}</span>}
+                    </div>
+
+                    {appt.automations_applied && (
+                      <div className="mb-2">
+                        <span className="text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                          ⚡ {language === 'TR' ? 'Otomasyon Uygulandı' : 'Automation Applied'}
+                        </span>
+                      </div>
+                    )}
+
+                    {(appt.status === 'PENDING' || appt.status === 'CANCELLATION_REQUESTED') && (
+                      <div className="flex gap-2">
+                        <button onClick={() => handleApprove(appt.id)} disabled={processingId === appt.id} className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
+                          {processingId === appt.id ? '...' : t('action_approve', language)}
+                        </button>
+                        <button onClick={() => handleCancel(appt.id)} disabled={processingId === appt.id} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
+                          {processingId === appt.id ? '...' : t('action_cancel', language)}
+                        </button>
+                      </div>
+                    )}
+                    {appt.status === 'APPROVED' && (
+                      <button onClick={() => handleCancel(appt.id)} disabled={processingId === appt.id} className="w-full py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
                         {processingId === appt.id ? '...' : t('action_cancel', language)}
                       </button>
-                    </div>
-                  )}
-                  {appt.status === 'APPROVED' && (
-                    <button
-                      onClick={() => handleCancel(appt.id)}
-                      disabled={processingId === appt.id}
-                      className="w-full py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60"
-                    >
-                      {processingId === appt.id ? '...' : t('action_cancel', language)}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {filteredAppointments.length > visibleCount && (
+                <button
+                  onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                  className="w-full mt-3 py-3 border border-[#6750A4]/30 dark:border-[#D0BCFF]/30 text-[#6750A4] dark:text-[#D0BCFF] rounded-xl text-sm font-medium hover:bg-[#6750A4]/5 transition"
+                >
+                  {language === 'TR' ? `Daha Fazla Göster (${filteredAppointments.length - visibleCount} kaldı)` : `Show More (${filteredAppointments.length - visibleCount} remaining)`}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
@@ -373,48 +453,25 @@ export default function AdminPanelScreen() {
         <div>
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Stüdyolar' : 'Studios'}</h3>
-            <button
-              onClick={() => setShowAddLab(true)}
-              className="py-2 px-4 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl hover:opacity-90 transition"
-            >
+            <button onClick={() => { setShowAddLab(true); setEditingLabId(null); setLabError('') }} className="py-2 px-4 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl hover:opacity-90 transition">
               + {language === 'TR' ? 'Stüdyo Ekle' : 'Add Studio'}
             </button>
           </div>
 
+          {labError && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-3">
+              {labError}
+              <button onClick={() => setLabError('')} className="ml-2 text-red-400">✕</button>
+            </div>
+          )}
+
           {showAddLab && (
             <form onSubmit={handleAddLab} className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 mb-4 space-y-3">
               <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Yeni Stüdyo' : 'New Studio'}</h4>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Şehir' : 'City'} *</label>
-                <select className={`${inputClass} w-full`} value={labForm.city_id} onChange={e => setLabForm(p => ({ ...p, city_id: e.target.value }))} required>
-                  <option value="">{language === 'TR' ? 'Şehir Seçin' : 'Select City'}</option>
-                  {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Stüdyo Adı' : 'Studio Name'} *</label>
-                <input type="text" className={`${inputClass} w-full`} value={labForm.name} onChange={e => setLabForm(p => ({ ...p, name: e.target.value }))} required />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Açıklama' : 'Description'}</label>
-                <input type="text" className={`${inputClass} w-full`} value={labForm.description} onChange={e => setLabForm(p => ({ ...p, description: e.target.value }))} />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Konum' : 'Location'}</label>
-                <input type="text" className={`${inputClass} w-full`} value={labForm.location} onChange={e => setLabForm(p => ({ ...p, location: e.target.value }))} />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Kapasite (slot başına)' : 'Capacity (per slot)'}</label>
-                <input type="number" min="1" className={`${inputClass} w-full`} value={labForm.capacity_per_slot} onChange={e => setLabForm(p => ({ ...p, capacity_per_slot: e.target.value }))} />
-              </div>
-              {labError && <p className="text-red-500 text-xs">{labError}</p>}
+              <LabFormFields form={labForm} setForm={setLabForm} cities={cities} inputClass={inputClass} language={language} showCity />
               <div className="flex gap-2">
-                <button type="submit" className="flex-1 py-2 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl">
-                  {language === 'TR' ? 'Kaydet' : 'Save'}
-                </button>
-                <button type="button" onClick={() => { setShowAddLab(false); setLabError('') }} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">
-                  {language === 'TR' ? 'İptal' : 'Cancel'}
-                </button>
+                <button type="submit" className="flex-1 py-2 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl">{language === 'TR' ? 'Kaydet' : 'Save'}</button>
+                <button type="button" onClick={() => { setShowAddLab(false); setLabError('') }} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{language === 'TR' ? 'İptal' : 'Cancel'}</button>
               </div>
             </form>
           )}
@@ -422,24 +479,35 @@ export default function AdminPanelScreen() {
           <div className="space-y-3">
             {visibleLabs.map(lab => {
               const city = cities.find(c => String(c.id) === String(lab.city_id))
+              const isEditing = editingLabId === lab.id
               return (
-                <div key={lab.id} className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-[#6750A4] dark:text-[#D0BCFF] text-lg">🎙</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{city?.name} {lab.location ? `• ${lab.location}` : ''}</p>
-                    {lab.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{lab.description}</p>}
-                    <p className="text-xs text-[#6750A4] dark:text-[#D0BCFF] mt-0.5">{language === 'TR' ? 'Kapasite' : 'Capacity'}: {lab.capacity_per_slot}</p>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteLab(lab.id)}
-                    disabled={processingId === lab.id}
-                    className="text-red-500 hover:text-red-700 text-xs p-1 disabled:opacity-40"
-                  >
-                    🗑
-                  </button>
+                <div key={lab.id} className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+                  {isEditing ? (
+                    <form onSubmit={handleUpdateLab} className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Stüdyoyu Düzenle' : 'Edit Studio'}</h4>
+                      <LabFormFields form={editLabForm} setForm={setEditLabForm} cities={cities} inputClass={inputClass} language={language} showCity={false} />
+                      <div className="flex gap-2">
+                        <button type="submit" className="flex-1 py-2 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl">{language === 'TR' ? 'Kaydet' : 'Save'}</button>
+                        <button type="button" onClick={() => setEditingLabId(null)} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{language === 'TR' ? 'İptal' : 'Cancel'}</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-[#6750A4] dark:text-[#D0BCFF] text-lg">🎙</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{city?.name}{lab.location ? ` • ${lab.location}` : ''}</p>
+                        {lab.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{lab.description}</p>}
+                        <p className="text-xs text-[#6750A4] dark:text-[#D0BCFF] mt-0.5">{language === 'TR' ? 'Kapasite' : 'Capacity'}: {lab.capacity_per_slot}{lab.branches ? ` · ${lab.branches}` : ''}</p>
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button onClick={() => startEditLab(lab)} className="text-[#6750A4] dark:text-[#D0BCFF] text-xs p-1.5 hover:bg-[#6750A4]/10 rounded-lg transition">✏️</button>
+                        <button onClick={() => handleDeleteLab(lab.id)} disabled={processingId === lab.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40">🗑</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -451,39 +519,23 @@ export default function AdminPanelScreen() {
       {activeTab === 'slots' && (
         <div>
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{language === 'TR' ? 'Saat Dilimi Yönetimi' : 'Time Slot Management'}</h3>
-
-          {/* Add Slot */}
           <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4 mb-4">
             <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{language === 'TR' ? 'Yeni Saat Dilimi Ekle' : 'Add New Time Slot'}</h4>
             <div className="flex flex-col sm:flex-row gap-2">
               {isGlobal && (
-                <select
-                  className={`${inputClass} flex-1`}
-                  value={newSlotCityId}
-                  onChange={e => setNewSlotCityId(e.target.value)}
-                >
+                <select className={`${inputClass} flex-1`} value={newSlotCityId} onChange={e => setNewSlotCityId(e.target.value)}>
                   <option value="">{language === 'TR' ? 'Şehir Seçin' : 'Select City'}</option>
                   {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               )}
-              <input
-                type="text"
-                placeholder={language === 'TR' ? 'Örn: 09:00 - 10:00' : 'E.g.: 09:00 - 10:00'}
-                className={`${inputClass} flex-1`}
-                value={newSlotTime}
-                onChange={e => setNewSlotTime(e.target.value)}
-              />
-              <button
-                onClick={handleAddSlot}
-                className="py-2 px-4 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl hover:opacity-90 transition"
-              >
+              <input type="text" placeholder={language === 'TR' ? 'Örn: 09:00 - 10:00' : 'E.g.: 09:00 - 10:00'} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
+              <button onClick={handleAddSlot} className="py-2 px-4 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] text-xs font-semibold rounded-xl hover:opacity-90 transition">
                 + {language === 'TR' ? 'Ekle' : 'Add'}
               </button>
             </div>
-            {slotError && <p className="text-red-500 text-xs mt-2">{slotError}</p>}
+            {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400">✕</button></p>}
           </div>
 
-          {/* Slots list grouped by city */}
           {isGlobal ? (
             cities.map(city => {
               const citySlots = visibleSlots.filter(s => String(s.city_id) === String(city.id))
@@ -492,18 +544,14 @@ export default function AdminPanelScreen() {
                 <div key={city.id} className="mb-4">
                   <h4 className="text-xs font-bold text-[#6750A4] dark:text-[#D0BCFF] mb-2 uppercase tracking-wide">{city.name}</h4>
                   <div className="space-y-2">
-                    {citySlots.map(slot => (
-                      <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />
-                    ))}
+                    {citySlots.map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)}
                   </div>
                 </div>
               )
             })
           ) : (
             <div className="space-y-2">
-              {visibleSlots.map(slot => (
-                <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />
-              ))}
+              {visibleSlots.map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)}
               {visibleSlots.length === 0 && (
                 <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
                   {language === 'TR' ? 'Henüz saat dilimi eklenmemiş.' : 'No time slots added yet.'}
@@ -517,7 +565,16 @@ export default function AdminPanelScreen() {
       {/* USER APPROVALS TAB */}
       {activeTab === 'user_approvals' && (
         <div>
-          {/* Pending */}
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder={language === 'TR' ? 'İsim veya e-posta ile ara...' : 'Search by name or email...'}
+              className={`${inputClass} w-full`}
+              value={userSearch}
+              onChange={e => setUserSearch(e.target.value)}
+            />
+          </div>
+
           <h3 className="font-bold text-orange-600 dark:text-orange-400 text-sm mb-2">
             {language === 'TR' ? 'Onay Bekleyenler' : 'Pending Approval'} ({pendingUsers.length})
           </h3>
@@ -528,20 +585,11 @@ export default function AdminPanelScreen() {
           ) : (
             <div className="space-y-3 mb-6">
               {pendingUsers.map(user => (
-                <UserCard
-                  key={user.id}
-                  user={user}
-                  language={language}
-                  processingId={processingId}
-                  onApprove={handleApproveUser}
-                  onRevoke={handleRevokeUser}
-                  showApprove
-                />
+                <UserCard key={user.id} user={user} language={language} processingId={processingId} onApprove={handleApproveUser} onRevoke={handleRevokeUser} showApprove />
               ))}
             </div>
           )}
 
-          {/* Approved */}
           <h3 className="font-bold text-green-600 dark:text-green-400 text-sm mb-2">
             {language === 'TR' ? 'Onaylı Üyeler' : 'Approved Members'} ({approvedUsers.length})
           </h3>
@@ -552,21 +600,101 @@ export default function AdminPanelScreen() {
           ) : (
             <div className="space-y-3">
               {approvedUsers.map(user => (
-                <UserCard
-                  key={user.id}
-                  user={user}
-                  language={language}
-                  processingId={processingId}
-                  onApprove={handleApproveUser}
-                  onRevoke={handleRevokeUser}
-                  showRevoke
-                />
+                <UserCard key={user.id} user={user} language={language} processingId={processingId} onApprove={handleApproveUser} onRevoke={handleRevokeUser} showRevoke />
               ))}
             </div>
           )}
         </div>
       )}
+
+      {/* NOTIFICATIONS TAB */}
+      {activeTab === 'notifications' && (
+        <div>
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">
+            {language === 'TR' ? 'Yeni Bildirim Gönder' : 'Send New Notification'}
+          </h3>
+          <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
+            <form onSubmit={handleCreateNotification} className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Tür' : 'Type'}</label>
+                <select className={`${inputClass} w-full`} value={notifForm.type} onChange={e => setNotifForm(p => ({ ...p, type: e.target.value }))}>
+                  <option value="SYSTEM">💡 {language === 'TR' ? 'Sistem' : 'System'}</option>
+                  <option value="REMINDER">⏰ {language === 'TR' ? 'Hatırlatma' : 'Reminder'}</option>
+                  <option value="ALERT">🚨 {language === 'TR' ? 'Uyarı' : 'Alert'}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Başlık' : 'Title'} *</label>
+                <input
+                  type="text"
+                  className={`${inputClass} w-full`}
+                  value={notifForm.title}
+                  onChange={e => setNotifForm(p => ({ ...p, title: e.target.value }))}
+                  required
+                  placeholder={language === 'TR' ? 'Bildirim başlığı...' : 'Notification title...'}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Mesaj' : 'Message'} *</label>
+                <textarea
+                  className={`${inputClass} w-full resize-none`}
+                  rows={4}
+                  value={notifForm.message}
+                  onChange={e => setNotifForm(p => ({ ...p, message: e.target.value }))}
+                  required
+                  placeholder={language === 'TR' ? 'Bildirim mesajı...' : 'Notification message...'}
+                />
+              </div>
+              {notifError && <p className="text-red-500 dark:text-red-400 text-xs">{notifError}</p>}
+              {notifSuccess && <p className="text-green-600 dark:text-green-400 text-xs font-medium">{notifSuccess}</p>}
+              <button
+                type="submit"
+                disabled={notifLoading}
+                className="w-full py-3 bg-[#6750A4] dark:bg-[#D0BCFF] text-white dark:text-[#141218] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60"
+              >
+                {notifLoading ? '...' : (language === 'TR' ? '🔔 Bildirimi Gönder' : '🔔 Send Notification')}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+function LabFormFields({ form, setForm, cities, inputClass, language, showCity }) {
+  return (
+    <>
+      {showCity && (
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Şehir' : 'City'} *</label>
+          <select className={`${inputClass} w-full`} value={form.city_id || ''} onChange={e => setForm(p => ({ ...p, city_id: e.target.value }))} required>
+            <option value="">{language === 'TR' ? 'Şehir Seçin' : 'Select City'}</option>
+            {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+      )}
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Stüdyo Adı' : 'Studio Name'} *</label>
+        <input type="text" className={`${inputClass} w-full`} value={form.name || ''} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Açıklama' : 'Description'}</label>
+        <input type="text" className={`${inputClass} w-full`} value={form.description || ''} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Konum' : 'Location'}</label>
+        <input type="text" className={`${inputClass} w-full`} value={form.location || ''} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} />
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Branşlar' : 'Branches'}</label>
+        <input type="text" className={`${inputClass} w-full`} value={form.branches || ''} onChange={e => setForm(p => ({ ...p, branches: e.target.value }))} placeholder={language === 'TR' ? 'Örn: Fen, Matematik' : 'E.g.: Science, Math'} />
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'Kapasite (slot başına)' : 'Capacity (per slot)'}</label>
+        <input type="number" min="1" className={`${inputClass} w-full`} value={form.capacity_per_slot || 1} onChange={e => setForm(p => ({ ...p, capacity_per_slot: e.target.value }))} />
+      </div>
+    </>
   )
 }
 
@@ -583,11 +711,7 @@ function SlotItem({ slot, processingId, onRemove, language }) {
   return (
     <div className="bg-white dark:bg-[#1D1B20] rounded-xl shadow px-4 py-3 flex items-center justify-between">
       <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">{slot.time_range}</span>
-      <button
-        onClick={() => onRemove(slot.id)}
-        disabled={processingId === slot.id}
-        className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40"
-      >
+      <button onClick={() => onRemove(slot.id)} disabled={processingId === slot.id} className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40">
         {processingId === slot.id ? '...' : (language === 'TR' ? 'Sil' : 'Delete')}
       </button>
     </div>
@@ -599,9 +723,7 @@ function UserCard({ user, language, processingId, onApprove, onRevoke, showAppro
     <div className="bg-white dark:bg-[#1D1B20] rounded-2xl shadow p-4">
       <div className="flex items-start gap-3 mb-2">
         <div className="w-10 h-10 rounded-full bg-[#6750A4]/10 dark:bg-[#D0BCFF]/10 flex items-center justify-center flex-shrink-0">
-          <span className="text-[#6750A4] dark:text-[#D0BCFF] font-bold text-sm">
-            {(user.name || '?').charAt(0).toUpperCase()}
-          </span>
+          <span className="text-[#6750A4] dark:text-[#D0BCFF] font-bold text-sm">{(user.name || '?').charAt(0).toUpperCase()}</span>
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{user.name} {user.surname}</p>
@@ -616,20 +738,12 @@ function UserCard({ user, language, processingId, onApprove, onRevoke, showAppro
         {user.work_location && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Kurum' : 'Institution'}:</span> {user.work_location}</span>}
       </div>
       {showApprove && (
-        <button
-          onClick={() => onApprove(user.id)}
-          disabled={processingId === user.id}
-          className="w-full py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60"
-        >
+        <button onClick={() => onApprove(user.id)} disabled={processingId === user.id} className="w-full py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
           {processingId === user.id ? '...' : (language === 'TR' ? 'Üyeliği Onayla' : 'Approve Membership')}
         </button>
       )}
       {showRevoke && (
-        <button
-          onClick={() => onRevoke(user.id)}
-          disabled={processingId === user.id}
-          className="w-full py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60"
-        >
+        <button onClick={() => onRevoke(user.id)} disabled={processingId === user.id} className="w-full py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
           {processingId === user.id ? '...' : (language === 'TR' ? 'Üyeliği İptal Et' : 'Revoke Membership')}
         </button>
       )}
