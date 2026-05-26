@@ -131,14 +131,14 @@ export default function LandingPage({ onLoginClick }) {
     <div className="min-h-screen bg-white dark:bg-[#040A1C] text-gray-800 dark:text-gray-100">
 
       {/* ── HEADER ── */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 dark:bg-[#061A3A]/95 backdrop-blur shadow-md' : 'bg-transparent'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 dark:bg-[#061A3A]/95 backdrop-blur shadow-md' : 'bg-white/80 dark:bg-[#040A1C]/80 backdrop-blur border-b border-gray-100 dark:border-white/5'}`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
           {/* Logo */}
           <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2.5">
             <AppLogo size={36} />
             <div className="leading-tight hidden sm:block">
-              <p className={`font-bold text-xs ${scrolled ? 'text-gray-900 dark:text-white' : 'text-white'}`}>Öğretmen Öğrenme Laboratuvarı</p>
-              <p className={`text-[10px] ${scrolled ? 'text-gray-500 dark:text-gray-400' : 'text-white/70'}`}>Randevu Sistemi | MEB ÖGEDEP</p>
+              <p className="font-bold text-xs text-gray-900 dark:text-white">Öğretmen Öğrenme Laboratuvarı</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">Randevu Sistemi | MEB ÖGEDEP</p>
             </div>
           </button>
 
@@ -148,7 +148,7 @@ export default function LandingPage({ onLoginClick }) {
               <button
                 key={l.href}
                 onClick={() => scrollTo(l.href.slice(1))}
-                className={`text-sm font-medium transition hover:opacity-70 ${scrolled ? 'text-gray-700 dark:text-gray-300' : 'text-white'}`}
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 transition hover:text-[#1565C0] dark:hover:text-[#7DD4FC]"
               >
                 {l.label[lang]}
               </button>
@@ -157,20 +157,20 @@ export default function LandingPage({ onLoginClick }) {
 
           {/* Controls */}
           <div className="flex items-center gap-2">
-            <button onClick={toggleLanguage} className={`text-xs font-semibold border rounded-lg px-2 py-1 transition ${scrolled ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300' : 'border-white/50 text-white'}`}>
+            <button onClick={toggleLanguage} className="text-xs font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1 transition hover:border-[#1565C0] hover:text-[#1565C0]">
               {lang === 'TR' ? 'EN' : 'TR'}
             </button>
-            <button onClick={toggleDarkMode} className={`w-8 h-8 flex items-center justify-center rounded-full transition ${scrolled ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' : 'text-white hover:bg-white/20'}`}>
+            <button onClick={toggleDarkMode} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
               {isDarkMode ? '☀️' : '🌙'}
             </button>
             <button
               onClick={onLoginClick}
-              className="ml-1 px-4 py-2 rounded-xl text-sm font-semibold bg-white text-[#1565C0] hover:bg-blue-50 transition shadow-sm"
+              className="ml-1 px-4 py-2 rounded-xl text-sm font-semibold bg-[#1565C0] hover:bg-[#0D47A1] text-white transition shadow-sm"
             >
               {lang === 'TR' ? 'Giriş Yap' : 'Sign In'}
             </button>
             {/* Mobile hamburger */}
-            <button className={`md:hidden ml-1 ${scrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'}`} onClick={() => setMenuOpen(p => !p)}>
+            <button className="md:hidden ml-1 text-gray-700 dark:text-gray-200" onClick={() => setMenuOpen(p => !p)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
                 {menuOpen ? <path d="M18 6L6 18M6 6l12 12"/> : <path d="M3 12h18M3 6h18M3 18h18"/>}
               </svg>
@@ -191,27 +191,27 @@ export default function LandingPage({ onLoginClick }) {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-r from-[#00AEEF] via-[#1565C0] to-[#0A2461] dark:from-[#0D3A8A] dark:via-[#071A48] dark:to-[#020A22]">
+      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-white dark:bg-[#040A1C]">
         {/* Decorative circles */}
-        <div className="absolute top-20 right-10 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/3 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-20 right-10 w-72 h-72 bg-[#00AEEF]/8 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#1565C0]/6 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#7DD4FC]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-20 text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/15 border border-white/25 rounded-full px-4 py-1.5 text-white text-xs font-medium mb-8">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+          <div className="inline-flex items-center gap-2 bg-[#1565C0]/10 border border-[#1565C0]/25 rounded-full px-4 py-1.5 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-medium mb-8">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             {lang === 'TR' ? 'Öğretmen Eğitimi Dijital Ekosistemi Projesi' : 'Teacher Training Digital Ecosystem Project'}
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6">
             {lang === 'TR'
-              ? <>Öğretmenler<br /><span className="text-[#7DD4FC]">Dijital Dönüşümün</span><br />Öncüsüdür</>
-              : <>Teachers Are the<br /><span className="text-[#7DD4FC]">Pioneers of</span><br />Digital Transformation</>
+              ? <>Öğretmenler<br /><span className="text-[#1565C0] dark:text-[#7DD4FC]">Dijital Dönüşümün</span><br />Öncüsüdür</>
+              : <>Teachers Are the<br /><span className="text-[#1565C0] dark:text-[#7DD4FC]">Pioneers of</span><br />Digital Transformation</>
             }
           </h1>
 
-          <p className="max-w-2xl mx-auto text-white/80 text-base sm:text-lg leading-relaxed mb-10">
+          <p className="max-w-2xl mx-auto text-gray-500 dark:text-gray-400 text-base sm:text-lg leading-relaxed mb-10">
             {lang === 'TR'
               ? 'Türkiye genelinde 7 ilde kurulan Öğretmen Öğrenme Laboratuvarları\'nda podcast, video ve dijital içerik stüdyolarına randevu alın.'
               : 'Book appointments at Teacher Learning Labs across 7 provinces in Turkey, featuring podcast, video and digital content studios.'
@@ -221,13 +221,13 @@ export default function LandingPage({ onLoginClick }) {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={onLoginClick}
-              className="px-8 py-3.5 bg-white text-[#1565C0] font-bold rounded-2xl text-sm hover:bg-blue-50 transition shadow-xl hover:shadow-2xl active:scale-95"
+              className="px-8 py-3.5 bg-[#1565C0] hover:bg-[#0D47A1] text-white font-bold rounded-2xl text-sm transition shadow-xl hover:shadow-blue-200 active:scale-95"
             >
               {lang === 'TR' ? '🎙 Hemen Randevu Al' : '🎙 Book Now'}
             </button>
             <button
               onClick={() => scrollTo('proje')}
-              className="px-8 py-3.5 border-2 border-white/40 text-white font-semibold rounded-2xl text-sm hover:bg-white/10 transition active:scale-95"
+              className="px-8 py-3.5 border-2 border-[#1565C0]/40 text-[#1565C0] dark:text-[#7DD4FC] dark:border-[#7DD4FC]/40 font-semibold rounded-2xl text-sm hover:bg-[#1565C0]/10 transition active:scale-95"
             >
               {lang === 'TR' ? 'Proje Hakkında' : 'About Project'}
             </button>
@@ -238,17 +238,17 @@ export default function LandingPage({ onLoginClick }) {
         <div className="relative max-w-6xl mx-auto w-full px-4 sm:px-6 pb-10">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {statsData.map((s, i) => (
-              <div key={i} className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-4 text-center text-white">
-                <div className="flex justify-center mb-1 text-[#7DD4FC]">{s.icon}</div>
-                <p className="text-2xl sm:text-3xl font-extrabold">{s.value}</p>
-                <p className="text-xs text-white/70 mt-0.5">{s.label[lang]}</p>
+              <div key={i} className="bg-[#1565C0]/8 border border-[#1565C0]/15 dark:bg-white/5 dark:border-white/10 rounded-2xl p-4 text-center">
+                <div className="flex justify-center mb-1 text-[#1565C0] dark:text-[#7DD4FC]">{s.icon}</div>
+                <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">{s.value}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label[lang]}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 animate-bounce">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-gray-400 dark:text-white/50 animate-bounce">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
             <path d="M12 5v14M5 12l7 7 7-7"/>
           </svg>
