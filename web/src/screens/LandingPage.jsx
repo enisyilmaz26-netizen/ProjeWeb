@@ -447,7 +447,7 @@ export default function LandingPage({ onLoginClick }) {
       </section>
 
       {/* ── NASIL ÇALIŞIR ── */}
-      <section id="nasil-calisir" className="relative py-20 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-white via-[#F5F9FF] to-[#EAF3FF] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565]">
+      <section id="nasil-calisir" className="relative py-20 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-white via-[#F5F9FF] to-[#EAF3FF] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565] animate-gradient-shift" style={{ backgroundSize: '300% 300%' }}>
         <div className="absolute top-8 left-1/4 w-64 h-64 bg-[#1565C0]/6 rounded-full blur-3xl pointer-events-none animate-blob" style={{ animationDelay: '1s' }} />
         <div className="absolute bottom-12 right-8 w-80 h-80 bg-[#00AEEF]/7 rounded-full blur-3xl pointer-events-none animate-blob-slow" style={{ animationDelay: '6s' }} />
         <div className="relative max-w-4xl mx-auto">
