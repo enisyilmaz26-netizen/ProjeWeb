@@ -588,14 +588,22 @@ export function AppProvider({ children }) {
 
     const { error } = await supabase.from('laboratories').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
-    setLabs(prev => prev.filter(l => l.id !== id))
+    const { data: all } = await supabase.from('laboratories').select('*')
+    if (all) {
+      if (all.some(l => l.id === id)) return { success: false, error: 'err_update_failed' }
+      setLabs(all)
+    } else {
+      setLabs(prev => prev.filter(l => l.id !== id))
+    }
     return { success: true }
   }
 
   const forceDeleteLab = async (id) => {
     const { error } = await supabase.from('laboratories').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
-    setLabs(prev => prev.filter(l => l.id !== id))
+    const { data: all } = await supabase.from('laboratories').select('*')
+    if (all) setLabs(all)
+    else setLabs(prev => prev.filter(l => l.id !== id))
     return { success: true }
   }
 
@@ -613,7 +621,14 @@ export function AppProvider({ children }) {
   const deleteWorkshop = async (id) => {
     const { error } = await supabase.from('workshops').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
-    setWorkshops(prev => prev.filter(w => w.id !== id))
+    // Reload to verify deletion — RLS can silently block DELETE (no error, 0 rows affected)
+    const { data: all } = await supabase.from('workshops').select('*')
+    if (all) {
+      if (all.some(w => w.id === id)) return { success: false, error: 'err_update_failed' }
+      setWorkshops(all)
+    } else {
+      setWorkshops(prev => prev.filter(w => w.id !== id))
+    }
     return { success: true }
   }
 
