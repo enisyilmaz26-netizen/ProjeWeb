@@ -5,6 +5,7 @@ import UserReservationScreen from './UserReservationScreen'
 import AdminPanelScreen from './AdminPanelScreen'
 import MyProfileScreen from './MyProfileScreen'
 import NotificationCenterScreen from './NotificationCenterScreen'
+import WorkshopsScreen from './WorkshopsScreen'
 
 export default function MainAppContainer() {
   const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading, loadError, loadAllData } = useApp()
@@ -19,6 +20,7 @@ export default function MainAppContainer() {
 
   const userTabs = [
     { key: 'book', label: t('tab_book', language), icon: '📅' },
+    { key: 'workshops', label: t('tab_workshops', language), icon: '🎓' },
     { key: 'profile', label: t('tab_profile', language), icon: '👤' },
     { key: 'notifications', label: t('tab_notifications', language), icon: '🔔' },
   ]
@@ -126,6 +128,7 @@ export default function MainAppContainer() {
       <main className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto w-full">
           {activeTab === 'book' && !isAdmin && <UserReservationScreen />}
+          {activeTab === 'workshops' && !isAdmin && <WorkshopsScreen />}
           {activeTab === 'profile' && !isAdmin && <MyProfileScreen />}
           {activeTab === 'admin' && isAdmin && <AdminPanelScreen />}
           {activeTab === 'notifications' && <NotificationCenterScreen />}

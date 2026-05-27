@@ -46,7 +46,7 @@ export default function AdminPanelScreen() {
     resetPassword,
     loadAllData,
     addWorkshop, deleteWorkshop,
-    addAdmin, deleteAdmin, resetAdminPasswordByGlobal,
+    addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
   } = useApp()
 
   const todayStr = new Date().toISOString().split('T')[0]
@@ -142,6 +142,9 @@ export default function AdminPanelScreen() {
   const [adminFormError, setAdminFormError] = useState('')
   const [adminFormSuccess, setAdminFormSuccess] = useState('')
   const [adminFormLoading, setAdminFormLoading] = useState(false)
+  const [editAdminModal, setEditAdminModal] = useState(null) // { adminId, name, role, city_id }
+  const [editAdminLoading, setEditAdminLoading] = useState(false)
+  const [editAdminError, setEditAdminError] = useState('')
   const [resetAdminPwModal, setResetAdminPwModal] = useState(null)
   const [resetAdminPwValue, setResetAdminPwValue] = useState('')
   const [resetAdminPwError, setResetAdminPwError] = useState('')
@@ -484,6 +487,29 @@ export default function AdminPanelScreen() {
       if (wsResult.success) await deleteLab(lab.id)
     }
     setMigrating(false)
+  }
+
+  const handleEditAdmin = async (e) => {
+    e.preventDefault()
+    if (!editAdminModal) return
+    setEditAdminError('')
+    if (editAdminModal.role === 'CITY' && !editAdminModal.city_id) {
+      setEditAdminError(language === 'TR' ? 'İl yöneticisi için il seçimi zorunludur.' : 'Province is required for city admin.')
+      return
+    }
+    setEditAdminLoading(true)
+    const updates = {
+      role: editAdminModal.role,
+      city_id: editAdminModal.role === 'GLOBAL' ? null : editAdminModal.city_id,
+    }
+    const result = await updateAdmin(editAdminModal.adminId, updates)
+    setEditAdminLoading(false)
+    if (result.success) {
+      setEditAdminModal(null)
+    } else {
+      const errKey = result.error
+      setEditAdminError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+    }
   }
 
   const handleCreateNotification = async (e) => {
@@ -1547,6 +1573,13 @@ export default function AdminPanelScreen() {
                       {!isSelf && (
                         <div className="flex gap-1 flex-shrink-0">
                           <button
+                            onClick={() => setEditAdminModal({ adminId: admin.id, name: admin.name || admin.email, role: admin.role, city_id: admin.city_id ? String(admin.city_id) : '' })}
+                            className="text-[#1565C0] dark:text-[#7DD4FC] text-xs px-2 py-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"
+                            title={language === 'TR' ? 'Rol / İl Düzenle' : 'Edit Role / Province'}
+                          >
+                            ✏️
+                          </button>
+                          <button
                             onClick={() => { setResetAdminPwModal({ adminId: admin.id, email: admin.email, name: admin.name || admin.email }); setResetAdminPwValue(''); setResetAdminPwError(''); setResetAdminPwSuccess('') }}
                             className="text-[#1565C0] dark:text-[#7DD4FC] text-xs px-2 py-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"
                             title={t('btn_reset_password', language)}
@@ -1643,6 +1676,62 @@ export default function AdminPanelScreen() {
                 <button
                   type="button"
                   onClick={() => { setResetPwModal(null); setResetPwValue(''); setResetPwError(''); setResetPwSuccess('') }}
+                  className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                >
+                  {t('btn_nevermind', language)}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Admin Role/City Modal */}
+      {editAdminModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">
+              {language === 'TR' ? 'Rol / İl Düzenle' : 'Edit Role / Province'}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 truncate">{editAdminModal.name}</p>
+            <form onSubmit={handleEditAdmin} className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_role', language)}</label>
+                <select
+                  className={`${inputClass} w-full`}
+                  value={editAdminModal.role}
+                  onChange={e => setEditAdminModal(p => ({ ...p, role: e.target.value, city_id: '' }))}
+                >
+                  <option value="CITY">{t('admin_type_city', language)}</option>
+                  <option value="GLOBAL">{t('admin_type_global', language)}</option>
+                </select>
+              </div>
+              {editAdminModal.role === 'CITY' && (
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_province', language)}</label>
+                  <select
+                    className={`${inputClass} w-full`}
+                    value={editAdminModal.city_id}
+                    onChange={e => setEditAdminModal(p => ({ ...p, city_id: e.target.value }))}
+                    required
+                  >
+                    <option value="">{t('select_province', language)}</option>
+                    {cities.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+                  </select>
+                </div>
+              )}
+              {editAdminError && <p className="text-red-600 dark:text-red-400 text-xs">{editAdminError}</p>}
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="submit"
+                  disabled={editAdminLoading}
+                  className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60"
+                >
+                  {editAdminLoading ? '...' : t('btn_save', language)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setEditAdminModal(null); setEditAdminError('') }}
                   className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
                   {t('btn_nevermind', language)}

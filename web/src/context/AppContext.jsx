@@ -331,7 +331,7 @@ export function AppProvider({ children }) {
       String(a.lab_id) === String(appointmentData.lab_id) &&
       a.date === appointmentData.date &&
       a.time_slot === appointmentData.time_slot &&
-      (a.status === 'PENDING' || a.status === 'APPROVED')
+      (a.status === 'PENDING' || a.status === 'APPROVED' || a.status === 'CANCELLATION_REQUESTED')
     )
     if (duplicate) return { success: false, error: 'err_duplicate_appointment' }
 
@@ -340,7 +340,6 @@ export function AppProvider({ children }) {
       .insert([{
         ...appointmentData,
         status: 'PENDING',
-        automations_applied: false,
         created_timestamp: Date.now(),
       }])
       .select()
@@ -476,9 +475,16 @@ export function AppProvider({ children }) {
   }
 
   const updateLab = async (id, updates) => {
+    // Try with .select() first to detect RLS issues; if select is blocked
+    // but write succeeded (some Supabase configs), fall back to plain update.
     const { data, error } = await supabase.from('laboratories').update(updates).eq('id', id).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!data || data.length === 0) return { success: false, error: 'err_update_failed' }
+    if (error) {
+      // Might be RLS on SELECT but UPDATE is allowed — try plain update
+      const { error: e2 } = await supabase.from('laboratories').update(updates).eq('id', id)
+      if (e2) return { success: false, error: e2.message }
+    } else if (!data || data.length === 0) {
+      return { success: false, error: 'err_update_failed' }
+    }
     setLabs(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l))
     return { success: true }
   }
@@ -527,6 +533,15 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('admins').delete().eq('id', adminId)
     if (error) return { success: false, error: error.message }
     setAdmins(prev => prev.filter(a => a.id !== adminId))
+    return { success: true }
+  }
+
+  const updateAdmin = async (adminId, updates) => {
+    const { data, error } = await supabase.from('admins').update(updates).eq('id', adminId).select('id')
+    if (error) return { success: false, error: error.message }
+    if (!data || data.length === 0) return { success: false, error: 'err_update_failed' }
+    setAdmins(prev => prev.map(a => a.id === adminId ? { ...a, ...updates } : a))
+    if (loggedInAdmin?.id === adminId) setLoggedInAdmin(prev => ({ ...prev, ...updates }))
     return { success: true }
   }
 
@@ -579,7 +594,7 @@ export function AppProvider({ children }) {
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab,
     addWorkshop, deleteWorkshop,
-    addAdmin, deleteAdmin, resetAdminPasswordByGlobal,
+    addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
