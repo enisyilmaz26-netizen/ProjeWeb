@@ -5,16 +5,12 @@ const AppContext = createContext(null)
 
 // SHA-256 via Web Crypto API
 async function hashPassword(password, salt = '') {
-  try {
-    const encoder = new TextEncoder()
-    const data = encoder.encode(salt + password + 'lab_rezervasyon_2024')
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-    return Array.from(new Uint8Array(hashBuffer))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-  } catch {
-    return password
-  }
+  const encoder = new TextEncoder()
+  const data = encoder.encode(salt + password + 'lab_rezervasyon_2024')
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
 }
 
 function loadFromStorage(key) {
@@ -73,6 +69,7 @@ export function AppProvider({ children }) {
   const [notifications, setNotifications] = useState([])
   const [timeSlots, setTimeSlots] = useState([])
   const [users, setUsers] = useState([])
+  const [workshops, setWorkshops] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const rtChannelsRef = React.useRef([])
@@ -106,6 +103,7 @@ export function AppProvider({ children }) {
         { data: notificationsData },
         { data: timeSlotsData },
         { data: usersData },
+        { data: workshopsData },
       ] = await Promise.all([
         supabase.from('cities').select('*').order('name'),
         supabase.from('laboratories').select('*').order('name'),
@@ -113,6 +111,7 @@ export function AppProvider({ children }) {
         supabase.from('notifications').select('*').order('timestamp', { ascending: false }),
         supabase.from('city_time_slots').select('*').order('id'),
         supabase.from('users').select('*').order('name'),
+        supabase.from('workshops').select('*').order('date', { ascending: false }),
       ])
       if (citiesData) setCities(citiesData)
       if (labsData) setLabs(labsData)
@@ -120,6 +119,7 @@ export function AppProvider({ children }) {
       if (notificationsData) setNotifications(notificationsData)
       if (timeSlotsData) setTimeSlots(timeSlotsData)
       if (usersData) setUsers(usersData)
+      if (workshopsData) setWorkshops(workshopsData)
       setLoadError(false)
     } catch (err) {
       console.error('Error loading data:', err)
@@ -155,10 +155,20 @@ export function AppProvider({ children }) {
       })
       .subscribe()
 
-    rtChannelsRef.current = [apptChannel, notifChannel]
+    const workshopChannel = supabase
+      .channel('rt-workshops')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workshops' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setWorkshops(prev => prev.find(w => w.id === n.id) ? prev : [n, ...prev])
+        else if (eventType === 'UPDATE') setWorkshops(prev => prev.map(w => w.id === n.id ? n : w))
+        else if (eventType === 'DELETE') setWorkshops(prev => prev.filter(w => w.id !== o.id))
+      })
+      .subscribe()
+
+    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel]
     return () => {
       supabase.removeChannel(apptChannel)
       supabase.removeChannel(notifChannel)
+      supabase.removeChannel(workshopChannel)
       rtChannelsRef.current = []
     }
   }, [])
@@ -479,10 +489,27 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const addWorkshop = async (data) => {
+    const { data: inserted, error } = await supabase.from('workshops').insert([{
+      ...data,
+      created_at: Date.now(),
+    }]).select().single()
+    if (error) return { success: false, error: error.message }
+    setWorkshops(prev => [inserted, ...prev])
+    return { success: true }
+  }
+
+  const deleteWorkshop = async (id) => {
+    const { error } = await supabase.from('workshops').delete().eq('id', id)
+    if (error) return { success: false, error: error.message }
+    setWorkshops(prev => prev.filter(w => w.id !== id))
+    return { success: true }
+  }
+
   const value = {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
-    cities, labs, appointments, notifications, timeSlots, users,
+    cities, labs, appointments, notifications, timeSlots, users, workshops,
     loading, loadError,
     loadAllData,
     loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
@@ -492,6 +519,7 @@ export function AppProvider({ children }) {
     markNotificationsRead, clearNotifications, createNotification,
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab,
+    addWorkshop, deleteWorkshop,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

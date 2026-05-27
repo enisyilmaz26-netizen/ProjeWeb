@@ -93,7 +93,7 @@ export default function MainAppContainer() {
               <span aria-hidden="true">{tab.icon}</span>
               <span>{tab.label}</span>
               {tab.key === 'notifications' && unreadCount > 0 && (
-                <span aria-label={`${unreadCount} okunmamış bildirim`} className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                <span aria-label={language === 'TR' ? `${unreadCount} okunmamış bildirim` : `${unreadCount} unread notifications`} className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}

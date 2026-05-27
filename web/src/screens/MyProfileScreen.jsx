@@ -227,7 +227,7 @@ export default function MyProfileScreen() {
             <ProfileField label={t('input_phone', language)} value={loggedInUser.phone} />
             <ProfileField
               label={language === 'TR' ? 'Üyelik Durumu' : 'Membership Status'}
-              value={loggedInUser.is_approved ? (language === 'TR' ? '✓ Onaylı' : '✓ Approved') : (language === 'TR' ? 'Onay Bekliyor' : 'Pending Approval')}
+              value={loggedInUser.is_approved ? t('status_approved', language) : t('status_pending_approval', language)}
               valueClass={loggedInUser.is_approved ? 'text-green-600 dark:text-green-400 font-medium' : 'text-orange-500'}
             />
           </div>
@@ -251,7 +251,7 @@ export default function MyProfileScreen() {
             </div>
             <div>
               <label className={labelClass}>{t('new_password', language)} *</label>
-              <input type="password" className={inputClass} value={pwForm.newPw} onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={4} />
+              <input type="password" className={inputClass} value={pwForm.newPw} onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={8} />
             </div>
             <div>
               <label className={labelClass}>{t('input_confirm_password', language)} *</label>

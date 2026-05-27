@@ -307,7 +307,7 @@ export default function UserReservationScreen() {
           <div className="bg-[#1565C0]/5 dark:bg-[#7DD4FC]/5 rounded-xl px-3 py-2 mb-3 text-xs text-gray-600 dark:text-gray-400 flex gap-2 flex-wrap">
             <span className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedLab?.name}</span>
             <span>•</span>
-            <span>{selectedDate}</span>
+            <span>{formatDate(selectedDate)}</span>
             <span>•</span>
             <span>{selectedCity?.name}</span>
           </div>
