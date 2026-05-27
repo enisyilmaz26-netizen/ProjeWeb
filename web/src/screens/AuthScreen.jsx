@@ -421,7 +421,7 @@ export default function AuthScreen({ onBack }) {
                     minLength={8}
                   />
                   {regForm.password.length === 0 ? (
-                    <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                    <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 italic">
                       {t('pw_requirement_hint', language)}
                     </p>
                   ) : (
