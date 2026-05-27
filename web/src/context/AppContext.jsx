@@ -3,16 +3,6 @@ import { supabase } from '../lib/supabase'
 
 const AppContext = createContext(null)
 
-// SHA-256 via Web Crypto API
-async function hashPassword(password, salt = '') {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(salt + password + 'lab_rezervasyon_2024')
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hashBuffer))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
 function loadFromStorage(key) {
   try {
     const val = localStorage.getItem(key)
@@ -112,7 +102,7 @@ export function AppProvider({ children }) {
         supabase.from('appointments').select('*').order('created_timestamp', { ascending: false }),
         supabase.from('notifications').select('*').order('timestamp', { ascending: false }),
         supabase.from('city_time_slots').select('*').order('id'),
-        supabase.from('users').select('*').order('name'),
+        supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district').order('name'),
         supabase.from('workshops').select('*').order('date', { ascending: false }),
         supabase.from('admins').select('id,name,email,role,city_id,phone').order('name'),
       ])
@@ -184,23 +174,21 @@ export function AppProvider({ children }) {
     const rl = checkRateLimit(email)
     if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
-    const { data, error } = await supabase
-      .from('users').select('*').eq('email', email).single()
+    const { data, error } = await supabase.rpc('login_user', { p_email: email, p_password: password })
 
-    if (error || !data) {
-      return { success: false, error: 'err_email_not_found' }
-    }
-
-    const hashed = await hashPassword(password, email)
-    if (data.password_hash !== hashed) {
+    if (error || !data || data.length === 0) {
+      // Distinguish "email not found" vs "wrong password" for admin login fallback
+      const { data: exists } = await supabase.from('users').select('id').eq('email', email).maybeSingle()
+      if (!exists) return { success: false, error: 'err_email_not_found' }
       recordFailedAttempt(email)
       return { success: false, error: 'err_user_not_found' }
     }
 
-    if (!data.is_approved) return { success: false, error: 'err_not_approved' }
+    const user = data[0]
+    if (!user.is_approved) return { success: false, error: 'err_not_approved' }
 
     clearAttempts(email)
-    setLoggedInUser(data)
+    setLoggedInUser(user)
     return { success: true }
   }
 
@@ -208,22 +196,15 @@ export function AppProvider({ children }) {
     const rl = checkRateLimit(email)
     if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
-    const { data, error } = await supabase
-      .from('admins').select('*').eq('email', email).single()
+    const { data, error } = await supabase.rpc('login_admin', { p_email: email, p_password: password })
 
-    if (error || !data) {
-      recordFailedAttempt(email)
-      return { success: false, error: 'err_user_not_found' }
-    }
-
-    const hashed = await hashPassword(password, email)
-    if (!data.password_hash || data.password_hash !== hashed) {
+    if (error || !data || data.length === 0) {
       recordFailedAttempt(email)
       return { success: false, error: 'err_user_not_found' }
     }
 
     clearAttempts(email)
-    setLoggedInAdmin(data)
+    setLoggedInAdmin(data[0])
     return { success: true }
   }
 
@@ -232,7 +213,8 @@ export function AppProvider({ children }) {
       .from('users').select('id').eq('email', formData.email).maybeSingle()
     if (existing) return { success: false, error: 'err_email_exists' }
 
-    const hashed = await hashPassword(formData.password, formData.email)
+    const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: formData.password })
+    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { error } = await supabase.from('users').insert([{
       name: formData.name,
       surname: formData.surname,
@@ -266,7 +248,8 @@ export function AppProvider({ children }) {
     if (existing) return { success: false, error: 'err_email_exists' }
 
     const email = formData.email.trim().toLowerCase()
-    const hashed = await hashPassword(formData.password, email)
+    const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: formData.password })
+    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { error } = await supabase.from('users').insert([{
       name: formData.name,
       surname: formData.surname,
@@ -281,7 +264,7 @@ export function AppProvider({ children }) {
       is_approved: true,
     }])
     if (error) return { success: false, error: error.message }
-    const { data: all } = await supabase.from('users').select('*')
+    const { data: all } = await supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district').order('name')
     if (all) setUsers(all)
     return { success: true }
   }
@@ -296,37 +279,33 @@ export function AppProvider({ children }) {
     return { success: true, data }
   }
 
-  const resetPassword = async (userId, email, newPassword) => {
-    const hashed = await hashPassword(newPassword, email)
+  const resetPassword = async (userId, _email, newPassword) => {
+    const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
+    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { error } = await supabase.from('users').update({ password_hash: hashed }).eq('id', userId)
     if (error) return { success: false, error: error.message }
     return { success: true }
   }
 
   const changeAdminPassword = async (adminId, email, currentPassword, newPassword) => {
-    const { data } = await supabase.from('admins').select('password_hash').eq('id', adminId).single()
-    if (!data) return { success: false, error: 'err_user_not_found' }
-
-    const currentHashed = await hashPassword(currentPassword, email)
-    if (!data.password_hash || data.password_hash !== currentHashed) return { success: false, error: 'err_current_password_wrong' }
-
-    const newHashed = await hashPassword(newPassword, email)
-    const { error } = await supabase.from('admins').update({ password_hash: newHashed }).eq('id', adminId)
-    if (error) return { success: false, error: error.message }
-    setLoggedInAdmin(prev => ({ ...prev, password_hash: newHashed }))
+    const { data: ok, error } = await supabase.rpc('change_admin_password', {
+      p_admin_id: adminId,
+      p_email: email,
+      p_current_password: currentPassword,
+      p_new_password: newPassword,
+    })
+    if (error || !ok) return { success: false, error: 'err_current_password_wrong' }
     return { success: true }
   }
 
   const changePassword = async (userId, email, currentPassword, newPassword) => {
-    const { data } = await supabase.from('users').select('password_hash').eq('id', userId).single()
-    if (!data) return { success: false, error: 'err_user_not_found' }
-
-    const currentHashed = await hashPassword(currentPassword, email)
-    if (!data.password_hash || data.password_hash !== currentHashed) return { success: false, error: 'err_current_password_wrong' }
-
-    const newHashed = await hashPassword(newPassword, email)
-    const { error } = await supabase.from('users').update({ password_hash: newHashed }).eq('id', userId)
-    if (error) return { success: false, error: error.message }
+    const { data: ok, error } = await supabase.rpc('change_user_password', {
+      p_user_id: userId,
+      p_email: email,
+      p_current_password: currentPassword,
+      p_new_password: newPassword,
+    })
+    if (error || !ok) return { success: false, error: 'err_current_password_wrong' }
     return { success: true }
   }
 
@@ -672,7 +651,8 @@ export function AppProvider({ children }) {
   }
 
   const addAdmin = async ({ name, email, password, role, city_id, phone }) => {
-    const hashed = await hashPassword(password, email)
+    const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: password })
+    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { data, error } = await supabase.from('admins').insert([{
       name, email, password_hash: hashed, role: role || 'CITY', city_id: city_id || null, phone: phone || ''
     }]).select('id,name,email,role,city_id,phone').single()
@@ -697,8 +677,9 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
-  const resetAdminPasswordByGlobal = async (adminId, email, newPassword) => {
-    const hashed = await hashPassword(newPassword, email)
+  const resetAdminPasswordByGlobal = async (adminId, _email, newPassword) => {
+    const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
+    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { error } = await supabase.from('admins').update({ password_hash: hashed }).eq('id', adminId)
     if (error) return { success: false, error: error.message }
     return { success: true }
