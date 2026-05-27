@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import AppLogo from '../components/AppLogo'
 import { t, formatDate } from '../lib/languages'
-import { Sun, Moon, MapPin, Calendar, Clock, Mic, Video, Monitor, Pencil } from 'lucide-react'
+import { Sun, Moon, MapPin, Calendar, Clock, Mic, Video, Monitor, Pencil, FlaskConical, Users } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
 
 const NAV_LINKS = [
@@ -33,51 +33,26 @@ export default function LandingPage({ onLoginClick }) {
     {
       value: cities.length || 7,
       label: { TR: 'İl', EN: 'Province' },
-      color: '#0A2461',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-          <circle cx="12" cy="9" r="2.5"/>
-        </svg>
-      ),
+      color: '#1565C0',
+      icon: <MapPin className="w-6 h-6" />,
     },
     {
       value: 8,
       label: { TR: 'Laboratuvar', EN: 'Laboratory' },
       color: '#1565C0',
-      icon: (
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7">
-          <rect x="12" y="16" width="60" height="16" rx="7" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round"/>
-          <line x1="42" y1="32" x2="42" y2="42" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
-          <rect x="8" y="42" width="72" height="38" rx="7" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round"/>
-          <circle cx="44" cy="61" r="11" fill="none" stroke="currentColor" strokeWidth="4"/>
-          <circle cx="44" cy="61" r="5" fill="none" stroke="currentColor" strokeWidth="3"/>
-          <polygon points="80,48 92,42 92,80 80,74" fill="none" stroke="currentColor" strokeWidth="4" strokeLinejoin="round"/>
-        </svg>
-      ),
+      icon: <FlaskConical className="w-6 h-6" />,
     },
     {
       value: workshops.length || 0,
       label: { TR: 'Atölye', EN: 'Workshop' },
       color: '#1565C0',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-      ),
+      icon: <Pencil className="w-6 h-6" />,
     },
     {
       value: '200K+',
       label: { TR: 'Hedef Öğretmen', EN: 'Target Teachers' },
-      color: '#0A2461',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      ),
+      color: '#1565C0',
+      icon: <Users className="w-6 h-6" />,
     },
   ]
 
