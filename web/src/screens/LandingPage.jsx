@@ -195,14 +195,14 @@ export default function LandingPage({ onLoginClick }) {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-br from-white via-[#EFF8FF] to-[#1565C0] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565]">
+      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#EFF8FF] via-[#BFDBFE] to-[#1565C0] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565]">
         {/* Decorative circles */}
-        <div className="absolute top-20 right-10 w-72 h-72 bg-[#00AEEF]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#1565C0]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-20 right-10 w-72 h-72 bg-[#00AEEF]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#1565C0]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/30 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-20 text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white leading-[1.35] sm:leading-[1.3] mb-6">
             {lang === 'TR'
               ? <>Öğretmenler<br /><span className="text-[#1565C0] dark:text-[#7DD4FC]">Dijital Dönüşümün</span><br />Öncüsüdür</>
               : <>Teachers Are the<br /><span className="text-[#1565C0] dark:text-[#7DD4FC]">Pioneers of</span><br />Digital Transformation</>
