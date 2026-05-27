@@ -6,29 +6,12 @@ export default function NotificationCenterScreen() {
   const { notifications, loggedInAdmin, loggedInUser, clearNotifications, markNotificationsRead, language, cities } = useApp()
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
+  // Filtering is handled in AppContext (visibleNotifications); notifications here is already
+  // scoped to the current user's city. We only need the city name for the clear action.
   const adminCity = cities.find(c => String(c.id) === String(loggedInAdmin?.city_id))
   const cityName = (loggedInAdmin?.role === 'CITY' && adminCity) ? adminCity.name : null
 
-  const extractCityTag = (title) => {
-    const match = (title || '').match(/^\[([^\]]+)\]/)
-    return match ? match[1] : null
-  }
-
-  let visibleNotifications = notifications
-  if (cityName) {
-    // İl yöneticisi: sadece kendi iline ait veya genel bildirimler
-    visibleNotifications = notifications.filter(n => {
-      const tag = extractCityTag(n.title)
-      return tag === null || tag === cityName
-    })
-  } else if (loggedInUser) {
-    // Öğretmen: genel bildirimler + kendi ilinin bildirimleri
-    const userCity = loggedInUser.city_name
-    visibleNotifications = notifications.filter(n => {
-      const tag = extractCityTag(n.title)
-      return tag === null || tag === userCity
-    })
-  }
+  const visibleNotifications = notifications
 
   useEffect(() => {
     const unreadIds = visibleNotifications.filter(n => !n.is_read).map(n => n.id)

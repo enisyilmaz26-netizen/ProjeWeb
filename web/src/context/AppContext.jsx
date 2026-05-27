@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AppContext = createContext(null)
@@ -158,6 +158,8 @@ export function AppProvider({ children }) {
         else if (eventType === 'DELETE') setNotifications(prev => prev.filter(x => x.id !== o.id))
       })
       .subscribe()
+    // Note: raw state stores all notifications; visibleNotifications (memoised) applies
+    // per-user city filtering so cross-city notifications are never rendered or counted.
 
     const workshopChannel = supabase
       .channel('rt-workshops')
@@ -535,10 +537,38 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  // Filter notifications to only show what's relevant to the current user/admin.
+  // Global admins see everything. City admins see their city + global.
+  // Regular users see their city + global, minus admin-only entries (e.g. registration requests).
+  const visibleNotifications = useMemo(() => {
+    if (loggedInAdmin?.role === 'GLOBAL') return notifications
+
+    const entity = loggedInAdmin || loggedInUser
+    if (!entity) return []
+
+    const cityName = loggedInUser?.city_name
+      || cities.find(c => String(c.id) === String(entity.city_id))?.name
+
+    if (!cityName) return notifications
+
+    return notifications.filter(n => {
+      const prefixMatch = (n.title || '').match(/^\[([^\]]+)\]/)
+      if (!prefixMatch) return true          // No city prefix → global, show to all
+      if (prefixMatch[1] !== cityName) return false  // Different city → filter out
+
+      // Hide admin-only notifications from regular users
+      if (loggedInUser && !loggedInAdmin) {
+        const title = n.title || ''
+        if (title.includes('Yeni Üye Başvurusu') || title.includes('New Member Request')) return false
+      }
+      return true
+    })
+  }, [notifications, loggedInAdmin, loggedInUser, cities])
+
   const value = {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
-    cities, labs, appointments, notifications, timeSlots, users, workshops, admins,
+    cities, labs, appointments, notifications: visibleNotifications, timeSlots, users, workshops, admins,
     loading, loadError,
     loadAllData,
     loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
