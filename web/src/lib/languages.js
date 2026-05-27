@@ -24,7 +24,7 @@ export const translations = {
   input_password: { TR: 'Şifre', EN: 'Password' },
   input_confirm_password: { TR: 'Şifre (Tekrar)', EN: 'Confirm Password' },
   submit_button: { TR: 'Randevu Talebi Oluştur', EN: 'Create Reservation Request' },
-  login_title: { TR: 'Sisteme Giriş Yap', EN: 'Sign In' },
+  login_title: { TR: 'Giriş Yap', EN: 'Sign In' },
   login_subtitle: { TR: 'Öğretmen Öğrenme Laboratuvarları Rezervasyon Sistemi', EN: 'Teacher Learning Labs Reservation System' },
   register_title: { TR: 'Yeni Üye', EN: 'Create Account' },
   btn_login: { TR: 'Giriş Yap', EN: 'Sign In' },
