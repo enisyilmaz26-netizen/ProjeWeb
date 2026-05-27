@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
+import PasswordInput from '../components/PasswordInput'
 
 export default function MyProfileScreen() {
   const { loggedInUser, appointments, submitCancellationRequest, updateUserProfile, changePassword, language } = useApp()
@@ -247,15 +248,15 @@ export default function MyProfileScreen() {
           <form onSubmit={handleChangePassword} className="px-5 pb-5 space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
             <div>
               <label className={labelClass}>{t('current_password', language)} *</label>
-              <input type="password" className={inputClass} value={pwForm.current} onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))} required />
+              <PasswordInput className={inputClass} value={pwForm.current} onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))} required />
             </div>
             <div>
               <label className={labelClass}>{t('new_password', language)} *</label>
-              <input type="password" className={inputClass} value={pwForm.newPw} onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={8} />
+              <PasswordInput className={inputClass} value={pwForm.newPw} onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={8} />
             </div>
             <div>
               <label className={labelClass}>{t('input_confirm_password', language)} *</label>
-              <input type="password" className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} required minLength={8} />
+              <PasswordInput className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} required minLength={8} />
             </div>
             {pwError && <p className="text-red-600 dark:text-red-400 text-xs">{pwError}</p>}
             <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60">

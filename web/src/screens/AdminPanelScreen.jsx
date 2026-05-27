@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
 import { INPUT_BASE } from '../lib/ui'
+import PasswordInput from '../components/PasswordInput'
 
 function statusLabel(status, lang) {
   return STATUS_LABELS[status]?.[lang] || status
@@ -40,7 +41,7 @@ export default function AdminPanelScreen() {
     approveAppointment, cancelAppointment, markAppointmentCompleted,
     approveUser, revokeUser,
     addTimeSlot, removeTimeSlot,
-    addLab, updateLab, deleteLab,
+    addLab, updateLab, deleteLab, forceDeleteLab,
     createNotification,
     changeAdminPassword,
     resetPassword,
@@ -484,7 +485,7 @@ export default function AdminPanelScreen() {
         time: '',
         capacity: lab.capacity_per_slot || 1,
       })
-      if (wsResult.success) await deleteLab(lab.id)
+      if (wsResult.success) await forceDeleteLab(lab.id)
     }
     setMigrating(false)
   }
@@ -747,15 +748,15 @@ export default function AdminPanelScreen() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('current_password', language)} *</label>
-                <input type="password" className={inputClass} value={adminPwForm.current} onChange={e => setAdminPwForm(p => ({ ...p, current: e.target.value }))} required />
+                <PasswordInput className={inputClass} value={adminPwForm.current} onChange={e => setAdminPwForm(p => ({ ...p, current: e.target.value }))} required />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('new_password', language)} *</label>
-                <input type="password" className={inputClass} value={adminPwForm.newPw} onChange={e => setAdminPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={8} />
+                <PasswordInput className={inputClass} value={adminPwForm.newPw} onChange={e => setAdminPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={8} />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_confirm_password', language)} *</label>
-                <input type="password" className={inputClass} value={adminPwForm.confirm} onChange={e => setAdminPwForm(p => ({ ...p, confirm: e.target.value }))} required minLength={8} />
+                <PasswordInput className={inputClass} value={adminPwForm.confirm} onChange={e => setAdminPwForm(p => ({ ...p, confirm: e.target.value }))} required minLength={8} />
               </div>
             </div>
             {adminPwError && <p className="text-red-500 dark:text-red-400 text-xs">{adminPwError}</p>}
@@ -1517,7 +1518,7 @@ export default function AdminPanelScreen() {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_password', language)} *</label>
-                  <input type="password" className={`${inputClass} w-full`} value={adminForm.password} onChange={e => setAdminForm(p => ({ ...p, password: e.target.value }))} required minLength={8} />
+                  <PasswordInput className={`${inputClass} w-full`} value={adminForm.password} onChange={e => setAdminForm(p => ({ ...p, password: e.target.value }))} required minLength={8} />
                   <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">{t('pw_requirement_hint', language)}</p>
                 </div>
               </div>
@@ -1613,8 +1614,7 @@ export default function AdminPanelScreen() {
             <form onSubmit={handleResetAdminPassword} className="space-y-3">
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('new_password', language)} *</label>
-                <input
-                  type="password"
+                <PasswordInput
                   className={inputClass}
                   value={resetAdminPwValue}
                   onChange={e => setResetAdminPwValue(e.target.value)}
@@ -1652,8 +1652,7 @@ export default function AdminPanelScreen() {
             <form onSubmit={handleResetUserPassword} className="space-y-3">
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('new_password', language)} *</label>
-                <input
-                  type="password"
+                <PasswordInput
                   className={inputClass}
                   value={resetPwValue}
                   onChange={e => setResetPwValue(e.target.value)}

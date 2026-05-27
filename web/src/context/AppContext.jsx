@@ -350,31 +350,84 @@ export function AppProvider({ children }) {
       return { success: false, error: error.message }
     }
     setAppointments(prev => [data, ...prev])
+    // Notify admin: new appointment submitted
+    const cityName = cities.find(c => String(c.id) === String(appointmentData.city_id))?.name
+    const labName = labs.find(l => String(l.id) === String(appointmentData.lab_id))?.name || ''
+    const userName = loggedInUser ? `${loggedInUser.name} ${loggedInUser.surname}` : (appointmentData.user_name || appointmentData.user_email || '')
+    if (cityName) {
+      await supabase.from('notifications').insert([{
+        title: `[${cityName}] Yeni Randevu Başvurusu`,
+        message: `${userName}, ${labName} için ${appointmentData.date} tarihli randevu başvurusu yaptı.`,
+        type: 'APPOINTMENT',
+        timestamp: Date.now(),
+        is_read: false,
+      }])
+    }
     return { success: true, data }
   }
 
   const markAppointmentCompleted = async (id) => {
+    const appt = appointments.find(a => a.id === id)
     const { error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id)
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'COMPLETED' } : a))
+    if (appt) {
+      const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
+      if (cityName) {
+        const notifData = {
+          title: `[${cityName}] Randevu Tamamlandı`,
+          message: `${appt.user_name || appt.user_email || ''} adlı öğretmenin ${appt.lab_name || ''} için ${appt.date} tarihli randevusu tamamlandı.`,
+          type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
+        }
+        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        if (nd) setNotifications(prev => [nd, ...prev])
+      }
+    }
     return { success: true }
   }
 
   const approveAppointment = async (id) => {
+    const appt = appointments.find(a => a.id === id)
     const { error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id)
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'APPROVED' } : a))
+    if (appt) {
+      const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
+      if (cityName) {
+        const notifData = {
+          title: `[${cityName}] Randevu Onaylandı`,
+          message: `${appt.user_name || appt.user_email || ''} adlı öğretmenin ${appt.lab_name || ''} için ${appt.date} tarihli randevusu onaylandı.`,
+          type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
+        }
+        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        if (nd) setNotifications(prev => [nd, ...prev])
+      }
+    }
     return { success: true }
   }
 
   const cancelAppointment = async (id) => {
+    const appt = appointments.find(a => a.id === id)
     const { error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id)
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
+    if (appt) {
+      const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
+      if (cityName) {
+        const notifData = {
+          title: `[${cityName}] Randevu İptal Edildi`,
+          message: `${appt.user_name || appt.user_email || ''} adlı öğretmenin ${appt.lab_name || ''} için ${appt.date} tarihli randevusu iptal edildi.`,
+          type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
+        }
+        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        if (nd) setNotifications(prev => [nd, ...prev])
+      }
+    }
     return { success: true }
   }
 
   const submitCancellationRequest = async (id, note) => {
+    const appt = appointments.find(a => a.id === id)
     const { error } = await supabase
       .from('appointments')
       .update({ status: 'CANCELLATION_REQUESTED', note: note || '' })
@@ -383,21 +436,58 @@ export function AppProvider({ children }) {
     setAppointments(prev => prev.map(a =>
       a.id === id ? { ...a, status: 'CANCELLATION_REQUESTED', note: note || '' } : a
     ))
+    if (appt) {
+      const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
+      const userName = loggedInUser ? `${loggedInUser.name} ${loggedInUser.surname}` : (appt.user_name || appt.user_email || '')
+      if (cityName) {
+        await supabase.from('notifications').insert([{
+          title: `[${cityName}] Randevu İptal Talebi`,
+          message: `${userName} adlı öğretmen, ${appt.lab_name || ''} için ${appt.date} tarihli randevusunu iptal talep etti.`,
+          type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
+        }])
+      }
+    }
     return { success: true }
   }
 
   // USER APPROVAL ACTIONS
   const approveUser = async (userId) => {
+    const user = users.find(u => u.id === userId)
     const { error } = await supabase.from('users').update({ is_approved: true }).eq('id', userId)
     if (error) return { success: false, error: error.message }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_approved: true } : u))
+    if (user) {
+      const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name
+      if (cityName) {
+        const notifData = {
+          title: `[${cityName}] Üyelik Onaylandı`,
+          message: `${user.name || ''} ${user.surname || ''} adlı öğretmenin üyeliği onaylandı.`,
+          type: 'SYSTEM', timestamp: Date.now(), is_read: false,
+        }
+        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        if (nd) setNotifications(prev => [nd, ...prev])
+      }
+    }
     return { success: true }
   }
 
   const revokeUser = async (userId) => {
+    const user = users.find(u => u.id === userId)
     const { error } = await supabase.from('users').update({ is_approved: false }).eq('id', userId)
     if (error) return { success: false, error: error.message }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_approved: false } : u))
+    if (user) {
+      const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name
+      if (cityName) {
+        const notifData = {
+          title: `[${cityName}] Üyelik İptal Edildi`,
+          message: `${user.name || ''} ${user.surname || ''} adlı öğretmenin üyeliği iptal edildi.`,
+          type: 'SYSTEM', timestamp: Date.now(), is_read: false,
+        }
+        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        if (nd) setNotifications(prev => [nd, ...prev])
+      }
+    }
     return { success: true }
   }
 
@@ -502,6 +592,13 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const forceDeleteLab = async (id) => {
+    const { error } = await supabase.from('laboratories').delete().eq('id', id)
+    if (error) return { success: false, error: error.message }
+    setLabs(prev => prev.filter(l => l.id !== id))
+    return { success: true }
+  }
+
   const addWorkshop = async (data) => {
     const { data: inserted, error } = await supabase.from('workshops').insert([{
       ...data,
@@ -592,7 +689,7 @@ export function AppProvider({ children }) {
     approveUser, revokeUser,
     markNotificationsRead, clearNotifications, createNotification,
     addTimeSlot, removeTimeSlot,
-    addLab, updateLab, deleteLab,
+    addLab, updateLab, deleteLab, forceDeleteLab,
     addWorkshop, deleteWorkshop,
     addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
   }

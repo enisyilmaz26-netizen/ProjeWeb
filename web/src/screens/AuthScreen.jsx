@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
 import AppLogo from '../components/AppLogo'
+import PasswordInput from '../components/PasswordInput'
 
 export default function AuthScreen({ onBack }) {
   const { loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
@@ -278,8 +279,7 @@ export default function AuthScreen({ onBack }) {
                 </div>
                 <div>
                   <label className={labelClass}>{t('input_password', language)}</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     className={inputClass}
                     placeholder={t('placeholder_password', language)}
                     value={loginPassword}
@@ -412,8 +412,7 @@ export default function AuthScreen({ onBack }) {
 
                 <div>
                   <label className={labelClass}>{t('input_password', language)} *</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     className={inputClass}
                     value={regForm.password}
                     onChange={e => setRegForm(p => ({ ...p, password: e.target.value }))}
@@ -441,8 +440,7 @@ export default function AuthScreen({ onBack }) {
 
                 <div>
                   <label className={labelClass}>{t('input_confirm_password', language)} *</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     className={inputClass}
                     value={regForm.confirmPassword}
                     onChange={e => setRegForm(p => ({ ...p, confirmPassword: e.target.value }))}
@@ -553,8 +551,7 @@ export default function AuthScreen({ onBack }) {
                   </div>
                   <div>
                     <label className={labelClass}>{t('input_password', language)} *</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       className={inputClass}
                       value={forgotNewPassword}
                       onChange={e => setForgotNewPassword(e.target.value)}
@@ -564,8 +561,7 @@ export default function AuthScreen({ onBack }) {
                   </div>
                   <div>
                     <label className={labelClass}>{t('input_confirm_password', language)} *</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       className={inputClass}
                       value={forgotConfirmPassword}
                       onChange={e => setForgotConfirmPassword(e.target.value)}
