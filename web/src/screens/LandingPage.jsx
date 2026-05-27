@@ -14,7 +14,7 @@ function scrollTo(id) {
 }
 
 export default function LandingPage({ onLoginClick }) {
-  const { cities, labs, timeSlots, language, isDarkMode, toggleLanguage, toggleDarkMode } = useApp()
+  const { cities, labs, language, isDarkMode, toggleLanguage, toggleDarkMode } = useApp()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -129,7 +129,6 @@ export default function LandingPage({ onLoginClick }) {
   ]
 
   const cityLabCount = (cityId) => labs.filter(l => String(l.city_id) === String(cityId)).length
-  const citySlotCount = (cityId) => timeSlots.filter(s => String(s.city_id) === String(cityId)).length
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#040A1C] text-gray-800 dark:text-gray-100">
@@ -211,8 +210,8 @@ export default function LandingPage({ onLoginClick }) {
 
           <p className="max-w-2xl mx-auto text-gray-500 dark:text-gray-400 text-base sm:text-lg leading-relaxed mb-10">
             {lang === 'TR'
-              ? 'Türkiye genelinde 7 ilde kurulan Öğretmen Öğrenme Laboratuvarları\'nda podcast, video ve dijital içerik stüdyolarına randevu alın.'
-              : 'Book appointments at Teacher Learning Labs across 7 provinces in Turkey, featuring podcast, video and digital content studios.'
+              ? 'Türkiye genelinde 7 ilde kurulan Öğretmen Öğrenme Laboratuvarları\'nda podcast, video ve dijital içerik alanlarına randevu alın.'
+              : 'Book appointments at Teacher Learning Labs across 7 provinces in Turkey, featuring podcast, video and digital content areas.'
             }
           </p>
 
@@ -377,8 +376,8 @@ export default function LandingPage({ onLoginClick }) {
             </h2>
             <p className="mt-3 text-gray-500 dark:text-gray-400 text-sm max-w-xl mx-auto">
               {lang === 'TR'
-                ? 'Her ilde birden fazla stüdyoyla öğretmenler dijital içerik üretim olanaklarına kolayca erişebilir.'
-                : 'With multiple studios in each province, teachers can easily access digital content production facilities.'}
+                ? 'Her ilde birden fazla alanla öğretmenler dijital içerik üretim olanaklarına kolayca erişebilir.'
+                : 'With multiple areas in each province, teachers can easily access digital content production facilities.'}
             </p>
           </div>
 
@@ -390,8 +389,7 @@ export default function LandingPage({ onLoginClick }) {
                 </div>
                 <p className="font-bold text-gray-900 dark:text-white text-sm">{city.name}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
-                  {cityLabCount(city.id)} {lang === 'TR' ? 'stüdyo' : 'studio'}
-                  {citySlotCount(city.id) > 0 && ` · ${citySlotCount(city.id)} ${lang === 'TR' ? 'alan' : 'slot'}`}
+                  {cityLabCount(city.id)} {lang === 'TR' ? 'alan' : 'area'}
                 </p>
                 <div className="mt-3 flex gap-1 flex-wrap">
                   {labs.filter(l => String(l.city_id) === String(city.id)).slice(0, 2).map(lab => (
