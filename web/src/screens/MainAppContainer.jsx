@@ -112,7 +112,7 @@ export default function MainAppContainer() {
       {/* Load error banner */}
       {loadError && (
         <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 px-4 py-2 text-red-700 dark:text-red-300 text-xs flex items-center justify-center gap-3">
-          <span>{language === 'TR' ? 'Veriler yüklenemedi.' : 'Failed to load data.'}</span>
+          <span>{t('data_load_failed', language)}</span>
           <button
             onClick={() => loadAllData()}
             className="underline font-semibold hover:opacity-80 transition"

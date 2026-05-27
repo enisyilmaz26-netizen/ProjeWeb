@@ -116,9 +116,7 @@ export default function NotificationCenterScreen() {
               {t('clear_notifications', language)}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-              {language === 'TR'
-                ? 'Tüm bildirimler kalıcı olarak silinecek. Emin misiniz?'
-                : 'All notifications will be permanently deleted. Are you sure?'}
+              {t('clear_notifications_confirm', language)}
             </p>
             <div className="flex gap-3">
               <button

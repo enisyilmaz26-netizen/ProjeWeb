@@ -208,6 +208,21 @@ export const translations = {
   upcoming_appointments: { TR: 'Yaklaşan Randevularım', EN: 'Upcoming Appointments' },
   no_upcoming_appointments: { TR: 'Yaklaşan randevu yok.', EN: 'No upcoming appointments.' },
   past_appointments: { TR: 'Geçmiş Randevular', EN: 'Past Appointments' },
+  kvkk_title: { TR: 'KVKK Aydınlatma Metni', EN: 'KVKK Information Text' },
+  kvkk_consent_suffix: { TR: "'ni okudum ve kabul ediyorum. *", EN: ' — I have read and agree. *' },
+  kvkk_agree_btn: { TR: 'Okudum, Onaylıyorum', EN: 'I Read and Agree' },
+  btn_close: { TR: 'Kapat', EN: 'Close' },
+  btn_ok: { TR: 'Tamam', EN: 'OK' },
+  reg_success_title: { TR: 'Başvurunuz Alındı', EN: 'Application Received' },
+  reg_success_msg: { TR: 'Üyelik talebiniz alınmıştır. Bilgileriniz kontrol edildikten sonra üyeliğiniz onaylanacaktır.', EN: 'Your membership request has been received. Your membership will be approved after your information is verified.' },
+  cancel_modal_title: { TR: 'İptal Talebi', EN: 'Cancellation Request' },
+  cancel_modal_subtitle: { TR: 'İptal sebebinizi belirtin (isteğe bağlı).', EN: 'State your cancellation reason (optional).' },
+  cancel_reason_placeholder: { TR: 'İptal sebebinizi yazın...', EN: 'Write your reason...' },
+  btn_submit: { TR: 'Gönder', EN: 'Submit' },
+  lbl_cancel_reason: { TR: 'İptal notu', EN: 'Cancel reason' },
+  btn_request_cancellation: { TR: 'İptal Talebi Gönder', EN: 'Request Cancellation' },
+  data_load_failed: { TR: 'Veriler yüklenemedi.', EN: 'Failed to load data.' },
+  clear_notifications_confirm: { TR: 'Tüm bildirimler kalıcı olarak silinecek. Emin misiniz?', EN: 'All notifications will be permanently deleted. Are you sure?' },
 }
 
 export const STATUS_COLORS = {

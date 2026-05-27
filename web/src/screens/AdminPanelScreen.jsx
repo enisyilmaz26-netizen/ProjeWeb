@@ -560,7 +560,7 @@ export default function AdminPanelScreen() {
               </div>
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_confirm_password', language)} *</label>
-                <input type="password" className={inputClass} value={adminPwForm.confirm} onChange={e => setAdminPwForm(p => ({ ...p, confirm: e.target.value }))} required />
+                <input type="password" className={inputClass} value={adminPwForm.confirm} onChange={e => setAdminPwForm(p => ({ ...p, confirm: e.target.value }))} required minLength={8} />
               </div>
             </div>
             {adminPwError && <p className="text-red-500 dark:text-red-400 text-xs">{adminPwError}</p>}

@@ -148,7 +148,7 @@ export default function AuthScreen({ onBack }) {
       if (result.success) {
         setForgotSuccess(true)
       } else {
-        setForgotError(result.error || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.'))
+        setForgotError(result.error || t('err_generic', language))
       }
     } finally {
       setForgotLoading(false)
@@ -436,9 +436,9 @@ export default function AuthScreen({ onBack }) {
                         onClick={() => setShowKvkkModal(true)}
                         className="text-[#1565C0] dark:text-[#7DD4FC] underline font-semibold hover:opacity-80"
                       >
-                        {language === 'TR' ? 'KVKK Aydınlatma Metni' : 'KVKK Consent Text'}
+                        {t('kvkk_title', language)}
                       </button>
-                      {language === 'TR' ? "'ni okudum ve kabul ediyorum. *" : " — I have read and agree. *"}
+                      {t('kvkk_consent_suffix', language)}
                     </span>
                   </label>
                 </div>
@@ -553,7 +553,7 @@ export default function AuthScreen({ onBack }) {
                     {forgotLoading ? t('loading_saving', language) : t('forgot_save_btn', language)}
                   </button>
                   <button type="button" onClick={() => { setForgotStep(1); setForgotError('') }} className="w-full text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline pt-1">
-                    ← {language === 'TR' ? 'Geri' : 'Back'}
+                    ← {t('btn_back', language)}
                   </button>
                 </form>
               )}
@@ -569,7 +569,7 @@ export default function AuthScreen({ onBack }) {
           <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{maxHeight: '80vh'}}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
               <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                {language === 'TR' ? 'KVKK Aydınlatma Metni' : 'KVKK Information Text'}
+                {t('kvkk_title', language)}
               </h3>
               <button
                 onClick={() => setShowKvkkModal(false)}
@@ -718,13 +718,13 @@ export default function AuthScreen({ onBack }) {
                 onClick={() => { setRegForm(p => ({ ...p, kvkk: true })); setShowKvkkModal(false) }}
                 className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
               >
-                {language === 'TR' ? 'Okudum, Onaylıyorum' : 'I Read and Agree'}
+                {t('kvkk_agree_btn', language)}
               </button>
               <button
                 onClick={() => setShowKvkkModal(false)}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
-                {language === 'TR' ? 'Kapat' : 'Close'}
+                {t('btn_close', language)}
               </button>
             </div>
           </div>
@@ -738,18 +738,16 @@ export default function AuthScreen({ onBack }) {
               <span className="text-green-600 dark:text-green-400 text-2xl">✓</span>
             </div>
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">
-              {language === 'TR' ? 'Başvurunuz Alındı' : 'Application Received'}
+              {t('reg_success_title', language)}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-              {language === 'TR'
-                ? 'Üyelik talebiniz alınmıştır. Bilgileriniz kontrol edildikten sonra üyeliğiniz onaylanacaktır.'
-                : 'Your membership request has been received. Your membership will be approved after your information is verified.'}
+              {t('reg_success_msg', language)}
             </p>
             <button
               onClick={() => { setShowRegSuccessModal(false); setActiveTab('login') }}
               className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
             >
-              OK
+              {t('btn_ok', language)}
             </button>
           </div>
         </div>
