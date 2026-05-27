@@ -232,6 +232,9 @@ export const translations = {
   pw_req_number: { TR: 'Rakam (0-9)', EN: 'Number (0-9)' },
   pw_req_special: { TR: 'Özel karakter (!, @, #, $, %)', EN: 'Special character (!, @, #, $, %)' },
   err_password_weak: { TR: 'Şifreniz en az 8 karakter, büyük/küçük harf, rakam ve özel karakter içermelidir.', EN: 'Password must contain at least 8 characters, uppercase/lowercase letters, a number and a special character.' },
+  btn_reset_password: { TR: 'Şifre Sıfırla', EN: 'Reset Password' },
+  reset_pw_title: { TR: 'Kullanıcı Şifresini Sıfırla', EN: 'Reset User Password' },
+  reset_pw_success: { TR: 'Şifre başarıyla sıfırlandı.', EN: 'Password reset successfully.' },
 }
 
 export const STATUS_COLORS = {
