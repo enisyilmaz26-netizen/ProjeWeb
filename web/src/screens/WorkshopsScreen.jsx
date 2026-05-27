@@ -1,6 +1,6 @@
 import React from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate } from '../lib/languages'
+import { t, formatDate, getWorkshopIcon } from '../lib/languages'
 
 export default function WorkshopsScreen() {
   const { workshops, loggedInUser, cities, language } = useApp()
@@ -29,7 +29,7 @@ export default function WorkshopsScreen() {
       <div className={`bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 border-l-4 ${isPast ? 'border-gray-300 dark:border-gray-600 opacity-70' : 'border-[#1565C0] dark:border-[#7DD4FC]'}`}>
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
-            <span className="text-xl">🎓</span>
+            <span className="text-xl">{getWorkshopIcon()}</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{ws.name}</p>
@@ -78,7 +78,7 @@ export default function WorkshopsScreen() {
 
       {cityWorkshops.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-12 text-center">
-          <div className="text-4xl mb-3">🎓</div>
+          <div className="text-4xl mb-3">{getWorkshopIcon()}</div>
           <p className="text-gray-500 dark:text-gray-400 text-sm">{t('no_workshops', language)}</p>
         </div>
       ) : (

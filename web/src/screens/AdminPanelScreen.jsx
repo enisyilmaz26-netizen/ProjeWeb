@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
+import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS, getLabIcon, getWorkshopIcon } from '../lib/languages'
 import { INPUT_BASE } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
 
@@ -46,8 +46,9 @@ export default function AdminPanelScreen() {
     changeAdminPassword,
     resetPassword,
     loadAllData,
-    addWorkshop, deleteWorkshop,
+    addWorkshop, updateWorkshop, deleteWorkshop,
     addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
+    addUserByAdmin,
   } = useApp()
 
   const todayStr = new Date().toISOString().split('T')[0]
@@ -70,6 +71,7 @@ export default function AdminPanelScreen() {
   // Time slots tab
   const [newSlotCityId, setNewSlotCityId] = useState(isGlobal ? '' : String(adminCityId || ''))
   const [newSlotTime, setNewSlotTime] = useState('')
+  const [newSlotLocation, setNewSlotLocation] = useState('')
   const [slotError, setSlotError] = useState('')
 
   // Studios tab
@@ -128,13 +130,16 @@ export default function AdminPanelScreen() {
   const [workshopError, setWorkshopError] = useState('')
   const [workshopSuccess, setWorkshopSuccess] = useState('')
   const [showAddWorkshop, setShowAddWorkshop] = useState(false)
+  const [editingWorkshopId, setEditingWorkshopId] = useState(null)
+  const [editWorkshopForm, setEditWorkshopForm] = useState({})
+  const [editWorkshopLoading, setEditWorkshopLoading] = useState(false)
 
   // City filters for global admin
   const [labCityFilter, setLabCityFilter] = useState('')
   const [workshopCityFilter, setWorkshopCityFilter] = useState('')
   const [userCityFilter, setUserCityFilter] = useState('')
   const [migrating, setMigrating] = useState(false)
-  const [labSaveSuccess, setLabSaveSuccess] = useState(false)
+  const [labSaveSuccess, setLabSaveSuccess] = useState('')
 
   // Admin management tab (global only)
   const [adminSearch, setAdminSearch] = useState('')
@@ -158,6 +163,13 @@ export default function AdminPanelScreen() {
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [resetAdminPwModal])
+
+  // Manual user add
+  const [showAddUser, setShowAddUser] = useState(false)
+  const [addUserForm, setAddUserForm] = useState({ name: '', surname: '', email: '', password: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
+  const [addUserError, setAddUserError] = useState('')
+  const [addUserSuccess, setAddUserSuccess] = useState('')
+  const [addUserLoading, setAddUserLoading] = useState(false)
 
   // Available locations for current city scope
   const availableLocations = useMemo(() => {
@@ -295,8 +307,12 @@ export default function AdminPanelScreen() {
   const visibleWorkshops = useMemo(() => {
     let list = isGlobal ? workshops : workshops.filter(w => String(w.city_id) === String(adminCityId))
     if (isGlobal && workshopCityFilter) list = list.filter(w => String(w.city_id) === String(workshopCityFilter))
-    return list
-  }, [workshops, isGlobal, adminCityId, workshopCityFilter])
+    return [...list].sort((a, b) => {
+      const cityA = cities.find(c => String(c.id) === String(a.city_id))?.name || ''
+      const cityB = cities.find(c => String(c.id) === String(b.city_id))?.name || ''
+      return cityA.localeCompare(cityB, 'tr')
+    })
+  }, [workshops, isGlobal, adminCityId, workshopCityFilter, cities])
 
   const filteredAdmins = useMemo(() => {
     if (!adminSearch.trim()) return admins
@@ -365,6 +381,34 @@ export default function AdminPanelScreen() {
     onConfirm: async () => { setProcessingId(id); await revokeUser(id); setProcessingId(null) },
   })
 
+  const handleAddUserByAdmin = async (e) => {
+    e.preventDefault()
+    setAddUserError('')
+    const cityId = isGlobal ? addUserForm.city_id : adminCityId
+    if (!addUserForm.name.trim() || !addUserForm.surname.trim() || !addUserForm.email.trim() || !addUserForm.password.trim() || !cityId) {
+      setAddUserError(language === 'TR' ? 'Ad, soyad, e-posta, şifre ve il zorunludur.' : 'Name, surname, email, password and province are required.')
+      return
+    }
+    setAddUserLoading(true)
+    const cityObj = cities.find(c => String(c.id) === String(cityId))
+    const result = await addUserByAdmin({
+      ...addUserForm,
+      email: addUserForm.email.trim().toLowerCase(),
+      city_id: cityId,
+      city_name: cityObj?.name || '',
+    })
+    setAddUserLoading(false)
+    if (result.success) {
+      setShowAddUser(false)
+      setAddUserForm({ name: '', surname: '', email: '', password: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
+      setAddUserSuccess(language === 'TR' ? 'Üye eklendi.' : 'Member added.')
+      setTimeout(() => setAddUserSuccess(''), 3000)
+    } else {
+      const errKey = result.error
+      setAddUserError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+    }
+  }
+
   const handleAddSlot = async () => {
     setSlotError('')
     const cityId = isGlobal ? newSlotCityId : adminCityId
@@ -372,9 +416,10 @@ export default function AdminPanelScreen() {
       setSlotError(t('slot_required_fields', language))
       return
     }
-    const result = await addTimeSlot(cityId, newSlotTime.trim())
+    const result = await addTimeSlot(cityId, newSlotTime.trim(), newSlotLocation.trim() || null)
     if (result.success) {
       setNewSlotTime('')
+      setNewSlotLocation('')
       if (isGlobal) setNewSlotCityId('')
     } else {
       setSlotError(result.error || 'Error')
@@ -410,6 +455,8 @@ export default function AdminPanelScreen() {
     if (result.success) {
       setShowAddLab(false)
       setLabForm({ name: '', description: '', capacity_per_slot: 1, location: '', branches: '', city_id: '' })
+      setLabSaveSuccess(language === 'TR' ? 'Kayıt eklendi.' : 'Record added.')
+      setTimeout(() => setLabSaveSuccess(''), 2500)
     } else {
       setLabError(result.error || 'Error')
     }
@@ -443,8 +490,8 @@ export default function AdminPanelScreen() {
     })
     if (result.success) {
       setEditingLabId(null)
-      setLabSaveSuccess(true)
-      setTimeout(() => setLabSaveSuccess(false), 2500)
+      setLabSaveSuccess(language === 'TR' ? 'Kayıt güncellendi.' : 'Record updated.')
+      setTimeout(() => setLabSaveSuccess(''), 2500)
     } else {
       const errKey = result.error
       setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
@@ -502,6 +549,8 @@ export default function AdminPanelScreen() {
     const updates = {
       role: editAdminModal.role,
       city_id: editAdminModal.role === 'GLOBAL' ? null : editAdminModal.city_id,
+      email: editAdminModal.email.trim(),
+      phone: editAdminModal.phone.trim(),
     }
     const result = await updateAdmin(editAdminModal.adminId, updates)
     setEditAdminLoading(false)
@@ -676,6 +725,45 @@ export default function AdminPanelScreen() {
       setProcessingId(null)
     },
   })
+
+  const startEditWorkshop = (ws) => {
+    setEditingWorkshopId(ws.id)
+    setEditWorkshopForm({
+      name: ws.name || '',
+      description: ws.description || '',
+      date: ws.date || '',
+      time: ws.time || '',
+      capacity: ws.capacity || 1,
+      location: ws.location || '',
+    })
+    setWorkshopError('')
+  }
+
+  const handleUpdateWorkshop = async (e) => {
+    e.preventDefault()
+    setWorkshopError('')
+    if (!editWorkshopForm.name.trim()) {
+      setWorkshopError(t('workshop_name_required', language))
+      return
+    }
+    setEditWorkshopLoading(true)
+    const result = await updateWorkshop(editingWorkshopId, {
+      name: editWorkshopForm.name,
+      description: editWorkshopForm.description,
+      date: editWorkshopForm.date || null,
+      time: editWorkshopForm.time || null,
+      capacity: Number(editWorkshopForm.capacity) || 1,
+      location: editWorkshopForm.location,
+    })
+    setEditWorkshopLoading(false)
+    if (result.success) {
+      setEditingWorkshopId(null)
+      setWorkshopSuccess(language === 'TR' ? 'Kayıt güncellendi' : 'Record updated')
+      setTimeout(() => setWorkshopSuccess(''), 2500)
+    } else {
+      setWorkshopError(result.error || t('err_generic', language))
+    }
+  }
 
   const resetFilters = () => {
     setSearch(''); setFilterCity(''); setFilterStatus(''); setFilterLocation('')
@@ -954,7 +1042,7 @@ export default function AdminPanelScreen() {
 
           {labSaveSuccess && (
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">
-              {language === 'TR' ? 'Alan başarıyla güncellendi.' : 'Area updated successfully.'}
+              {labSaveSuccess}
             </div>
           )}
 
@@ -994,7 +1082,7 @@ export default function AdminPanelScreen() {
                   ) : (
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">🎙</span>
+                        <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">{getLabIcon(lab.name)}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
@@ -1109,43 +1197,91 @@ export default function AdminPanelScreen() {
                 const city = cities.find(c => String(c.id) === String(ws.city_id))
                 return (
                   <div key={ws.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">🎓</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{ws.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {city?.name || ws.city_name}
-                          {ws.location ? ` • ${ws.location}` : ''}
-                        </p>
-                        {ws.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{ws.description}</p>}
-                        <div className="flex flex-wrap gap-3 mt-1.5">
-                          {ws.date && (
-                            <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium">
-                              📅 {formatDate(ws.date)}
-                            </span>
-                          )}
-                          {ws.time && (
-                            <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium">
-                              🕐 {ws.time}
-                            </span>
-                          )}
-                          {ws.capacity && (
-                            <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium">
-                              👥 {ws.capacity}
-                            </span>
-                          )}
+                    {editingWorkshopId === ws.id ? (
+                      <form onSubmit={handleUpdateWorkshop} className="space-y-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Atölyeyi Düzenle' : 'Edit Workshop'}</h4>
+                          <button type="button" onClick={() => setEditingWorkshopId(null)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_name_label', language)} *</label>
+                          <input type="text" className={`${inputClass} w-full`} value={editWorkshopForm.name} onChange={e => setEditWorkshopForm(p => ({ ...p, name: e.target.value }))} required />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_desc_label', language)}</label>
+                          <input type="text" className={`${inputClass} w-full`} value={editWorkshopForm.description} onChange={e => setEditWorkshopForm(p => ({ ...p, description: e.target.value }))} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_date_label', language)}</label>
+                            <input type="date" className={`${inputClass} w-full`} value={editWorkshopForm.date} onChange={e => setEditWorkshopForm(p => ({ ...p, date: e.target.value }))} />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_time_label', language)}</label>
+                            <input type="text" className={`${inputClass} w-full`} placeholder="09:00 - 17:00" value={editWorkshopForm.time} onChange={e => setEditWorkshopForm(p => ({ ...p, time: e.target.value }))} />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_location_label', language)}</label>
+                            <input type="text" className={`${inputClass} w-full`} value={editWorkshopForm.location} onChange={e => setEditWorkshopForm(p => ({ ...p, location: e.target.value }))} />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_capacity_label', language)}</label>
+                            <input type="number" min="1" className={`${inputClass} w-full`} value={editWorkshopForm.capacity} onChange={e => setEditWorkshopForm(p => ({ ...p, capacity: e.target.value }))} />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="submit" disabled={editWorkshopLoading} className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60">
+                            {editWorkshopLoading ? '...' : t('btn_save', language)}
+                          </button>
+                          <button type="button" onClick={() => setEditingWorkshopId(null)} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">
+                            {t('btn_nevermind', language)}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">{getWorkshopIcon()}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{ws.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {city?.name || ws.city_name}
+                            {ws.location ? ` • ${ws.location}` : ''}
+                          </p>
+                          {ws.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{ws.description}</p>}
+                          <div className="flex flex-wrap gap-3 mt-1.5">
+                            {ws.date && (
+                              <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium">
+                                📅 {formatDate(ws.date)}
+                              </span>
+                            )}
+                            {ws.time && (
+                              <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium">
+                                🕐 {ws.time}
+                              </span>
+                            )}
+                            {ws.capacity && (
+                              <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium">
+                                👥 {ws.capacity}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button onClick={() => startEditWorkshop(ws)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition">✏️</button>
+                          <button
+                            onClick={() => handleDeleteWorkshop(ws.id)}
+                            disabled={processingId === ws.id}
+                            className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40"
+                          >
+                            🗑
+                          </button>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteWorkshop(ws.id)}
-                        disabled={processingId === ws.id}
-                        className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40 flex-shrink-0"
-                      >
-                        🗑
-                      </button>
-                    </div>
+                    )}
                   </div>
                 )
               })}
@@ -1158,46 +1294,128 @@ export default function AdminPanelScreen() {
       {activeTab === 'slots' && (
         <div>
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('slot_mgmt_title', language)}</h3>
-          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4">
-            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{t('slot_add_new', language)}</h4>
-            <div className="flex flex-col sm:flex-row gap-2">
-              {isGlobal && (
-                <select className={`${inputClass} flex-1`} value={newSlotCityId} onChange={e => setNewSlotCityId(e.target.value)}>
-                  <option value="">{t('select_province', language)}</option>
-                  {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              )}
-              <input type="text" placeholder={t('slot_placeholder', language)} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
-              <button onClick={handleAddSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
-                + {t('btn_add', language)}
-              </button>
-            </div>
-            {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400">✕</button></p>}
-          </div>
 
           {isGlobal ? (
-            cities.map(city => {
-              const citySlots = visibleSlots.filter(s => String(s.city_id) === String(city.id))
-              if (citySlots.length === 0) return null
-              return (
-                <div key={city.id} className="mb-4">
-                  <h4 className="text-xs font-bold text-[#1565C0] dark:text-[#7DD4FC] mb-2 uppercase tracking-wide">{city.name}</h4>
-                  <div className="space-y-2">
-                    {citySlots.map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)}
+            /* ── Global admin: city selector + add form ── */
+            <>
+              <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4">
+                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{t('slot_add_new', language)}</h4>
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <select className={`${inputClass} flex-1`} value={newSlotCityId} onChange={e => { setNewSlotCityId(e.target.value); setNewSlotLocation('') }}>
+                      <option value="">{t('select_province', language)}</option>
+                      {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    <input type="text" placeholder={t('slot_placeholder', language)} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
+                    <button onClick={handleAddSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
+                      + {t('btn_add', language)}
+                    </button>
                   </div>
+                  {newSlotCityId && (
+                    <input
+                      type="text"
+                      placeholder={language === 'TR' ? 'Konum (isteğe bağlı) — örn: Gölbaşı BİLSEM' : 'Location (optional) — e.g.: Gölbaşı BİLSEM'}
+                      className={`${inputClass} w-full`}
+                      value={newSlotLocation}
+                      onChange={e => setNewSlotLocation(e.target.value)}
+                    />
+                  )}
+                </div>
+                {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400">✕</button></p>}
+              </div>
+
+              {cities.map(city => {
+                const citySlots = visibleSlots.filter(s => String(s.city_id) === String(city.id))
+                const cityLabLocs = [...new Set(labs.filter(l => String(l.city_id) === String(city.id) && l.location).map(l => l.location))]
+                const citySlotLocs = [...new Set(citySlots.filter(s => s.location).map(s => s.location))]
+                const allCityLocs = [...new Set([...cityLabLocs, ...citySlotLocs])]
+                const hasMultiLoc = allCityLocs.length >= 2
+                return (
+                  <div key={city.id} className="mb-6">
+                    <h4 className="text-xs font-bold text-[#1565C0] dark:text-[#7DD4FC] mb-2 uppercase tracking-wide">{city.name}</h4>
+                    {hasMultiLoc ? (
+                      <div className="space-y-3">
+                        {allCityLocs.map(loc => (
+                          <LocationSlotSection
+                            key={loc}
+                            locationName={loc}
+                            slots={citySlots.filter(s => s.location === loc)}
+                            cityId={city.id}
+                            processingId={processingId}
+                            onAddSlot={addTimeSlot}
+                            onRemove={handleRemoveSlot}
+                            language={language}
+                          />
+                        ))}
+                        {citySlots.filter(s => !s.location).length > 0 && (
+                          <div>
+                            <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Genel' : 'General'}</h5>
+                            <div className="space-y-2">{citySlots.filter(s => !s.location).map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)}</div>
+                          </div>
+                        )}
+                      </div>
+                    ) : citySlots.length === 0 ? null : (
+                      <div className="space-y-2">
+                        {citySlots.map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </>
+          ) : (() => {
+            /* ── City admin ── */
+            const cityLocations = [...new Set([
+              ...labs.filter(l => String(l.city_id) === String(adminCityId) && l.location).map(l => l.location),
+              ...visibleSlots.filter(s => s.location).map(s => s.location),
+            ])]
+
+            if (cityLocations.length >= 2) {
+              /* Multi-location city: dedicated card per location */
+              return (
+                <div className="space-y-4">
+                  {cityLocations.map(loc => (
+                    <LocationSlotSection
+                      key={loc}
+                      locationName={loc}
+                      slots={visibleSlots.filter(s => s.location === loc)}
+                      cityId={adminCityId}
+                      processingId={processingId}
+                      onAddSlot={addTimeSlot}
+                      onRemove={handleRemoveSlot}
+                      language={language}
+                    />
+                  ))}
+                  {slotError && <p className="text-red-500 text-xs mt-1">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400">✕</button></p>}
                 </div>
               )
-            })
-          ) : (
-            <div className="space-y-2">
-              {visibleSlots.map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)}
-              {visibleSlots.length === 0 && (
-                <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
-                  {t('slot_none', language)}
+            }
+
+            /* Single-location or no-location city: original UI */
+            return (
+              <>
+                <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4">
+                  <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{t('slot_add_new', language)}</h4>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input type="text" placeholder={t('slot_placeholder', language)} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
+                    <button onClick={handleAddSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
+                      + {t('btn_add', language)}
+                    </button>
+                  </div>
+                  {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400">✕</button></p>}
                 </div>
-              )}
-            </div>
-          )}
+                <div className="space-y-2">
+                  {visibleSlots.length === 0 ? (
+                    <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      {t('slot_none', language)}
+                    </div>
+                  ) : (
+                    visibleSlots.map(slot => <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />)
+                  )}
+                </div>
+              </>
+            )
+          })()}
         </div>
       )}
 
@@ -1205,16 +1423,24 @@ export default function AdminPanelScreen() {
       {activeTab === 'user_approvals' && (
         <div>
           <div className="mb-4 flex flex-col gap-2">
-            {isGlobal && (
-              <select
-                className={`${inputClass} w-full`}
-                value={userCityFilter}
-                onChange={e => setUserCityFilter(e.target.value)}
+            <div className="flex items-center justify-between">
+              {isGlobal ? (
+                <select
+                  className={`${inputClass} flex-1 mr-2`}
+                  value={userCityFilter}
+                  onChange={e => setUserCityFilter(e.target.value)}
+                >
+                  <option value="">{t('filter_all_provinces', language)}</option>
+                  {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              ) : <div />}
+              <button
+                onClick={() => { setShowAddUser(p => !p); setAddUserError('') }}
+                className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition flex-shrink-0"
               >
-                <option value="">{t('filter_all_provinces', language)}</option>
-                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            )}
+                + {language === 'TR' ? 'Üye Ekle' : 'Add Member'}
+              </button>
+            </div>
             <input
               type="text"
               placeholder={t('search_user_placeholder', language)}
@@ -1223,6 +1449,75 @@ export default function AdminPanelScreen() {
               onChange={e => setUserSearch(e.target.value)}
             />
           </div>
+
+          {addUserSuccess && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">
+              {addUserSuccess}
+            </div>
+          )}
+
+          {showAddUser && (
+            <form onSubmit={handleAddUserByAdmin} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4 space-y-3">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Yeni Üye' : 'New Member'}</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_name', language)} *</label>
+                  <input type="text" className={`${inputClass} w-full`} value={addUserForm.name} onChange={e => setAddUserForm(p => ({ ...p, name: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_surname', language)} *</label>
+                  <input type="text" className={`${inputClass} w-full`} value={addUserForm.surname} onChange={e => setAddUserForm(p => ({ ...p, surname: e.target.value }))} required />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_email', language)} *</label>
+                <input type="email" className={`${inputClass} w-full`} value={addUserForm.email} onChange={e => setAddUserForm(p => ({ ...p, email: e.target.value }))} required />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Şifre *' : 'Password *'}</label>
+                <PasswordInput className={`${inputClass} w-full`} value={addUserForm.password} onChange={e => setAddUserForm(p => ({ ...p, password: e.target.value }))} required minLength={8} />
+              </div>
+              {isGlobal && (
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_province', language)} *</label>
+                  <select className={`${inputClass} w-full`} value={addUserForm.city_id} onChange={e => setAddUserForm(p => ({ ...p, city_id: e.target.value }))} required>
+                    <option value="">{t('select_province', language)}</option>
+                    {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_branch', language)}</label>
+                  <input type="text" className={`${inputClass} w-full`} value={addUserForm.branch} onChange={e => setAddUserForm(p => ({ ...p, branch: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_phone', language)}</label>
+                  <input type="text" className={`${inputClass} w-full`} value={addUserForm.phone} onChange={e => setAddUserForm(p => ({ ...p, phone: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_work_location', language)}</label>
+                  <input type="text" className={`${inputClass} w-full`} value={addUserForm.work_location} onChange={e => setAddUserForm(p => ({ ...p, work_location: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_district', language)}</label>
+                  <input type="text" className={`${inputClass} w-full`} value={addUserForm.district} onChange={e => setAddUserForm(p => ({ ...p, district: e.target.value }))} />
+                </div>
+              </div>
+              {addUserError && <p className="text-red-500 dark:text-red-400 text-xs">{addUserError}</p>}
+              <div className="flex gap-2">
+                <button type="submit" disabled={addUserLoading} className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60">
+                  {addUserLoading ? '...' : t('btn_save', language)}
+                </button>
+                <button type="button" onClick={() => { setShowAddUser(false); setAddUserError('') }} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">
+                  {t('btn_nevermind', language)}
+                </button>
+              </div>
+            </form>
+          )}
+
 
           <h3 className="font-bold text-orange-600 dark:text-orange-400 text-sm mb-2">
             {t('pending_users_title', language)} ({pendingUsers.length})
@@ -1574,7 +1869,7 @@ export default function AdminPanelScreen() {
                       {!isSelf && (
                         <div className="flex gap-1 flex-shrink-0">
                           <button
-                            onClick={() => setEditAdminModal({ adminId: admin.id, name: admin.name || admin.email, role: admin.role, city_id: admin.city_id ? String(admin.city_id) : '' })}
+                            onClick={() => setEditAdminModal({ adminId: admin.id, name: admin.name || admin.email, email: admin.email || '', phone: admin.phone || '', role: admin.role, city_id: admin.city_id ? String(admin.city_id) : '' })}
                             className="text-[#1565C0] dark:text-[#7DD4FC] text-xs px-2 py-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"
                             title={language === 'TR' ? 'Rol / İl Düzenle' : 'Edit Role / Province'}
                           >
@@ -1690,10 +1985,29 @@ export default function AdminPanelScreen() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">
-              {language === 'TR' ? 'Rol / İl Düzenle' : 'Edit Role / Province'}
+              {language === 'TR' ? 'Yönetici Düzenle' : 'Edit Admin'}
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 truncate">{editAdminModal.name}</p>
             <form onSubmit={handleEditAdmin} className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_email', language)}</label>
+                <input
+                  type="email"
+                  className={`${inputClass} w-full`}
+                  value={editAdminModal.email}
+                  onChange={e => setEditAdminModal(p => ({ ...p, email: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_phone', language)}</label>
+                <input
+                  type="text"
+                  className={`${inputClass} w-full`}
+                  value={editAdminModal.phone}
+                  onChange={e => setEditAdminModal(p => ({ ...p, phone: e.target.value }))}
+                />
+              </div>
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_role', language)}</label>
                 <select
@@ -1815,10 +2129,63 @@ function StatCard({ label, value, color }) {
 function SlotItem({ slot, processingId, onRemove, language }) {
   return (
     <div className="bg-white dark:bg-[#0D1E3D] rounded-xl shadow px-4 py-3 flex items-center justify-between">
-      <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">{slot.time_range}</span>
+      <div>
+        <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">{slot.time_range}</span>
+        {slot.location && (
+          <span className="ml-2 text-xs text-[#1565C0] dark:text-[#7DD4FC] bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 px-2 py-0.5 rounded-lg">{slot.location}</span>
+        )}
+      </div>
       <button onClick={() => onRemove(slot.id)} disabled={processingId === slot.id} className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40">
         {processingId === slot.id ? '...' : t('btn_delete', language)}
       </button>
+    </div>
+  )
+}
+
+function LocationSlotSection({ locationName, slots, cityId, processingId, onAddSlot, onRemove, language }) {
+  const [slotTime, setSlotTime] = React.useState('')
+  const [error, setError] = React.useState('')
+
+  const handleAdd = async () => {
+    if (!slotTime.trim()) { setError(language === 'TR' ? 'Saat dilimi gereklidir.' : 'Time slot is required.'); return }
+    const result = await onAddSlot(cityId, slotTime.trim(), locationName)
+    if (result.success) { setSlotTime(''); setError('') }
+    else setError(result.error || (language === 'TR' ? 'Hata oluştu.' : 'An error occurred.'))
+  }
+
+  return (
+    <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
+      <h4 className="font-semibold text-[#1565C0] dark:text-[#7DD4FC] text-sm mb-3">{locationName}</h4>
+      <div className="space-y-2 mb-3">
+        {slots.length === 0 && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 py-1">{language === 'TR' ? 'Henüz saat dilimi eklenmedi.' : 'No time slots yet.'}</p>
+        )}
+        {slots.map(slot => (
+          <div key={slot.id} className="bg-gray-50 dark:bg-[#0A1628] rounded-xl px-4 py-2.5 flex items-center justify-between">
+            <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">{slot.time_range}</span>
+            <button onClick={() => onRemove(slot.id)} disabled={processingId === slot.id} className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40">
+              {processingId === slot.id ? '...' : t('btn_delete', language)}
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder={t('slot_placeholder', language)}
+          className={INPUT_BASE + ' flex-1'}
+          value={slotTime}
+          onChange={e => setSlotTime(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
+        />
+        <button
+          onClick={handleAdd}
+          className="py-2 px-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition"
+        >
+          + {t('btn_add', language)}
+        </button>
+      </div>
+      {error && <p className="text-red-500 text-xs mt-1">{error} <button onClick={() => setError('')} className="ml-1 text-red-400">✕</button></p>}
     </div>
   )
 }

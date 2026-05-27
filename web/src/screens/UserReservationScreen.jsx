@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate, translations } from '../lib/languages'
+import { t, formatDate, translations, getLabIcon } from '../lib/languages'
 
 function getMaxCapacity(lab) {
   if (!lab) return 1
@@ -63,8 +63,10 @@ export default function UserReservationScreen() {
 
   const citySlots = useMemo(() => {
     if (!selectedCity) return []
-    return timeSlots.filter(s => String(s.city_id) === String(selectedCity.id))
-  }, [timeSlots, selectedCity])
+    const all = timeSlots.filter(s => String(s.city_id) === String(selectedCity.id))
+    if (!selectedLab?.location) return all.filter(s => !s.location)
+    return all.filter(s => !s.location || s.location === selectedLab.location)
+  }, [timeSlots, selectedCity, selectedLab])
 
   const getSlotAvailability = (slot) => {
     if (!selectedLab || !selectedDate) return { count: 0, remaining: 0, full: false }
@@ -271,7 +273,7 @@ export default function UserReservationScreen() {
           <div className={cardClass}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">🎙</span>
+                <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">{getLabIcon(selectedLab?.name)}</span>
               </div>
               <div>
                 <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{selectedLab?.name}</p>
@@ -431,7 +433,7 @@ function LabCard({ lab, onClick, language, getMaxCapacity }) {
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
-          <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">🎙</span>
+          <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">{getLabIcon(lab.name)}</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>

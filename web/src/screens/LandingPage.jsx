@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import AppLogo from '../components/AppLogo'
-import { t } from '../lib/languages'
+import { t, formatDate } from '../lib/languages'
 
 const NAV_LINKS = [
   { href: '#proje', label: { TR: 'Proje', EN: 'Project' } },
@@ -45,18 +45,23 @@ export default function LandingPage({ onLoginClick }) {
       color: '#1565C0',
       icon: (
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7">
-          {/* Shotgun mikrofon kapsülü */}
           <rect x="12" y="16" width="60" height="16" rx="7" fill="none" stroke="#1a1a1a" strokeWidth="4.5" strokeLinecap="round"/>
-          {/* Mikrofon braket */}
           <line x1="42" y1="32" x2="42" y2="42" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round"/>
-          {/* Kamera gövdesi */}
           <rect x="8" y="42" width="72" height="38" rx="7" fill="none" stroke="#1a1a1a" strokeWidth="4.5" strokeLinecap="round"/>
-          {/* Kamera lensi dış */}
           <circle cx="44" cy="61" r="11" fill="none" stroke="#1a1a1a" strokeWidth="4"/>
-          {/* Kamera lensi iç */}
           <circle cx="44" cy="61" r="5" fill="none" stroke="#1a1a1a" strokeWidth="3"/>
-          {/* Video viewfinder üçgeni */}
           <polygon points="80,48 92,42 92,80 80,74" fill="none" stroke="#1a1a1a" strokeWidth="4" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
+    {
+      value: workshops.length || 0,
+      label: { TR: 'Atölye', EN: 'Workshop' },
+      color: '#1565C0',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
       ),
     },
@@ -89,8 +94,8 @@ export default function LandingPage({ onLoginClick }) {
     {
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
-          <rect x="2" y="2" width="20" height="20" rx="2.18"/>
-          <path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 7h5M17 17h5"/>
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
         </svg>
       ),
       title: { TR: 'Video Kayıt & Yeşil Ekran', EN: 'Video Recording & Green Screen' },
@@ -101,10 +106,8 @@ export default function LandingPage({ onLoginClick }) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
           <rect x="2" y="3" width="20" height="13" rx="2"/>
           <path d="M8 21h8M12 16v5"/>
-          <line x1="5" y1="8" x2="9" y2="8"/>
-          <line x1="11" y1="8" x2="19" y2="8"/>
-          <line x1="5" y1="12" x2="13" y2="12"/>
-          <line x1="15" y1="12" x2="19" y2="12"/>
+          <polyline points="7 8 10.5 11.5 7 15" strokeWidth="1.8"/>
+          <line x1="13.5" y1="15" x2="17" y2="15" strokeWidth="1.8"/>
         </svg>
       ),
       title: { TR: 'Post Prodüksiyon Lab', EN: 'Post-Production Lab' },
@@ -113,8 +116,8 @@ export default function LandingPage({ onLoginClick }) {
     {
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
-          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
       ),
       title: { TR: 'Öğretim Tasarımı Atölyesi', EN: 'Instructional Design Workshop' },
@@ -131,6 +134,7 @@ export default function LandingPage({ onLoginClick }) {
 
   const cityLabCount = (cityId) => labs.filter(l => String(l.city_id) === String(cityId)).length
   const cityStudioCount = (cityName) => cityName === 'Ankara' ? 2 : 1
+  const cityWorkshopCount = (cityId) => workshops.filter(w => String(w.city_id) === String(cityId)).length
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#040A1C] text-gray-800 dark:text-gray-100">
@@ -235,7 +239,7 @@ export default function LandingPage({ onLoginClick }) {
 
         {/* Stats bar */}
         <div className="relative max-w-3xl mx-auto w-full px-4 sm:px-6 pb-10">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {statsData.map((s, i) => (
               <div key={i} className="rounded-2xl p-5 text-center bg-white/80 dark:bg-white/10 backdrop-blur border" style={{ borderColor: s.color + '50' }}>
                 <div className="flex justify-center mb-2" style={{ color: s.color }} aria-hidden="true">{s.icon}</div>
@@ -393,6 +397,7 @@ export default function LandingPage({ onLoginClick }) {
                 <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
                   {cityStudioCount(city.name)} {lang === 'TR' ? 'stüdyo' : 'studio'}
                   {cityLabCount(city.id) > 0 && ` · ${cityLabCount(city.id)} ${lang === 'TR' ? 'alan' : 'area'}`}
+                  {cityWorkshopCount(city.id) > 0 && ` · ${cityWorkshopCount(city.id)} ${lang === 'TR' ? 'atölye' : 'workshop'}`}
                 </p>
                 <div className="mt-3 flex gap-1 flex-wrap">
                   {labs.filter(l => String(l.city_id) === String(city.id)).slice(0, 2).map(lab => (
@@ -440,14 +445,18 @@ export default function LandingPage({ onLoginClick }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {workshops.map(ws => {
+              {[...workshops].sort((a, b) => {
+                const ca = cities.find(c => String(c.id) === String(a.city_id))?.name || ''
+                const cb = cities.find(c => String(c.id) === String(b.city_id))?.name || ''
+                return ca.localeCompare(cb, 'tr')
+              }).map(ws => {
                 const city = cities.find(c => String(c.id) === String(ws.city_id))
                 return (
                   <div key={ws.id} className="flex gap-4 p-5 bg-gray-50 dark:bg-[#0D1E3D] rounded-2xl border border-gray-100 dark:border-[#162848] hover:shadow-md hover:-translate-y-0.5 transition-all">
                     <div className="w-10 h-10 flex-shrink-0 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC]">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
                     </div>
                     <div className="min-w-0 flex-1">
@@ -458,16 +467,17 @@ export default function LandingPage({ onLoginClick }) {
                       <div className="flex flex-wrap gap-2 mt-2">
                         {city && (
                           <span className="text-[11px] font-medium text-[#1565C0] dark:text-[#7DD4FC] bg-[#1565C0]/8 dark:bg-[#7DD4FC]/10 px-2 py-0.5 rounded-lg">
-                            📍 {city.name}
+                            📍 {city.name}{ws.location ? ` · ${ws.location}` : ''}
                           </span>
                         )}
-                        {ws.date ? (
+                        {ws.date && (
                           <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-lg">
-                            📅 {ws.date}
+                            📅 {formatDate(ws.date)}
                           </span>
-                        ) : (
-                          <span className="text-[11px] font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-lg">
-                            {lang === 'TR' ? 'Tarih belirleniyor' : 'Date TBD'}
+                        )}
+                        {ws.time && (
+                          <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-lg">
+                            🕐 {ws.time}
                           </span>
                         )}
                       </div>

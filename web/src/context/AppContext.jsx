@@ -261,6 +261,32 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const addUserByAdmin = async (formData) => {
+    const { data: existing } = await supabase
+      .from('users').select('id').eq('email', formData.email.trim().toLowerCase()).maybeSingle()
+    if (existing) return { success: false, error: 'err_email_exists' }
+
+    const email = formData.email.trim().toLowerCase()
+    const hashed = await hashPassword(formData.password, email)
+    const { error } = await supabase.from('users').insert([{
+      name: formData.name,
+      surname: formData.surname,
+      email,
+      password_hash: hashed,
+      branch: formData.branch,
+      work_location: formData.work_location,
+      phone: formData.phone,
+      city_id: formData.city_id,
+      city_name: formData.city_name,
+      district: formData.district,
+      is_approved: true,
+    }])
+    if (error) return { success: false, error: error.message }
+    const { data: all } = await supabase.from('users').select('*')
+    if (all) setUsers(all)
+    return { success: true }
+  }
+
   const findUserForReset = async (email) => {
     const { data, error } = await supabase
       .from('users')
@@ -529,10 +555,10 @@ export function AppProvider({ children }) {
   }
 
   // TIME SLOT ACTIONS
-  const addTimeSlot = async (cityId, timeRange) => {
-    const { error } = await supabase
-      .from('city_time_slots')
-      .insert([{ city_id: cityId, time_range: timeRange }])
+  const addTimeSlot = async (cityId, timeRange, location = null) => {
+    const row = { city_id: cityId, time_range: timeRange }
+    if (location) row.location = location
+    const { error } = await supabase.from('city_time_slots').insert([row])
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('city_time_slots').select('*')
     if (all) setTimeSlots(all)
@@ -618,6 +644,20 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const updateWorkshop = async (id, updates) => {
+    const { error } = await supabase.from('workshops').update(updates).eq('id', id)
+    if (error) return { success: false, error: error.message }
+    const { data: all } = await supabase.from('workshops').select('*')
+    if (all) {
+      const updated = all.find(w => w.id === id)
+      if (!updated || updated.name !== updates.name) return { success: false, error: 'err_update_failed' }
+      setWorkshops(all)
+    } else {
+      setWorkshops(prev => prev.map(w => w.id === id ? { ...w, ...updates } : w))
+    }
+    return { success: true }
+  }
+
   const deleteWorkshop = async (id) => {
     const { error } = await supabase.from('workshops').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
@@ -699,14 +739,14 @@ export function AppProvider({ children }) {
     cities, labs, appointments, notifications: visibleNotifications, timeSlots, users, workshops, admins,
     loading, loadError,
     loadAllData,
-    loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
+    loginUser, loginAdmin, registerUser, addUserByAdmin, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
     toggleLanguage, toggleDarkMode,
     submitAppointment, approveAppointment, cancelAppointment, submitCancellationRequest, markAppointmentCompleted,
     approveUser, revokeUser,
     markNotificationsRead, clearNotifications, createNotification,
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab, forceDeleteLab,
-    addWorkshop, deleteWorkshop,
+    addWorkshop, updateWorkshop, deleteWorkshop,
     addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
   }
 
