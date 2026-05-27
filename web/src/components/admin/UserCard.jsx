@@ -1,6 +1,6 @@
 import { t } from '../../lib/languages'
 
-export default function UserCard({ user, language, processingId, onApprove, onRevoke, onResetPassword, showApprove, showRevoke }) {
+export default function UserCard({ user, language, processingId, onApprove, onRevoke, onResetPassword, showApprove, showRevoke, showDelete }) {
   return (
     <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
       <div className="flex items-start gap-3 mb-2">
@@ -28,6 +28,11 @@ export default function UserCard({ user, language, processingId, onApprove, onRe
         {showRevoke && (
           <button onClick={() => onRevoke(user.id)} disabled={processingId === user.id} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
             {processingId === user.id ? '...' : t('btn_revoke_member', language)}
+          </button>
+        )}
+        {showDelete && (
+          <button onClick={() => onRevoke(user.id)} disabled={processingId === user.id} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
+            {processingId === user.id ? '...' : t('btn_reject_member', language)}
           </button>
         )}
         <button

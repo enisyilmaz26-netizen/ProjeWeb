@@ -171,7 +171,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       ) : (
         <div className="space-y-3 mb-6">
           {pendingUsers.map(user => (
-            <UserCard key={user.id} user={user} language={language} processingId={processingId} onApprove={handleApproveUser} onRevoke={handleRevokeUser} onResetPassword={() => openResetPw(user)} showApprove />
+            <UserCard key={user.id} user={user} language={language} processingId={processingId} onApprove={handleApproveUser} onRevoke={handleRevokeUser} onResetPassword={() => openResetPw(user)} showApprove showDelete />
           ))}
         </div>
       )}

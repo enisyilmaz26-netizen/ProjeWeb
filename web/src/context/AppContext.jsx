@@ -498,9 +498,9 @@ export function AppProvider({ children }) {
 
   const revokeUser = async (userId) => {
     const user = users.find(u => u.id === userId)
-    const { error } = await supabase.from('users').update({ is_approved: false }).eq('id', userId)
+    const { error } = await supabase.from('users').delete().eq('id', userId)
     if (error) return { success: false, error: error.message }
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_approved: false } : u))
+    setUsers(prev => prev.filter(u => u.id !== userId))
     if (user) {
       const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name
       if (cityName) {
