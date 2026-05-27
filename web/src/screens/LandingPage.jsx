@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import AppLogo from '../components/AppLogo'
 import { t, formatDate } from '../lib/languages'
-import { Sun, Moon, MapPin, Calendar, Clock, Mic, Video, Monitor, Pencil, FlaskConical, Users } from 'lucide-react'
+import { Sun, Moon, MapPin, Calendar, Clock, Mic, Video, Monitor, BookOpen, GraduationCap, FlaskConical, Users } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
 
 const NAV_LINKS = [
@@ -46,7 +46,7 @@ export default function LandingPage({ onLoginClick }) {
       value: workshops.length || 0,
       label: { TR: 'Atölye', EN: 'Workshop' },
       color: '#1565C0',
-      icon: <Pencil className="w-6 h-6" />,
+      icon: <GraduationCap className="w-6 h-6" />,
     },
     {
       value: '200K+',
@@ -73,7 +73,7 @@ export default function LandingPage({ onLoginClick }) {
       desc: { TR: 'Video düzenleme ve dijital içerik geliştirme için donanımlı post prodüksiyon laboratuvarları.', EN: 'Equipped post-production labs for video editing and digital content development.' },
     },
     {
-      icon: <Pencil className="w-7 h-7" />,
+      icon: <BookOpen className="w-7 h-7" />,
       title: { TR: 'Öğretim Tasarımı Atölyesi', EN: 'Instructional Design Workshop' },
       desc: { TR: 'Eğitim materyali ve senaryo geliştirme için uzman destekli atölye çalışmaları.', EN: 'Expert-supported workshops for developing educational materials and scenarios.' },
     },
