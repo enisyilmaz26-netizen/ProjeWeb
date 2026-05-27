@@ -192,8 +192,8 @@ export default function AuthScreen({ onBack }) {
           </button>
           <button
             onClick={toggleDarkMode}
+            aria-label={t('toggle_dark', language)}
             className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition"
-            title="Toggle dark mode"
           >
             {isDarkMode ? '☀️' : '🌙'}
           </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import AppLogo from '../components/AppLogo'
+import { t } from '../lib/languages'
 
 const NAV_LINKS = [
   { href: '#proje', label: { TR: 'Proje', EN: 'Project' } },
@@ -172,7 +173,7 @@ export default function LandingPage({ onLoginClick }) {
               {lang === 'TR' ? 'Giriş Yap' : 'Sign In'}
             </button>
             {/* Mobile hamburger */}
-            <button className="md:hidden ml-1 text-gray-700 dark:text-gray-200" onClick={() => setMenuOpen(p => !p)} aria-label={menuOpen ? (lang === 'TR' ? 'Menüyü kapat' : 'Close menu') : (lang === 'TR' ? 'Menüyü aç' : 'Open menu')}>
+            <button className="md:hidden ml-1 text-gray-700 dark:text-gray-200" onClick={() => setMenuOpen(p => !p)} aria-label={menuOpen ? t('menu_close', lang) : t('menu_open', lang)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6" aria-hidden="true">
                 {menuOpen ? <path d="M18 6L6 18M6 6l12 12"/> : <path d="M3 12h18M3 6h18M3 18h18"/>}
               </svg>

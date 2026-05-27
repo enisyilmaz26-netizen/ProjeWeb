@@ -223,6 +223,8 @@ export const translations = {
   btn_request_cancellation: { TR: 'İptal Talebi Gönder', EN: 'Request Cancellation' },
   data_load_failed: { TR: 'Veriler yüklenemedi.', EN: 'Failed to load data.' },
   clear_notifications_confirm: { TR: 'Tüm bildirimler kalıcı olarak silinecek. Emin misiniz?', EN: 'All notifications will be permanently deleted. Are you sure?' },
+  menu_open: { TR: 'Menüyü aç', EN: 'Open menu' },
+  menu_close: { TR: 'Menüyü kapat', EN: 'Close menu' },
 }
 
 export const STATUS_COLORS = {
