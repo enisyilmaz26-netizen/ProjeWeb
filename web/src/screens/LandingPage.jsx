@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import AppLogo from '../components/AppLogo'
 import { t, formatDate } from '../lib/languages'
 import { Sun, Moon, MapPin, Calendar, Clock, Mic, Camera, Monitor, Pencil } from 'lucide-react'
+import { getLabIcon } from '../lib/icons'
 
 const NAV_LINKS = [
   { href: '#proje', label: { TR: 'Proje', EN: 'Project' } },
@@ -103,13 +104,6 @@ export default function LandingPage({ onLoginClick }) {
     },
   ]
 
-  const getLabIcon = (name = '') => {
-    const n = name.toLowerCase()
-    if (n.includes('ses') || n.includes('podcast') || n.includes('audio')) return <Mic className="w-5 h-5" />
-    if (n.includes('video') || n.includes('yeşil ekran') || n.includes('green')) return <Camera className="w-5 h-5" />
-    if (n.includes('post') || n.includes('prodüksiyon') || n.includes('düzenle')) return <Monitor className="w-5 h-5" />
-    return <Pencil className="w-5 h-5" />
-  }
 
   const steps = [
     { title: { TR: 'Kayıt Ol', EN: 'Register' }, desc: { TR: 'Sisteme üye olun. Branş, kurum ve il bilgilerinizi girin.', EN: 'Register on the system. Enter your branch, institution, and province information.' } },

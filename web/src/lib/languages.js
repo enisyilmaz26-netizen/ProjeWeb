@@ -297,11 +297,4 @@ export function formatTimestamp(ts) {
   }
 }
 
-export function getLabIcon(name = '') {
-  const n = name.toLowerCase()
-  if (n.includes('post prod') || n.includes('dijital içerik') || n.includes('post-prod')) return '💻'
-  if (n.includes('yeşil ekran') || n.includes('video kayıt') || n.includes('video')) return '🎥'
-  if (n.includes('podcast') || n.includes('ses stüdyo') || n.includes('ses ')) return '🎙'
-  return '🎙'
-}
 

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate, translations, getLabIcon } from '../lib/languages'
+import { t, formatDate, translations } from '../lib/languages'
 import { X, MapPin } from 'lucide-react'
+import { getLabIcon } from '../lib/icons'
 
 function getMaxCapacity(lab) {
   if (!lab) return 1

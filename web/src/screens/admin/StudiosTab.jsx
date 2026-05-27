@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
-import { t, translations, getLabIcon } from '../../lib/languages'
-import { INPUT_BASE } from '../../lib/ui'
+import { t, translations } from '../../lib/languages'
+import { INPUT_BASE } from "../../lib/ui"
+import { getLabIcon } from '../../lib/icons'
 import LabFormFields from '../../components/admin/LabFormFields'
-import { RefreshCw, X, Pencil } from 'lucide-react'
+import { RefreshCw, X, Pencil, Trash2 } from 'lucide-react'
 
 export default function StudiosTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { cities, labs, addLab, updateLab, deleteLab, forceDeleteLab, addWorkshop } = useApp()
@@ -149,8 +150,8 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
                 </form>
               ) : (
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">{getLabIcon(lab.name)}</span>
+                  <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0 text-[#1565C0] dark:text-[#7DD4FC]">
+                    {getLabIcon(lab.name)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
@@ -160,7 +161,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
                     <button onClick={() => startEditLab(lab)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"><Pencil className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => handleDeleteLab(lab.id)} disabled={processingId === lab.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40">🗑</button>
+                    <button onClick={() => handleDeleteLab(lab.id)} disabled={processingId === lab.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
               )}
