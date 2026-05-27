@@ -1,5 +1,3 @@
-import React from 'react'
-
 export default function AppLogo({ size = 40 }) {
   return (
     <img

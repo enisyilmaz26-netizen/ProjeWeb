@@ -45,7 +45,6 @@ export const translations = {
   err_lab_has_appointments: { TR: 'Bu alana ait aktif randevular var. Önce randevuları iptal edin.', EN: 'This area has active appointments. Cancel them first.' },
   err_slot_has_appointments: { TR: 'Bu saat dilimine ait aktif randevular var. Önce randevuları iptal edin.', EN: 'This time slot has active appointments. Cancel them first.' },
   err_current_password_wrong: { TR: 'Mevcut şifreniz hatalı.', EN: 'Current password is incorrect.' },
-  status_completed: { TR: 'Tamamlandı', EN: 'Completed' },
   mark_completed: { TR: 'Tamamlandı Olarak İşaretle', EN: 'Mark as Completed' },
   change_password: { TR: 'Şifremi Değiştir', EN: 'Change Password' },
   current_password: { TR: 'Mevcut Şifre', EN: 'Current Password' },
@@ -195,8 +194,6 @@ export const translations = {
   btn_approve_member: { TR: 'Üyeliği Onayla', EN: 'Approve Membership' },
   btn_revoke_member: { TR: 'Üyeliği İptal Et', EN: 'Revoke Membership' },
   btn_reject_member: { TR: 'Reddet & Sil', EN: 'Reject & Delete' },
-  login_teacher: { TR: 'Öğretmen Girişi', EN: 'Teacher Login' },
-  login_admin: { TR: 'Yönetici Girişi', EN: 'Admin Login' },
   placeholder_email: { TR: 'E-posta adresiniz', EN: 'Your email address' },
   placeholder_password: { TR: 'Şifreniz', EN: 'Your password' },
   placeholder_registered_email: { TR: 'Kayıtlı e-posta adresiniz', EN: 'Your registered email' },
@@ -241,14 +238,12 @@ export const translations = {
   admin_new: { TR: 'Yeni Yönetici', EN: 'New Admin' },
   admin_delete_confirm: { TR: 'Bu yöneticiyi silmek istediğinizden emin misiniz?', EN: 'Are you sure you want to delete this admin?' },
   admin_added: { TR: 'Yönetici eklendi.', EN: 'Admin added.' },
-  admin_deleted: { TR: 'Yönetici silindi.', EN: 'Admin deleted.' },
   admin_search_placeholder: { TR: 'İsim veya e-posta ara...', EN: 'Search by name or email...' },
   lbl_role: { TR: 'Rol', EN: 'Role' },
   lbl_phone: { TR: 'Telefon', EN: 'Phone' },
   err_admin_required_fields: { TR: 'İsim, e-posta ve şifre zorunludur.', EN: 'Name, email and password are required.' },
   err_city_required: { TR: 'İl yöneticisi için il seçimi zorunludur.', EN: 'Province selection is required for province admin.' },
   no_admins: { TR: 'Yönetici bulunamadı.', EN: 'No admins found.' },
-  lbl_user_role: { TR: 'Kullanıcı', EN: 'User' },
 }
 
 export const STATUS_COLORS = {

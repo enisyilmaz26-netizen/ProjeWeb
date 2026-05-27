@@ -29,8 +29,6 @@ export default function AdminPanelScreen() {
 
   const [activeTab, setActiveTab] = useState('appointments')
   const [confirmModal, setConfirmModal] = useState(null)
-  const [processingId] = useState(null) // kept for StatCard display only
-
   // Admin password change
   const [showAdminPwChange, setShowAdminPwChange] = useState(false)
   const [adminPwForm, setAdminPwForm] = useState({ current: '', newPw: '', confirm: '' })
