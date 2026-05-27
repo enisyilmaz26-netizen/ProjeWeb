@@ -171,7 +171,7 @@ export default function MyProfileScreen() {
               onClick={startEdit}
               className="flex-shrink-0 text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
             >
-              ✏️ {language === 'TR' ? 'Düzenle' : 'Edit'}
+              ✏️ {t('btn_edit', language)}
             </button>
           )}
         </div>
@@ -211,10 +211,10 @@ export default function MyProfileScreen() {
             )}
             <div className="flex gap-2 pt-1">
               <button type="submit" disabled={editLoading} className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm disabled:opacity-60 hover:opacity-90 transition">
-                {editLoading ? '...' : (language === 'TR' ? 'Kaydet' : 'Save')}
+                {editLoading ? '...' : t('btn_save', language)}
               </button>
               <button type="button" onClick={() => setEditMode(false)} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                {language === 'TR' ? 'Vazgeç' : 'Cancel'}
+                {t('btn_nevermind', language)}
               </button>
             </div>
           </form>
@@ -226,7 +226,7 @@ export default function MyProfileScreen() {
             <ProfileField label={t('input_work_location', language)} value={loggedInUser.work_location} />
             <ProfileField label={t('input_phone', language)} value={loggedInUser.phone} />
             <ProfileField
-              label={language === 'TR' ? 'Üyelik Durumu' : 'Membership Status'}
+              label={t('lbl_membership_status', language)}
               value={loggedInUser.is_approved ? t('status_approved', language) : t('status_pending_approval', language)}
               valueClass={loggedInUser.is_approved ? 'text-green-600 dark:text-green-400 font-medium' : 'text-orange-500'}
             />
@@ -259,7 +259,7 @@ export default function MyProfileScreen() {
             </div>
             {pwError && <p className="text-red-600 dark:text-red-400 text-xs">{pwError}</p>}
             <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60">
-              {pwLoading ? '...' : (language === 'TR' ? 'Şifreyi Güncelle' : 'Update Password')}
+              {pwLoading ? '...' : t('btn_update_password', language)}
             </button>
           </form>
         )}
@@ -339,7 +339,7 @@ export default function MyProfileScreen() {
                 onClick={() => setShowCancelModal(false)}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
-                {language === 'TR' ? 'Vazgeç' : 'Back'}
+                {t('btn_nevermind', language)}
               </button>
             </div>
           </div>

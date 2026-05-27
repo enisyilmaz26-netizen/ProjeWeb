@@ -253,7 +253,7 @@ export default function AdminPanelScreen() {
     if (appt) {
       const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
       await createNotification({
-        title: `${prefix}${language === 'TR' ? 'Randevunuz Onaylandı' : 'Appointment Approved'}`,
+        title: `${prefix}${t('notif_appt_approved', language)}`,
         message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`,
         type: 'SYSTEM',
       })
@@ -268,7 +268,7 @@ export default function AdminPanelScreen() {
     if (appt) {
       const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
       await createNotification({
-        title: `${prefix}${language === 'TR' ? 'Randevunuz İptal Edildi' : 'Appointment Cancelled'}`,
+        title: `${prefix}${t('notif_appt_cancelled', language)}`,
         message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`,
         type: 'ALERT',
       })
@@ -449,7 +449,7 @@ export default function AdminPanelScreen() {
       setTimeout(() => setAdminPwSuccess(''), 4000)
     } else {
       const errKey = result.error
-      setAdminPwError(translations[errKey] ? t(errKey, language) : (errKey || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.')))
+      setAdminPwError(translations[errKey] ? t(errKey, language) : (errKey || t('err_generic', language)))
     }
   }
 
@@ -585,10 +585,12 @@ export default function AdminPanelScreen() {
       </div>
 
       {/* Tab Bar */}
-      <div className="flex bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-4 overflow-x-auto gap-1 scrollbar-hide">
+      <div role="tablist" className="flex bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-4 overflow-x-auto gap-1 scrollbar-hide">
         {tabs.map(tab => (
           <button
             key={tab.key}
+            role="tab"
+            aria-selected={activeTab === tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition whitespace-nowrap ${
               activeTab === tab.key
@@ -1031,7 +1033,7 @@ export default function AdminPanelScreen() {
                 value={statsCity}
                 onChange={e => setStatsCity(e.target.value)}
               >
-                <option value="">{language === 'TR' ? 'Tüm İller' : 'All Provinces'}</option>
+                <option value="">{t('filter_all_provinces', language)}</option>
                 {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               {statsCity && (
@@ -1260,7 +1262,7 @@ function LabFormFields({ form, setForm, cities, inputClass, language, showCity }
     <>
       {showCity && (
         <div>
-          <label className="block text-xs text-gray-500 mb-1">{language === 'TR' ? 'İl' : 'Province'} *</label>
+          <label className="block text-xs text-gray-500 mb-1">{t('province_label_req', language)} *</label>
           <select className={`${inputClass} w-full`} value={form.city_id || ''} onChange={e => setForm(p => ({ ...p, city_id: e.target.value }))} required>
             <option value="">{t('select_province', language)}</option>
             {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1324,20 +1326,20 @@ function UserCard({ user, language, processingId, onApprove, onRevoke, showAppro
         </div>
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 dark:text-gray-400 mb-3">
-        {user.branch && <span><span className="font-medium">{language === 'TR' ? 'Branş' : 'Branch'}:</span> {user.branch}</span>}
-        {user.phone && <span><span className="font-medium">{language === 'TR' ? 'Tel' : 'Phone'}:</span> {user.phone}</span>}
-        {user.city_name && <span><span className="font-medium">{language === 'TR' ? 'İl' : 'Province'}:</span> {user.city_name}</span>}
-        {user.district && <span><span className="font-medium">{language === 'TR' ? 'İlçe' : 'District'}:</span> {user.district}</span>}
-        {user.work_location && <span className="col-span-2"><span className="font-medium">{language === 'TR' ? 'Kurum' : 'Institution'}:</span> {user.work_location}</span>}
+        {user.branch && <span><span className="font-medium">{t('lbl_branch', language)}:</span> {user.branch}</span>}
+        {user.phone && <span><span className="font-medium">{t('lbl_phone', language)}:</span> {user.phone}</span>}
+        {user.city_name && <span><span className="font-medium">{t('lbl_province', language)}:</span> {user.city_name}</span>}
+        {user.district && <span><span className="font-medium">{t('lbl_district', language)}:</span> {user.district}</span>}
+        {user.work_location && <span className="col-span-2"><span className="font-medium">{t('lbl_institution', language)}:</span> {user.work_location}</span>}
       </div>
       {showApprove && (
         <button onClick={() => onApprove(user.id)} disabled={processingId === user.id} className="w-full py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
-          {processingId === user.id ? '...' : (language === 'TR' ? 'Üyeliği Onayla' : 'Approve Membership')}
+          {processingId === user.id ? '...' : t('btn_approve_member', language)}
         </button>
       )}
       {showRevoke && (
         <button onClick={() => onRevoke(user.id)} disabled={processingId === user.id} className="w-full py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
-          {processingId === user.id ? '...' : (language === 'TR' ? 'Üyeliği İptal Et' : 'Revoke Membership')}
+          {processingId === user.id ? '...' : t('btn_revoke_member', language)}
         </button>
       )}
     </div>

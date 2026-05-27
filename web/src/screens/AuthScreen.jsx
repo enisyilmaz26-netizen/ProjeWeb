@@ -241,13 +241,13 @@ export default function AuthScreen({ onBack }) {
                   onClick={() => setLoginType('user')}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${loginType === 'user' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-[#1565C0] dark:border-[#7DD4FC]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}`}
                 >
-                  {language === 'TR' ? 'Öğretmen Girişi' : 'Teacher Login'}
+                  {t('login_teacher', language)}
                 </button>
                 <button
                   onClick={() => setLoginType('admin')}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${loginType === 'admin' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-[#1565C0] dark:border-[#7DD4FC]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}`}
                 >
-                  {language === 'TR' ? 'Yönetici Girişi' : 'Admin Login'}
+                  {t('login_admin', language)}
                 </button>
               </div>
 
@@ -257,7 +257,7 @@ export default function AuthScreen({ onBack }) {
                   <input
                     type="email"
                     className={inputClass}
-                    placeholder={language === 'TR' ? 'E-posta adresiniz' : 'Your email address'}
+                    placeholder={t('placeholder_email', language)}
                     value={loginEmail}
                     onChange={e => setLoginEmail(e.target.value)}
                     required
@@ -268,7 +268,7 @@ export default function AuthScreen({ onBack }) {
                   <input
                     type="password"
                     className={inputClass}
-                    placeholder={language === 'TR' ? 'Şifreniz' : 'Your password'}
+                    placeholder={t('placeholder_password', language)}
                     value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
                     required
@@ -491,7 +491,7 @@ export default function AuthScreen({ onBack }) {
                     <input
                       type="email"
                       className={inputClass}
-                      placeholder={language === 'TR' ? 'Kayıtlı e-posta adresiniz' : 'Your registered email'}
+                      placeholder={t('placeholder_registered_email', language)}
                       value={forgotForm.email}
                       onChange={e => setForgotForm(p => ({ ...p, email: e.target.value }))}
                       required

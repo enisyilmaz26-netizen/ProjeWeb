@@ -7,7 +7,7 @@ import MyProfileScreen from './MyProfileScreen'
 import NotificationCenterScreen from './NotificationCenterScreen'
 
 export default function MainAppContainer() {
-  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading, loadError } = useApp()
+  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading, loadError, loadAllData } = useApp()
   const isAdmin = loggedInAdmin !== null
   const [activeTab, setActiveTab] = useState(isAdmin ? 'admin' : 'book')
 
@@ -111,8 +111,14 @@ export default function MainAppContainer() {
 
       {/* Load error banner */}
       {loadError && (
-        <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 px-4 py-2 text-red-700 dark:text-red-300 text-xs text-center">
-          {language === 'TR' ? 'Veriler yüklenemedi. Lütfen sayfayı yenileyin.' : 'Failed to load data. Please refresh the page.'}
+        <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 px-4 py-2 text-red-700 dark:text-red-300 text-xs flex items-center justify-center gap-3">
+          <span>{language === 'TR' ? 'Veriler yüklenemedi.' : 'Failed to load data.'}</span>
+          <button
+            onClick={() => loadAllData()}
+            className="underline font-semibold hover:opacity-80 transition"
+          >
+            {t('btn_retry', language)}
+          </button>
         </div>
       )}
 

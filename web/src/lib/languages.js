@@ -188,6 +188,19 @@ export const translations = {
   studio_name_label_req: { TR: 'Stüdyo Adı', EN: 'Studio Name' },
   lbl_description: { TR: 'Açıklama', EN: 'Description' },
   lbl_location: { TR: 'Konum', EN: 'Location' },
+  lbl_district: { TR: 'İlçe', EN: 'District' },
+  btn_edit: { TR: 'Düzenle', EN: 'Edit' },
+  btn_retry: { TR: 'Yeniden Dene', EN: 'Retry' },
+  lbl_membership_status: { TR: 'Üyelik Durumu', EN: 'Membership Status' },
+  btn_approve_member: { TR: 'Üyeliği Onayla', EN: 'Approve Membership' },
+  btn_revoke_member: { TR: 'Üyeliği İptal Et', EN: 'Revoke Membership' },
+  login_teacher: { TR: 'Öğretmen Girişi', EN: 'Teacher Login' },
+  login_admin: { TR: 'Yönetici Girişi', EN: 'Admin Login' },
+  placeholder_email: { TR: 'E-posta adresiniz', EN: 'Your email address' },
+  placeholder_password: { TR: 'Şifreniz', EN: 'Your password' },
+  placeholder_registered_email: { TR: 'Kayıtlı e-posta adresiniz', EN: 'Your registered email' },
+  notif_appt_approved: { TR: 'Randevunuz Onaylandı', EN: 'Appointment Approved' },
+  notif_appt_cancelled: { TR: 'Randevunuz İptal Edildi', EN: 'Appointment Cancelled' },
 }
 
 export const STATUS_COLORS = {
