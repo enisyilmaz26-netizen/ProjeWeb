@@ -474,8 +474,9 @@ export function AppProvider({ children }) {
   }
 
   const updateLab = async (id, updates) => {
-    const { error } = await supabase.from('laboratories').update(updates).eq('id', id)
+    const { data, error } = await supabase.from('laboratories').update(updates).eq('id', id).select('id')
     if (error) return { success: false, error: error.message }
+    if (!data || data.length === 0) return { success: false, error: 'err_update_failed' }
     setLabs(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l))
     return { success: true }
   }

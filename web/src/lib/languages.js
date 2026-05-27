@@ -71,6 +71,7 @@ export const translations = {
   err_phone_invalid: { TR: 'Geçerli bir telefon numarası giriniz (10-11 rakam).', EN: 'Please enter a valid phone number (10-11 digits).' },
   err_registration_failed: { TR: 'Kayıt sırasında bir hata oluştu.', EN: 'An error occurred during registration.' },
   err_generic: { TR: 'Bir hata oluştu.', EN: 'An error occurred.' },
+  err_update_failed: { TR: 'Kayıt güncellenemedi. Veritabanı izinlerini kontrol edin.', EN: 'Record could not be updated. Check database permissions.' },
   err_password_min_length: { TR: 'Şifre en az 8 karakter olmalıdır.', EN: 'Password must be at least 8 characters.' },
   profile_updated: { TR: 'Profiliniz güncellendi.', EN: 'Profile updated successfully.' },
   cancellation_submitted: { TR: 'İptal talebiniz iletildi.', EN: 'Your cancellation request has been submitted.' },

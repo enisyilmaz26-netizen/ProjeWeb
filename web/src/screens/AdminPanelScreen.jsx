@@ -128,6 +128,13 @@ export default function AdminPanelScreen() {
   const [workshopSuccess, setWorkshopSuccess] = useState('')
   const [showAddWorkshop, setShowAddWorkshop] = useState(false)
 
+  // City filters for global admin
+  const [labCityFilter, setLabCityFilter] = useState('')
+  const [workshopCityFilter, setWorkshopCityFilter] = useState('')
+  const [userCityFilter, setUserCityFilter] = useState('')
+  const [migrating, setMigrating] = useState(false)
+  const [labSaveSuccess, setLabSaveSuccess] = useState(false)
+
   // Admin management tab (global only)
   const [adminSearch, setAdminSearch] = useState('')
   const [showAddAdmin, setShowAddAdmin] = useState(false)
@@ -256,36 +263,47 @@ export default function AdminPanelScreen() {
 
   // Users
   const pendingUsers = useMemo(() => {
-    const base = isGlobal ? users.filter(u => !u.is_approved) : users.filter(u => !u.is_approved && String(u.city_id) === String(adminCityId))
+    let base = isGlobal ? users.filter(u => !u.is_approved) : users.filter(u => !u.is_approved && String(u.city_id) === String(adminCityId))
+    if (isGlobal && userCityFilter) base = base.filter(u => String(u.city_id) === String(userCityFilter))
     if (!userSearch.trim()) return base
     const q = userSearch.toLowerCase()
     return base.filter(u => `${u.name} ${u.surname} ${u.email}`.toLowerCase().includes(q))
-  }, [users, isGlobal, adminCityId, userSearch])
+  }, [users, isGlobal, adminCityId, userSearch, userCityFilter])
 
   const approvedUsers = useMemo(() => {
-    const base = isGlobal ? users.filter(u => u.is_approved) : users.filter(u => u.is_approved && String(u.city_id) === String(adminCityId))
+    let base = isGlobal ? users.filter(u => u.is_approved) : users.filter(u => u.is_approved && String(u.city_id) === String(adminCityId))
+    if (isGlobal && userCityFilter) base = base.filter(u => String(u.city_id) === String(userCityFilter))
     if (!userSearch.trim()) return base
     const q = userSearch.toLowerCase()
     return base.filter(u => `${u.name} ${u.surname} ${u.email}`.toLowerCase().includes(q))
-  }, [users, isGlobal, adminCityId, userSearch])
+  }, [users, isGlobal, adminCityId, userSearch, userCityFilter])
 
   const visibleSlots = useMemo(() => {
     return isGlobal ? timeSlots : timeSlots.filter(s => String(s.city_id) === String(adminCityId))
   }, [timeSlots, isGlobal, adminCityId])
 
   const visibleLabs = useMemo(() => {
-    return isGlobal ? labs : labs.filter(l => String(l.city_id) === String(adminCityId))
-  }, [labs, isGlobal, adminCityId])
+    let list = isGlobal ? labs : labs.filter(l => String(l.city_id) === String(adminCityId))
+    if (isGlobal && labCityFilter) list = list.filter(l => String(l.city_id) === String(labCityFilter))
+    return list
+  }, [labs, isGlobal, adminCityId, labCityFilter])
 
   const visibleWorkshops = useMemo(() => {
-    return isGlobal ? workshops : workshops.filter(w => String(w.city_id) === String(adminCityId))
-  }, [workshops, isGlobal, adminCityId])
+    let list = isGlobal ? workshops : workshops.filter(w => String(w.city_id) === String(adminCityId))
+    if (isGlobal && workshopCityFilter) list = list.filter(w => String(w.city_id) === String(workshopCityFilter))
+    return list
+  }, [workshops, isGlobal, adminCityId, workshopCityFilter])
 
   const filteredAdmins = useMemo(() => {
     if (!adminSearch.trim()) return admins
     const q = adminSearch.toLowerCase()
     return admins.filter(a => (a.name || '').toLowerCase().includes(q) || (a.email || '').toLowerCase().includes(q))
   }, [admins, adminSearch])
+
+  const needsMigration = isGlobal && labs.some(l =>
+    (l.name.includes('Gölbaşı BİLSEM ÖÖL') && !l.name.startsWith('Ankara ')) ||
+    l.name.includes('Öğretim Tasarımı ve Senaryo Atölyesi')
+  )
 
   // Handlers
   const execApprove = async (id) => {
@@ -421,8 +439,11 @@ export default function AdminPanelScreen() {
     })
     if (result.success) {
       setEditingLabId(null)
+      setLabSaveSuccess(true)
+      setTimeout(() => setLabSaveSuccess(false), 2500)
     } else {
-      setLabError(result.error || 'Error')
+      const errKey = result.error
+      setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
     }
   }
 
@@ -439,6 +460,30 @@ export default function AdminPanelScreen() {
         }
       }
     })
+  }
+
+  const handleMigrateData = async () => {
+    setMigrating(true)
+    const golbasiLabs = labs.filter(l =>
+      l.name.includes('Gölbaşı BİLSEM ÖÖL') && !l.name.startsWith('Ankara ')
+    )
+    for (const lab of golbasiLabs) {
+      await updateLab(lab.id, { name: 'Ankara ' + lab.name })
+    }
+    const atolyeLabs = labs.filter(l => l.name.includes('Öğretim Tasarımı ve Senaryo Atölyesi'))
+    for (const lab of atolyeLabs) {
+      const wsResult = await addWorkshop({
+        name: lab.name,
+        city_id: lab.city_id,
+        description: lab.description || '',
+        location: lab.location || '',
+        date: '',
+        time: '',
+        capacity: lab.capacity_per_slot || 1,
+      })
+      if (wsResult.success) await deleteLab(lab.id)
+    }
+    setMigrating(false)
   }
 
   const handleCreateNotification = async (e) => {
@@ -658,6 +703,15 @@ export default function AdminPanelScreen() {
             <button onClick={loadAllData} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition">
               {t('btn_refresh', language)}
             </button>
+            {needsMigration && (
+              <button
+                onClick={handleMigrateData}
+                disabled={migrating}
+                className="text-xs text-orange-600 dark:text-orange-400 border border-orange-300 dark:border-orange-600 rounded-lg px-3 py-1.5 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition disabled:opacity-60"
+              >
+                {migrating ? '...' : (language === 'TR' ? '🔄 Veriyi Düzenle' : '🔄 Fix Data')}
+              </button>
+            )}
           </div>
         </div>
 
@@ -860,6 +914,23 @@ export default function AdminPanelScreen() {
             </button>
           </div>
 
+          {isGlobal && (
+            <select
+              className={`${inputClass} w-full mb-3`}
+              value={labCityFilter}
+              onChange={e => setLabCityFilter(e.target.value)}
+            >
+              <option value="">{t('filter_all_provinces', language)}</option>
+              {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          )}
+
+          {labSaveSuccess && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">
+              {language === 'TR' ? 'Alan başarıyla güncellendi.' : 'Area updated successfully.'}
+            </div>
+          )}
+
           {labError && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-3">
               {labError}
@@ -929,6 +1000,17 @@ export default function AdminPanelScreen() {
               + {t('workshop_add', language)}
             </button>
           </div>
+
+          {isGlobal && (
+            <select
+              className={`${inputClass} w-full mb-3`}
+              value={workshopCityFilter}
+              onChange={e => setWorkshopCityFilter(e.target.value)}
+            >
+              <option value="">{t('filter_all_provinces', language)}</option>
+              {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          )}
 
           {workshopSuccess && (
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">
@@ -1095,7 +1177,17 @@ export default function AdminPanelScreen() {
       {/* USER APPROVALS TAB */}
       {activeTab === 'user_approvals' && (
         <div>
-          <div className="mb-4">
+          <div className="mb-4 flex flex-col gap-2">
+            {isGlobal && (
+              <select
+                className={`${inputClass} w-full`}
+                value={userCityFilter}
+                onChange={e => setUserCityFilter(e.target.value)}
+              >
+                <option value="">{t('filter_all_provinces', language)}</option>
+                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
             <input
               type="text"
               placeholder={t('search_user_placeholder', language)}
