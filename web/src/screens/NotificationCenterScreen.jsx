@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatTimestamp } from '../lib/languages'
+import { AlertTriangle, Clock, Lightbulb, Bell } from 'lucide-react'
 
 export default function NotificationCenterScreen() {
   const { notifications, loggedInAdmin, loggedInUser, clearNotifications, markNotificationsRead, language, cities } = useApp()
@@ -33,10 +34,10 @@ export default function NotificationCenterScreen() {
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'ALERT': return '🚨'
-      case 'REMINDER': return '⏰'
-      case 'SYSTEM': return '💡'
-      default: return '🔔'
+      case 'ALERT': return <AlertTriangle className="w-5 h-5 text-red-500" />
+      case 'REMINDER': return <Clock className="w-5 h-5 text-orange-500" />
+      case 'SYSTEM': return <Lightbulb className="w-5 h-5 text-blue-500" />
+      default: return <Bell className="w-5 h-5 text-gray-500" />
     }
   }
 
@@ -56,7 +57,7 @@ export default function NotificationCenterScreen() {
 
       {visibleNotifications.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-12 text-center">
-          <div className="text-4xl mb-3">🔔</div>
+          <div className="mb-3 flex justify-center text-gray-400 dark:text-gray-500"><Bell className="w-10 h-10" /></div>
           <p className="text-gray-500 dark:text-gray-400 text-sm">{t('notifications_empty', language)}</p>
         </div>
       ) : (
@@ -73,7 +74,7 @@ export default function NotificationCenterScreen() {
               }`}
             >
               <div className="flex items-start gap-3">
-                <span className="text-xl flex-shrink-0 mt-0.5" aria-hidden="true">{getTypeIcon(notif.type)}</span>
+                <span className="flex-shrink-0 mt-0.5" aria-hidden="true">{getTypeIcon(notif.type)}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <p className={`font-semibold text-sm ${notif.type === 'ALERT' ? 'text-red-700 dark:text-red-300' : 'text-gray-900 dark:text-gray-100'}`}>

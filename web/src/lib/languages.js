@@ -102,14 +102,14 @@ export const translations = {
   toggle_lang: { TR: 'Dili değiştir', EN: 'Switch language' },
   admin_type_global: { TR: 'Genel Yönetici', EN: 'Global Admin' },
   admin_type_city: { TR: 'İl Yöneticisi', EN: 'Province Admin' },
-  btn_refresh: { TR: '↻ Yenile', EN: '↻ Refresh' },
+  btn_refresh: { TR: 'Yenile', EN: 'Refresh' },
   btn_update_password: { TR: 'Şifreyi Güncelle', EN: 'Update Password' },
   btn_save: { TR: 'Kaydet', EN: 'Save' },
   btn_add: { TR: 'Ekle', EN: 'Add' },
   btn_delete: { TR: 'Sil', EN: 'Delete' },
   select_province: { TR: 'İl Seçin', EN: 'Select Province' },
-  notif_city_only_hint: { TR: '📍 Yalnızca seçilen şehrin kullanıcılarına gönderilecek.', EN: '📍 Will be sent only to users in the selected city.' },
-  status_approved: { TR: '✓ Onaylı', EN: '✓ Approved' },
+  notif_city_only_hint: { TR: 'Yalnızca seçilen şehrin kullanıcılarına gönderilecek.', EN: 'Will be sent only to users in the selected city.' },
+  status_approved: { TR: 'Onaylı', EN: 'Approved' },
   status_pending_approval: { TR: 'Onay Bekliyor', EN: 'Pending Approval' },
   filter_all_provinces: { TR: 'Tüm İller', EN: 'All Provinces' },
   filter_all_locations: { TR: 'Tüm Konumlar', EN: 'All Locations' },
@@ -160,7 +160,7 @@ export const translations = {
   notif_type_system: { TR: 'Sistem', EN: 'System' },
   notif_type_reminder: { TR: 'Hatırlatma', EN: 'Reminder' },
   notif_type_alert: { TR: 'Uyarı', EN: 'Alert' },
-  notif_send_btn: { TR: '🔔 Bildirimi Gönder', EN: '🔔 Send Notification' },
+  notif_send_btn: { TR: 'Bildirimi Gönder', EN: 'Send Notification' },
   notif_title_placeholder: { TR: 'Bildirim başlığı...', EN: 'Notification title...' },
   notif_msg_placeholder: { TR: 'Bildirim mesajı...', EN: 'Notification message...' },
   confirm_approve_appt: { TR: 'Bu randevuyu onaylamak istediğinizden emin misiniz?', EN: 'Are you sure you want to approve this appointment?' },
@@ -305,6 +305,3 @@ export function getLabIcon(name = '') {
   return '🎙'
 }
 
-export function getWorkshopIcon() {
-  return '✏️'
-}

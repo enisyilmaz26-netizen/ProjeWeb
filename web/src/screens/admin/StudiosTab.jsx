@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext'
 import { t, translations, getLabIcon } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import LabFormFields from '../../components/admin/LabFormFields'
+import { RefreshCw, X, Pencil } from 'lucide-react'
 
 export default function StudiosTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { cities, labs, addLab, updateLab, deleteLab, forceDeleteLab, addWorkshop } = useApp()
@@ -95,7 +96,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
         <div className="flex gap-2">
           {needsMigration && (
             <button onClick={handleMigrateData} disabled={migrating} className="text-xs text-orange-600 dark:text-orange-400 border border-orange-300 dark:border-orange-600 rounded-lg px-3 py-1.5 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition disabled:opacity-60">
-              {migrating ? '...' : (language === 'TR' ? '🔄 Veriyi Düzenle' : '🔄 Fix Data')}
+              {migrating ? '...' : <span className="inline-flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />{language === 'TR' ? 'Veriyi Düzenle' : 'Fix Data'}</span>}
             </button>
           )}
           <button onClick={() => { setShowAddLab(true); setEditingLabId(null); setLabError('') }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
@@ -116,7 +117,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
       )}
       {labError && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-3">
-          {labError} <button onClick={() => setLabError('')} className="ml-2 text-red-400">✕</button>
+          {labError} <button onClick={() => setLabError('')} className="ml-2 text-red-400"><X className="w-3.5 h-3.5 inline" /></button>
         </div>
       )}
 
@@ -158,7 +159,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
                     <p className="text-xs text-[#1565C0] dark:text-[#7DD4FC] mt-0.5">{t('capacity_label', language)}: {lab.capacity_per_slot}{lab.branches ? ` · ${lab.branches}` : ''}</p>
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
-                    <button onClick={() => startEditLab(lab)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition">✏️</button>
+                    <button onClick={() => startEditLab(lab)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"><Pencil className="w-3.5 h-3.5" /></button>
                     <button onClick={() => handleDeleteLab(lab.id)} disabled={processingId === lab.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40">🗑</button>
                   </div>
                 </div>

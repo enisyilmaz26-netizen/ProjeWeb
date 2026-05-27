@@ -1,6 +1,7 @@
 import React from 'react'
 import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
+import { X } from 'lucide-react'
 
 export default function LocationSlotSection({ locationName, slots, cityId, processingId, onAddSlot, onRemove, language }) {
   const [slotTime, setSlotTime] = React.useState('')
@@ -56,7 +57,7 @@ export default function LocationSlotSection({ locationName, slots, cityId, proce
       </div>
       {error && (
         <p className="text-red-500 text-xs mt-1">
-          {error} <button onClick={() => setError('')} className="ml-1 text-red-400">✕</button>
+          {error} <button onClick={() => setError('')} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" /></button>
         </p>
       )}
     </div>

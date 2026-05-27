@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
+import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react'
 
 export default function MyProfileScreen() {
   const { loggedInUser, appointments, submitCancellationRequest, updateUserProfile, changePassword, language } = useApp()
@@ -153,7 +154,7 @@ export default function MyProfileScreen() {
       {successMsg && (
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between items-start">
           <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg('')} className="ml-2 text-green-500">✕</button>
+          <button onClick={() => setSuccessMsg('')} className="ml-2 text-green-500"><X className="w-4 h-4" /></button>
         </div>
       )}
 
@@ -172,7 +173,7 @@ export default function MyProfileScreen() {
               onClick={startEdit}
               className="flex-shrink-0 text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
             >
-              ✏️ {t('btn_edit', language)}
+              <Pencil className="w-3.5 h-3.5 inline mr-1" />{t('btn_edit', language)}
             </button>
           )}
         </div>
@@ -241,8 +242,8 @@ export default function MyProfileScreen() {
           onClick={() => { setShowPwChange(p => !p); setPwError(''); setPwForm({ current: '', newPw: '', confirm: '' }) }}
           className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          <span>🔒 {t('change_password', language)}</span>
-          <span className="text-gray-400">{showPwChange ? '▲' : '▼'}</span>
+          <span className="inline-flex items-center gap-1"><Lock className="w-3.5 h-3.5" />{t('change_password', language)}</span>
+          <span className="text-gray-400">{showPwChange ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
         </button>
         {showPwChange && (
           <form onSubmit={handleChangePassword} className="px-5 pb-5 space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
@@ -298,7 +299,7 @@ export default function MyProfileScreen() {
             onClick={() => setShowPast(p => !p)}
             className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-200 transition"
           >
-            <span>{showPast ? '▼' : '▶'}</span>
+            <span>{showPast ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}</span>
             {t('past_appointments', language)} ({pastAppointments.length})
           </button>
           {showPast && (
@@ -363,8 +364,8 @@ function AppointmentCard({ appt, language, canCancel, onCancelClick }) {
         </span>
       </div>
       <div className="flex gap-4 text-xs text-gray-600 dark:text-gray-400 mb-2">
-        <span>📅 {formatDate(appt.date)}</span>
-        <span>🕐 {appt.time_slot}</span>
+        <span className="inline-flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(appt.date)}</span>
+        <span className="inline-flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{appt.time_slot}</span>
       </div>
       {appt.note && appt.status === 'CANCELLATION_REQUESTED' && (
         <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">

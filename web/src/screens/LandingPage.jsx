@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import AppLogo from '../components/AppLogo'
 import { t, formatDate } from '../lib/languages'
+import { Sun, Moon, MapPin, Calendar, Clock, Mic, Camera, Monitor, Pencil } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '#proje', label: { TR: 'Proje', EN: 'Project' } },
@@ -81,49 +82,34 @@ export default function LandingPage({ onLoginClick }) {
 
   const features = [
     {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
-          <path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/>
-        </svg>
-      ),
+      icon: <Mic className="w-7 h-7" />,
       title: { TR: 'Podcast & Ses Stüdyosu', EN: 'Podcast & Audio Studio' },
       desc: { TR: 'Profesyonel ses kayıt ekipmanlarıyla podcast ve sesli içerik üretimi.', EN: 'Podcast and audio content production with professional recording equipment.' },
     },
     {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-      ),
+      icon: <Camera className="w-7 h-7" />,
       title: { TR: 'Video Kayıt & Yeşil Ekran', EN: 'Video Recording & Green Screen' },
       desc: { TR: 'Yüksek kaliteli video içerik üretimi için profesyonel yeşil ekran stüdyoları.', EN: 'Professional green screen studios for high-quality video content production.' },
     },
     {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
-          <rect x="2" y="3" width="20" height="13" rx="2"/>
-          <path d="M8 21h8M12 16v5"/>
-          <polyline points="7 8 10.5 11.5 7 15" strokeWidth="1.8"/>
-          <line x1="13.5" y1="15" x2="17" y2="15" strokeWidth="1.8"/>
-        </svg>
-      ),
+      icon: <Monitor className="w-7 h-7" />,
       title: { TR: 'Post Prodüksiyon Lab', EN: 'Post-Production Lab' },
       desc: { TR: 'Video düzenleme ve dijital içerik geliştirme için donanımlı post prodüksiyon laboratuvarları.', EN: 'Equipped post-production labs for video editing and digital content development.' },
     },
     {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-      ),
+      icon: <Pencil className="w-7 h-7" />,
       title: { TR: 'Öğretim Tasarımı Atölyesi', EN: 'Instructional Design Workshop' },
       desc: { TR: 'Eğitim materyali ve senaryo geliştirme için uzman destekli atölye çalışmaları.', EN: 'Expert-supported workshops for developing educational materials and scenarios.' },
     },
   ]
+
+  const getLabIcon = (name = '') => {
+    const n = name.toLowerCase()
+    if (n.includes('ses') || n.includes('podcast') || n.includes('audio')) return <Mic className="w-5 h-5" />
+    if (n.includes('video') || n.includes('yeşil ekran') || n.includes('green')) return <Camera className="w-5 h-5" />
+    if (n.includes('post') || n.includes('prodüksiyon') || n.includes('düzenle')) return <Monitor className="w-5 h-5" />
+    return <Pencil className="w-5 h-5" />
+  }
 
   const steps = [
     { title: { TR: 'Kayıt Ol', EN: 'Register' }, desc: { TR: 'Sisteme üye olun. Branş, kurum ve il bilgilerinizi girin.', EN: 'Register on the system. Enter your branch, institution, and province information.' } },
@@ -170,7 +156,7 @@ export default function LandingPage({ onLoginClick }) {
               {lang === 'TR' ? 'EN' : 'TR'}
             </button>
             <button onClick={toggleDarkMode} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-              {isDarkMode ? '☀️' : '🌙'}
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <button
               onClick={onLoginClick}
@@ -259,8 +245,10 @@ export default function LandingPage({ onLoginClick }) {
       </section>
 
       {/* ── PROJE HAKKINDA ── */}
-      <section id="proje" className="py-20 px-4 sm:px-6 bg-white dark:bg-[#040A1C]">
-        <div className="max-w-6xl mx-auto">
+      <section id="proje" className="relative py-20 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-white via-[#F0F7FF] to-[#E8F4FD] dark:from-[#040A1C] dark:via-[#06152E] dark:to-[#081A3A]">
+        <div className="absolute top-16 left-8 w-80 h-80 bg-[#1565C0]/8 rounded-full blur-3xl pointer-events-none animate-blob" />
+        <div className="absolute bottom-12 right-12 w-64 h-64 bg-[#00AEEF]/10 rounded-full blur-3xl pointer-events-none animate-blob-slow" style={{ animationDelay: '3s' }} />
+        <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
               {lang === 'TR' ? 'Proje Hakkında' : 'About the Project'}
@@ -367,10 +355,10 @@ export default function LandingPage({ onLoginClick }) {
       </section>
 
       {/* ── ŞEHİRLER ── */}
+
       <section id="sehirler" className="relative py-20 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-white via-[#EFF8FF] to-[#1565C0] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565]">
-        {/* Dekoratif blur daireler */}
-        <div className="absolute top-10 right-10 w-72 h-72 bg-[#00AEEF]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-[#1565C0]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-10 right-10 w-72 h-72 bg-[#00AEEF]/10 rounded-full blur-3xl pointer-events-none animate-blob" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-[#1565C0]/8 rounded-full blur-3xl pointer-events-none animate-blob-slow" style={{ animationDelay: '4s' }} />
 
         <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-12">
@@ -423,8 +411,10 @@ export default function LandingPage({ onLoginClick }) {
       </section>
 
       {/* ── ATÖLYELER ── */}
-      <section id="atolyeler" className="py-20 px-4 sm:px-6 bg-white dark:bg-[#040A1C]">
-        <div className="max-w-6xl mx-auto">
+      <section id="atolyeler" className="relative py-20 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-[#F8FBFF] via-white to-[#EEF6FF] dark:from-[#040A1C] dark:via-[#061528] dark:to-[#040A1C]">
+        <div className="absolute top-20 right-0 w-72 h-72 bg-[#1565C0]/6 rounded-full blur-3xl pointer-events-none animate-blob" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-8 left-4 w-56 h-56 bg-[#00AEEF]/8 rounded-full blur-3xl pointer-events-none animate-blob-slow" style={{ animationDelay: '5s' }} />
+        <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
               {lang === 'TR' ? 'Eğitim Programı' : 'Training Program'}
@@ -454,10 +444,7 @@ export default function LandingPage({ onLoginClick }) {
                 return (
                   <div key={ws.id} className="flex gap-4 p-5 bg-gray-50 dark:bg-[#0D1E3D] rounded-2xl border border-gray-100 dark:border-[#162848] hover:shadow-md hover:-translate-y-0.5 transition-all">
                     <div className="w-10 h-10 flex-shrink-0 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC]">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
+                      {getLabIcon(ws.name)}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-gray-900 dark:text-white text-sm leading-snug">{ws.name}</p>
@@ -466,18 +453,18 @@ export default function LandingPage({ onLoginClick }) {
                       )}
                       <div className="flex flex-wrap gap-2 mt-2">
                         {city && (
-                          <span className="text-[11px] font-medium text-[#1565C0] dark:text-[#7DD4FC] bg-[#1565C0]/8 dark:bg-[#7DD4FC]/10 px-2 py-0.5 rounded-lg">
-                            📍 {city.name}{ws.location ? ` · ${ws.location}` : ''}
+                          <span className="text-[11px] font-medium text-[#1565C0] dark:text-[#7DD4FC] bg-[#1565C0]/8 dark:bg-[#7DD4FC]/10 px-2 py-0.5 rounded-lg inline-flex items-center gap-0.5">
+                            <MapPin className="w-3 h-3 inline" />{city.name}{ws.location ? ` · ${ws.location}` : ''}
                           </span>
                         )}
                         {ws.date && (
-                          <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-lg">
-                            📅 {formatDate(ws.date)}
+                          <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-lg inline-flex items-center gap-0.5">
+                            <Calendar className="w-3 h-3 inline" />{formatDate(ws.date)}
                           </span>
                         )}
                         {ws.time && (
-                          <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-lg">
-                            🕐 {ws.time}
+                          <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-lg inline-flex items-center gap-0.5">
+                            <Clock className="w-3 h-3 inline" />{ws.time}
                           </span>
                         )}
                       </div>
@@ -491,8 +478,10 @@ export default function LandingPage({ onLoginClick }) {
       </section>
 
       {/* ── NASIL ÇALIŞIR ── */}
-      <section id="nasil-calisir" className="py-20 px-4 sm:px-6 bg-white dark:bg-[#040A1C]">
-        <div className="max-w-4xl mx-auto">
+      <section id="nasil-calisir" className="relative py-20 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-white via-[#F5F9FF] to-[#EAF3FF] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565]">
+        <div className="absolute top-8 left-1/4 w-64 h-64 bg-[#1565C0]/6 rounded-full blur-3xl pointer-events-none animate-blob" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-12 right-8 w-80 h-80 bg-[#00AEEF]/7 rounded-full blur-3xl pointer-events-none animate-blob-slow" style={{ animationDelay: '6s' }} />
+        <div className="relative max-w-4xl mx-auto">
           <div className="text-center mb-14">
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
               {lang === 'TR' ? 'Nasıl Çalışır?' : 'How It Works'}

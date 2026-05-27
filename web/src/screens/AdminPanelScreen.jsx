@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
+import { Settings, Lock, X, RefreshCw } from 'lucide-react'
 import { INPUT_BASE } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
 import StatCard from '../components/admin/StatCard'
@@ -91,7 +92,7 @@ export default function AdminPanelScreen() {
       {adminPwSuccess && (
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between">
           <span>{adminPwSuccess}</span>
-          <button onClick={() => setAdminPwSuccess('')} className="ml-2 text-green-500">✕</button>
+          <button onClick={() => setAdminPwSuccess('')} className="ml-2 text-green-500"><X className="w-4 h-4" /></button>
         </div>
       )}
 
@@ -99,7 +100,7 @@ export default function AdminPanelScreen() {
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center">
-            <span className="text-[#1565C0] dark:text-[#7DD4FC] text-xl">⚙️</span>
+            <Settings className="w-5 h-5 text-[#1565C0] dark:text-[#7DD4FC]" />
           </div>
           <div>
             <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{loggedInAdmin?.name || loggedInAdmin?.email}</p>
@@ -116,10 +117,10 @@ export default function AdminPanelScreen() {
               onClick={() => { setShowAdminPwChange(p => !p); setAdminPwError(''); setAdminPwForm({ current: '', newPw: '', confirm: '' }) }}
               className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
             >
-              🔒 {t('change_password', language)}
+              <Lock className="w-3.5 h-3.5 inline mr-1" />{t('change_password', language)}
             </button>
-            <button onClick={loadAllData} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition">
-              {t('btn_refresh', language)}
+            <button onClick={loadAllData} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1">
+              <RefreshCw className="w-3.5 h-3.5" />{t('btn_refresh', language)}
             </button>
           </div>
         </div>

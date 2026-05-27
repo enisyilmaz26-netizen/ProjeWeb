@@ -1,6 +1,7 @@
 import React from 'react'
 import { useApp } from '../context/AppContext'
-import { t, formatDate, getWorkshopIcon } from '../lib/languages'
+import { t, formatDate } from '../lib/languages'
+import { Pencil, Calendar, Clock, Users } from 'lucide-react'
 
 export default function WorkshopsScreen() {
   const { workshops, loggedInUser, cities, language } = useApp()
@@ -29,7 +30,7 @@ export default function WorkshopsScreen() {
       <div className={`bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 border-l-4 ${isPast ? 'border-gray-300 dark:border-gray-600 opacity-70' : 'border-[#1565C0] dark:border-[#7DD4FC]'}`}>
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
-            <span className="text-xl">{getWorkshopIcon()}</span>
+            <Pencil className="w-5 h-5 text-[#1565C0] dark:text-[#7DD4FC]" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{ws.name}</p>
@@ -42,18 +43,18 @@ export default function WorkshopsScreen() {
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
               {ws.date && (
-                <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium">
-                  📅 {formatDate(ws.date)}
+                <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 inline" />{formatDate(ws.date)}
                 </span>
               )}
               {ws.time && (
-                <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium">
-                  🕐 {ws.time}
+                <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 inline" />{ws.time}
                 </span>
               )}
               {ws.capacity && (
-                <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium">
-                  👥 {ws.capacity} {language === 'TR' ? 'kişi' : 'people'}
+                <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 inline" />{ws.capacity} {language === 'TR' ? 'kişi' : 'people'}
                 </span>
               )}
             </div>
@@ -78,7 +79,7 @@ export default function WorkshopsScreen() {
 
       {cityWorkshops.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-12 text-center">
-          <div className="text-4xl mb-3">{getWorkshopIcon()}</div>
+          <div className="mb-3 flex justify-center text-gray-400 dark:text-gray-500"><Pencil className="w-10 h-10" /></div>
           <p className="text-gray-500 dark:text-gray-400 text-sm">{t('no_workshops', language)}</p>
         </div>
       ) : (

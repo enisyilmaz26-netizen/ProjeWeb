@@ -4,6 +4,7 @@ import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import SlotItem from '../../components/admin/SlotItem'
 import LocationSlotSection from '../../components/admin/LocationSlotSection'
+import { X } from 'lucide-react'
 
 export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
   const { cities, labs, timeSlots, addTimeSlot, removeTimeSlot } = useApp()
@@ -72,7 +73,7 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
                 />
               )}
             </div>
-            {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400">✕</button></p>}
+            {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" /></button></p>}
           </div>
 
           {cities.map(city => {
@@ -139,7 +140,7 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
                   language={language}
                 />
               ))}
-              {slotError && <p className="text-red-500 text-xs mt-1">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400">✕</button></p>}
+              {slotError && <p className="text-red-500 text-xs mt-1">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" /></button></p>}
             </div>
           )
         }
@@ -154,7 +155,7 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
                   + {t('btn_add', language)}
                 </button>
               </div>
-              {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400">✕</button></p>}
+              {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" /></button></p>}
             </div>
             <div className="space-y-2">
               {visibleSlots.length === 0 ? (

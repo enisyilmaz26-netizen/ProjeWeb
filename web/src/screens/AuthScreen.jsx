@@ -4,6 +4,7 @@ import { t } from '../lib/languages'
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
 import AppLogo from '../components/AppLogo'
 import PasswordInput from '../components/PasswordInput'
+import { Sun, Moon, Check, Circle, X } from 'lucide-react'
 
 export default function AuthScreen({ onBack }) {
   const { loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
@@ -206,7 +207,7 @@ export default function AuthScreen({ onBack }) {
             aria-label={t('toggle_dark', language)}
             className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition"
           >
-            {isDarkMode ? '☀️' : '🌙'}
+            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -408,7 +409,7 @@ export default function AuthScreen({ onBack }) {
                         const ok = met(regForm.password)
                         return (
                           <li key={key} className={`flex items-center gap-1.5 text-xs transition-colors ${ok ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
-                            <span aria-hidden="true" className="flex-shrink-0 font-bold">{ok ? '✓' : '○'}</span>
+                            <span aria-hidden="true" className="flex-shrink-0">{ok ? <Check className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}</span>
                             {t(key, language)}
                           </li>
                         )
@@ -483,7 +484,7 @@ export default function AuthScreen({ onBack }) {
                 <div className="space-y-4">
                   <div className="flex flex-col items-center py-4">
                     <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-3">
-                      <span className="text-green-600 dark:text-green-400 text-xl">✓</span>
+                      <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
                     </div>
                     <p className="text-sm text-gray-700 dark:text-gray-300 text-center">{t('forgot_success', language)}</p>
                   </div>
@@ -581,9 +582,9 @@ export default function AuthScreen({ onBack }) {
               </h3>
               <button
                 onClick={() => setShowKvkkModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold leading-none"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold leading-none"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
             <div className="overflow-y-auto px-6 py-4 flex-1 space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -743,7 +744,7 @@ export default function AuthScreen({ onBack }) {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
             <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-green-600 dark:text-green-400 text-2xl">✓</span>
+              <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">
               {t('reg_success_title', language)}

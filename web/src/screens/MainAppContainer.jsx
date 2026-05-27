@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
+import { Calendar, GraduationCap, User, Bell, Settings, Sun, Moon } from 'lucide-react'
 import UserReservationScreen from './UserReservationScreen'
 import AdminPanelScreen from './AdminPanelScreen'
 import MyProfileScreen from './MyProfileScreen'
@@ -19,14 +20,14 @@ export default function MainAppContainer() {
   const unreadCount = notifications.filter(n => !n.is_read).length
 
   const userTabs = [
-    { key: 'book', label: t('tab_book', language), icon: '📅' },
-    { key: 'workshops', label: t('tab_workshops', language), icon: '🎓' },
-    { key: 'profile', label: t('tab_profile', language), icon: '👤' },
-    { key: 'notifications', label: t('tab_notifications', language), icon: '🔔' },
+    { key: 'book', label: t('tab_book', language), icon: <Calendar className="w-4 h-4" /> },
+    { key: 'workshops', label: t('tab_workshops', language), icon: <GraduationCap className="w-4 h-4" /> },
+    { key: 'profile', label: t('tab_profile', language), icon: <User className="w-4 h-4" /> },
+    { key: 'notifications', label: t('tab_notifications', language), icon: <Bell className="w-4 h-4" /> },
   ]
   const adminTabs = [
-    { key: 'admin', label: t('tab_admin', language), icon: '⚙️' },
-    { key: 'notifications', label: t('tab_notifications', language), icon: '🔔' },
+    { key: 'admin', label: t('tab_admin', language), icon: <Settings className="w-4 h-4" /> },
+    { key: 'notifications', label: t('tab_notifications', language), icon: <Bell className="w-4 h-4" /> },
   ]
   const tabs = isAdmin ? adminTabs : userTabs
 
@@ -65,7 +66,7 @@ export default function MainAppContainer() {
               aria-label={t('toggle_dark', language)}
               className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition"
             >
-              {isDarkMode ? '☀️' : '🌙'}
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <button
               onClick={logout}

@@ -4,6 +4,7 @@ import { t, translations } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import ResetPasswordModal from '../../components/admin/ResetPasswordModal'
 import PasswordInput from '../../components/PasswordInput'
+import { Pencil } from 'lucide-react'
 
 export default function AdminManagementTab({ language, loggedInAdmin, onRequestConfirm }) {
   const { cities, admins, addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal } = useApp()
@@ -181,7 +182,7 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
                   </div>
                   {!isSelf && (
                     <div className="flex gap-1 flex-shrink-0">
-                      <button onClick={() => setEditAdminModal({ adminId: admin.id, name: admin.name || admin.email, email: admin.email || '', phone: admin.phone || '', role: admin.role, city_id: admin.city_id ? String(admin.city_id) : '' })} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs px-2 py-1.5 hover:bg-[#1565C0]/10 rounded-lg transition" title={language === 'TR' ? 'Rol / İl Düzenle' : 'Edit Role / Province'}>✏️</button>
+                      <button onClick={() => setEditAdminModal({ adminId: admin.id, name: admin.name || admin.email, email: admin.email || '', phone: admin.phone || '', role: admin.role, city_id: admin.city_id ? String(admin.city_id) : '' })} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs px-2 py-1.5 hover:bg-[#1565C0]/10 rounded-lg transition" title={language === 'TR' ? 'Rol / İl Düzenle' : 'Edit Role / Province'}><Pencil className="w-3.5 h-3.5" /></button>
                       <button onClick={() => openResetAdminPw(admin)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs px-2 py-1.5 hover:bg-[#1565C0]/10 rounded-lg transition" title={t('btn_reset_password', language)}>🔑</button>
                       <button onClick={() => handleDeleteAdmin(admin.id)} disabled={processingId === admin.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40">🗑</button>
                     </div>

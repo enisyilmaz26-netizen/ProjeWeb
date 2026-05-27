@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext'
 import { t, formatDate, STATUS_COLORS, STATUS_LABELS } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { PAGE_SIZE, statusLabel, exportToCSV } from '../../lib/adminHelpers'
+import { Download } from 'lucide-react'
 
 export default function AppointmentsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { appointments, cities, labs, approveAppointment, cancelAppointment, markAppointmentCompleted, createNotification } = useApp()
@@ -125,8 +126,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
           {filteredAppointments.length > visibleCount && ` (${visibleCount} ${t('shown', language)})`}
         </p>
         {filteredAppointments.length > 0 && (
-          <button onClick={() => exportToCSV(filteredAppointments, language)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition">
-            ⬇ {t('export_csv', language)}
+          <button onClick={() => exportToCSV(filteredAppointments, language)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1">
+            <Download className="w-3.5 h-3.5" />{t('export_csv', language)}
           </button>
         )}
       </div>

@@ -49,9 +49,9 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('notif_lbl_type', language)}</label>
             <select className={`${inputClass} w-full`} value={notifForm.type} onChange={e => setNotifForm(p => ({ ...p, type: e.target.value }))}>
-              <option value="SYSTEM">💡 {t('notif_type_system', language)}</option>
-              <option value="REMINDER">⏰ {t('notif_type_reminder', language)}</option>
-              <option value="ALERT">🚨 {t('notif_type_alert', language)}</option>
+              <option value="SYSTEM">{t('notif_type_system', language)}</option>
+              <option value="REMINDER">{t('notif_type_reminder', language)}</option>
+              <option value="ALERT">{t('notif_type_alert', language)}</option>
             </select>
           </div>
           {isGlobal && (

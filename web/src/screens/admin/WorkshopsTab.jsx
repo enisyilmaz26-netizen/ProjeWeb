@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
-import { t, formatDate, getWorkshopIcon } from '../../lib/languages'
+import { t, formatDate } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
+import { X, Calendar, Clock, Users, Pencil } from 'lucide-react'
 
 export default function WorkshopsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { cities, workshops, addWorkshop, updateWorkshop, deleteWorkshop } = useApp()
@@ -89,7 +90,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       {workshopSuccess && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{workshopSuccess}</div>}
       {workshopError && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-3">
-          {workshopError} <button onClick={() => setWorkshopError('')} className="ml-2 text-red-400">✕</button>
+          {workshopError} <button onClick={() => setWorkshopError('')} className="ml-2 text-red-400"><X className="w-3.5 h-3.5 inline" /></button>
         </div>
       )}
 
@@ -152,7 +153,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                   <form onSubmit={handleUpdateWorkshop} className="space-y-3">
                     <div className="flex items-center justify-between mb-1">
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Atölyeyi Düzenle' : 'Edit Workshop'}</h4>
-                      <button type="button" onClick={() => setEditingWorkshopId(null)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                      <button type="button" onClick={() => setEditingWorkshopId(null)} className="text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_name_label', language)} *</label>
@@ -193,21 +194,21 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                   </form>
                 ) : (
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">{getWorkshopIcon()}</span>
+                    <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0 text-[#1565C0] dark:text-[#7DD4FC]">
+                      <Pencil className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{ws.name}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{city?.name || ws.city_name}{ws.location ? ` • ${ws.location}` : ''}</p>
                       {ws.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{ws.description}</p>}
                       <div className="flex flex-wrap gap-3 mt-1.5">
-                        {ws.date && <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium">📅 {formatDate(ws.date)}</span>}
-                        {ws.time && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium">🕐 {ws.time}</span>}
-                        {ws.capacity && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium">👥 {ws.capacity}</span>}
+                        {ws.date && <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Calendar className="w-3 h-3 inline" />{formatDate(ws.date)}</span>}
+                        {ws.time && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Clock className="w-3 h-3 inline" />{ws.time}</span>}
+                        {ws.capacity && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Users className="w-3 h-3 inline" />{ws.capacity}</span>}
                       </div>
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
-                      <button onClick={() => startEditWorkshop(ws)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition">✏️</button>
+                      <button onClick={() => startEditWorkshop(ws)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"><Pencil className="w-3.5 h-3.5" /></button>
                       <button onClick={() => handleDeleteWorkshop(ws.id)} disabled={processingId === ws.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40">🗑</button>
                     </div>
                   </div>

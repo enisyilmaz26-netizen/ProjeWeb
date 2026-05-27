@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate, translations, getLabIcon } from '../lib/languages'
+import { X, MapPin } from 'lucide-react'
 
 function getMaxCapacity(lab) {
   if (!lab) return 1
@@ -168,7 +169,7 @@ export default function UserReservationScreen() {
       {successMsg && (
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between items-start">
           <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg('')} className="ml-2 text-green-500 hover:text-green-700">✕</button>
+          <button onClick={() => setSuccessMsg('')} className="ml-2 text-green-500 hover:text-green-700"><X className="w-4 h-4" /></button>
         </div>
       )}
 
@@ -242,7 +243,7 @@ export default function UserReservationScreen() {
                     {locations.map(loc => (
                       <div key={loc}>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-bold text-[#1565C0] dark:text-[#7DD4FC] uppercase tracking-wide">📍 {loc}</span>
+                          <span className="text-xs font-bold text-[#1565C0] dark:text-[#7DD4FC] uppercase tracking-wide inline-flex items-center gap-0.5"><MapPin className="w-3.5 h-3.5 inline" />{loc}</span>
                           <div className="flex-1 h-px bg-[#1565C0]/20 dark:bg-[#7DD4FC]/20" />
                         </div>
                         <div className="grid grid-cols-1 gap-3">
