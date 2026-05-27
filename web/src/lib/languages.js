@@ -201,6 +201,13 @@ export const translations = {
   placeholder_registered_email: { TR: 'Kayıtlı e-posta adresiniz', EN: 'Your registered email' },
   notif_appt_approved: { TR: 'Randevunuz Onaylandı', EN: 'Appointment Approved' },
   notif_appt_cancelled: { TR: 'Randevunuz İptal Edildi', EN: 'Appointment Cancelled' },
+  loading_signin: { TR: 'Giriş yapılıyor...', EN: 'Signing in...' },
+  loading_registering: { TR: 'Kaydediliyor...', EN: 'Registering...' },
+  loading_looking_up: { TR: 'Sorgulanıyor...', EN: 'Looking up...' },
+  loading_saving: { TR: 'Kaydediliyor...', EN: 'Saving...' },
+  upcoming_appointments: { TR: 'Yaklaşan Randevularım', EN: 'Upcoming Appointments' },
+  no_upcoming_appointments: { TR: 'Yaklaşan randevu yok.', EN: 'No upcoming appointments.' },
+  past_appointments: { TR: 'Geçmiş Randevular', EN: 'Past Appointments' },
 }
 
 export const STATUS_COLORS = {

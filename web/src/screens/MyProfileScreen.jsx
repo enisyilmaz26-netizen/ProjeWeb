@@ -255,7 +255,7 @@ export default function MyProfileScreen() {
             </div>
             <div>
               <label className={labelClass}>{t('input_confirm_password', language)} *</label>
-              <input type="password" className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} required />
+              <input type="password" className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} required minLength={8} />
             </div>
             {pwError && <p className="text-red-600 dark:text-red-400 text-xs">{pwError}</p>}
             <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60">
@@ -268,13 +268,13 @@ export default function MyProfileScreen() {
       {/* Upcoming Appointments */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
-          {language === 'TR' ? 'Yaklaşan Randevularım' : 'Upcoming Appointments'} ({upcomingAppointments.length})
+          {t('upcoming_appointments', language)} ({upcomingAppointments.length})
         </h3>
       </div>
 
       {upcomingAppointments.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">
-          {language === 'TR' ? 'Yaklaşan randevu yok.' : 'No upcoming appointments.'}
+          {t('no_upcoming_appointments', language)}
         </div>
       ) : (
         <div className="space-y-3 mb-5">
@@ -298,7 +298,7 @@ export default function MyProfileScreen() {
             className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-200 transition"
           >
             <span>{showPast ? '▼' : '▶'}</span>
-            {language === 'TR' ? `Geçmiş Randevular (${pastAppointments.length})` : `Past Appointments (${pastAppointments.length})`}
+            {t('past_appointments', language)} ({pastAppointments.length})
           </button>
           {showPast && (
             <div className="space-y-3 mb-4 opacity-75">

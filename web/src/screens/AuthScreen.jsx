@@ -284,7 +284,7 @@ export default function AuthScreen({ onBack }) {
                   disabled={loginLoading}
                   className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                 >
-                  {loginLoading ? (language === 'TR' ? 'Giriş yapılıyor...' : 'Signing in...') : t('btn_login', language)}
+                  {loginLoading ? t('loading_signin', language) : t('btn_login', language)}
                 </button>
               </form>
               {loginType === 'user' && (
@@ -454,7 +454,7 @@ export default function AuthScreen({ onBack }) {
                   disabled={regLoading}
                   className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                 >
-                  {regLoading ? (language === 'TR' ? 'Kaydediliyor...' : 'Registering...') : t('btn_register', language)}
+                  {regLoading ? t('loading_registering', language) : t('btn_register', language)}
                 </button>
               </form>
             </div>
@@ -507,7 +507,7 @@ export default function AuthScreen({ onBack }) {
                     disabled={forgotLoading}
                     className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                   >
-                    {forgotLoading ? (language === 'TR' ? 'Sorgulanıyor...' : 'Looking up...') : t('forgot_verify_btn', language)}
+                    {forgotLoading ? t('loading_looking_up', language) : t('forgot_verify_btn', language)}
                   </button>
                   <button type="button" onClick={goBackToLogin} className="w-full text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline pt-1">
                     ← {t('back_to_login', language)}
@@ -537,6 +537,7 @@ export default function AuthScreen({ onBack }) {
                       value={forgotConfirmPassword}
                       onChange={e => setForgotConfirmPassword(e.target.value)}
                       required
+                      minLength={8}
                     />
                   </div>
                   {forgotError && (
@@ -549,7 +550,7 @@ export default function AuthScreen({ onBack }) {
                     disabled={forgotLoading}
                     className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                   >
-                    {forgotLoading ? (language === 'TR' ? 'Kaydediliyor...' : 'Saving...') : t('forgot_save_btn', language)}
+                    {forgotLoading ? t('loading_saving', language) : t('forgot_save_btn', language)}
                   </button>
                   <button type="button" onClick={() => { setForgotStep(1); setForgotError('') }} className="w-full text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline pt-1">
                     ← {language === 'TR' ? 'Geri' : 'Back'}
