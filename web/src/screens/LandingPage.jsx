@@ -14,7 +14,7 @@ function scrollTo(id) {
 }
 
 export default function LandingPage({ onLoginClick }) {
-  const { cities, labs, language, isDarkMode, toggleLanguage, toggleDarkMode } = useApp()
+  const { cities, labs, timeSlots, language, isDarkMode, toggleLanguage, toggleDarkMode } = useApp()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -129,6 +129,7 @@ export default function LandingPage({ onLoginClick }) {
   ]
 
   const cityLabCount = (cityId) => labs.filter(l => String(l.city_id) === String(cityId)).length
+  const citySlotCount = (cityId) => timeSlots.filter(s => String(s.city_id) === String(cityId)).length
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#040A1C] text-gray-800 dark:text-gray-100">
@@ -201,12 +202,6 @@ export default function LandingPage({ onLoginClick }) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-20 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#1565C0]/10 border border-[#1565C0]/25 rounded-full px-4 py-1.5 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-medium mb-8">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            {lang === 'TR' ? 'Öğretmen Eğitimi Dijital Ekosistemi Projesi' : 'Teacher Training Digital Ecosystem Project'}
-          </div>
-
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6">
             {lang === 'TR'
               ? <>Öğretmenler<br /><span className="text-[#1565C0] dark:text-[#7DD4FC]">Dijital Dönüşümün</span><br />Öncüsüdür</>
@@ -396,6 +391,7 @@ export default function LandingPage({ onLoginClick }) {
                 <p className="font-bold text-gray-900 dark:text-white text-sm">{city.name}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
                   {cityLabCount(city.id)} {lang === 'TR' ? 'stüdyo' : 'studio'}
+                  {citySlotCount(city.id) > 0 && ` · ${citySlotCount(city.id)} ${lang === 'TR' ? 'alan' : 'slot'}`}
                 </p>
                 <div className="mt-3 flex gap-1 flex-wrap">
                   {labs.filter(l => String(l.city_id) === String(city.id)).slice(0, 2).map(lab => (

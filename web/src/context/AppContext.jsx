@@ -70,6 +70,7 @@ export function AppProvider({ children }) {
   const [timeSlots, setTimeSlots] = useState([])
   const [users, setUsers] = useState([])
   const [workshops, setWorkshops] = useState([])
+  const [admins, setAdmins] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const rtChannelsRef = React.useRef([])
@@ -104,6 +105,7 @@ export function AppProvider({ children }) {
         { data: timeSlotsData },
         { data: usersData },
         { data: workshopsData },
+        { data: adminsData },
       ] = await Promise.all([
         supabase.from('cities').select('*').order('name'),
         supabase.from('laboratories').select('*').order('name'),
@@ -112,6 +114,7 @@ export function AppProvider({ children }) {
         supabase.from('city_time_slots').select('*').order('id'),
         supabase.from('users').select('*').order('name'),
         supabase.from('workshops').select('*').order('date', { ascending: false }),
+        supabase.from('admins').select('id,name,email,role,city_id,phone').order('name'),
       ])
       if (citiesData) setCities(citiesData)
       if (labsData) setLabs(labsData)
@@ -120,6 +123,7 @@ export function AppProvider({ children }) {
       if (timeSlotsData) setTimeSlots(timeSlotsData)
       if (usersData) setUsers(usersData)
       if (workshopsData) setWorkshops(workshopsData)
+      if (adminsData) setAdmins(adminsData)
       setLoadError(false)
     } catch (err) {
       console.error('Error loading data:', err)
@@ -506,10 +510,34 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const addAdmin = async ({ name, email, password, role, city_id, phone }) => {
+    const hashed = await hashPassword(password, email)
+    const { data, error } = await supabase.from('admins').insert([{
+      name, email, password_hash: hashed, role: role || 'CITY', city_id: city_id || null, phone: phone || ''
+    }]).select('id,name,email,role,city_id,phone').single()
+    if (error) return { success: false, error: error.message }
+    setAdmins(prev => [...prev, data].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
+    return { success: true }
+  }
+
+  const deleteAdmin = async (adminId) => {
+    const { error } = await supabase.from('admins').delete().eq('id', adminId)
+    if (error) return { success: false, error: error.message }
+    setAdmins(prev => prev.filter(a => a.id !== adminId))
+    return { success: true }
+  }
+
+  const resetAdminPasswordByGlobal = async (adminId, email, newPassword) => {
+    const hashed = await hashPassword(newPassword, email)
+    const { error } = await supabase.from('admins').update({ password_hash: hashed }).eq('id', adminId)
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  }
+
   const value = {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
-    cities, labs, appointments, notifications, timeSlots, users, workshops,
+    cities, labs, appointments, notifications, timeSlots, users, workshops, admins,
     loading, loadError,
     loadAllData,
     loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
@@ -520,6 +548,7 @@ export function AppProvider({ children }) {
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab,
     addWorkshop, deleteWorkshop,
+    addAdmin, deleteAdmin, resetAdminPasswordByGlobal,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
