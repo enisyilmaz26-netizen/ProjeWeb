@@ -6,6 +6,7 @@ import { t } from '../lib/languages'
 const NAV_LINKS = [
   { href: '#proje', label: { TR: 'Proje', EN: 'Project' } },
   { href: '#sehirler', label: { TR: 'İller', EN: 'Provinces' } },
+  { href: '#atolyeler', label: { TR: 'Atölyeler', EN: 'Workshops' } },
   { href: '#nasil-calisir', label: { TR: 'Nasıl Çalışır?', EN: 'How It Works' } },
 ]
 
@@ -14,7 +15,7 @@ function scrollTo(id) {
 }
 
 export default function LandingPage({ onLoginClick }) {
-  const { cities, labs, timeSlots, language, isDarkMode, toggleLanguage, toggleDarkMode } = useApp()
+  const { cities, labs, workshops, timeSlots, language, isDarkMode, toggleLanguage, toggleDarkMode } = useApp()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -413,6 +414,69 @@ export default function LandingPage({ onLoginClick }) {
               ))
             )}
           </div>
+        </div>
+      </section>
+
+      {/* ── ATÖLYELER ── */}
+      <section id="atolyeler" className="py-20 px-4 sm:px-6 bg-white dark:bg-[#040A1C]">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
+              {lang === 'TR' ? 'Eğitim Programı' : 'Training Program'}
+            </span>
+            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
+              {lang === 'TR' ? 'Öğretim Tasarımı Atölyeleri' : 'Instructional Design Workshops'}
+            </h2>
+            <p className="mt-4 max-w-2xl mx-auto text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+              {lang === 'TR'
+                ? 'Her ilde düzenlenen atölye çalışmalarıyla öğretmenler eğitim materyali geliştirme ve senaryo yazma konularında uzman desteği alır.'
+                : 'Through workshops held in each province, teachers receive expert support on developing educational materials and writing scenarios.'}
+            </p>
+          </div>
+
+          {workshops.length === 0 ? (
+            <div className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">
+              {lang === 'TR' ? 'Yakında atölye duyuruları yayınlanacak.' : 'Workshop announcements coming soon.'}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {workshops.map(ws => {
+                const city = cities.find(c => String(c.id) === String(ws.city_id))
+                return (
+                  <div key={ws.id} className="flex gap-4 p-5 bg-gray-50 dark:bg-[#0D1E3D] rounded-2xl border border-gray-100 dark:border-[#162848] hover:shadow-md hover:-translate-y-0.5 transition-all">
+                    <div className="w-10 h-10 flex-shrink-0 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC]">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                      </svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm leading-snug">{ws.name}</p>
+                      {ws.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{ws.description}</p>
+                      )}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {city && (
+                          <span className="text-[11px] font-medium text-[#1565C0] dark:text-[#7DD4FC] bg-[#1565C0]/8 dark:bg-[#7DD4FC]/10 px-2 py-0.5 rounded-lg">
+                            📍 {city.name}
+                          </span>
+                        )}
+                        {ws.date ? (
+                          <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-lg">
+                            📅 {ws.date}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-lg">
+                            {lang === 'TR' ? 'Tarih belirleniyor' : 'Date TBD'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
 
