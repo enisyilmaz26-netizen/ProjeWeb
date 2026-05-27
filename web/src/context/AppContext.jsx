@@ -530,13 +530,12 @@ export function AppProvider({ children }) {
 
   // TIME SLOT ACTIONS
   const addTimeSlot = async (cityId, timeRange) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('city_time_slots')
       .insert([{ city_id: cityId, time_range: timeRange }])
-      .select()
-      .single()
     if (error) return { success: false, error: error.message }
-    setTimeSlots(prev => [...prev, data])
+    const { data: all } = await supabase.from('city_time_slots').select('*')
+    if (all) setTimeSlots(all)
     return { success: true }
   }
 
@@ -558,9 +557,10 @@ export function AppProvider({ children }) {
 
   // LAB ACTIONS
   const addLab = async (labData) => {
-    const { data, error } = await supabase.from('laboratories').insert([labData]).select().single()
+    const { error } = await supabase.from('laboratories').insert([labData])
     if (error) return { success: false, error: error.message }
-    setLabs(prev => [...prev, data])
+    const { data: all } = await supabase.from('laboratories').select('*')
+    if (all) setLabs(all)
     return { success: true }
   }
 
@@ -600,12 +600,13 @@ export function AppProvider({ children }) {
   }
 
   const addWorkshop = async (data) => {
-    const { data: inserted, error } = await supabase.from('workshops').insert([{
+    const { error } = await supabase.from('workshops').insert([{
       ...data,
       created_at: Date.now(),
-    }]).select().single()
+    }])
     if (error) return { success: false, error: error.message }
-    setWorkshops(prev => [inserted, ...prev])
+    const { data: all } = await supabase.from('workshops').select('*')
+    if (all) setWorkshops(all)
     return { success: true }
   }
 
