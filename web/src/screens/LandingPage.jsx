@@ -14,7 +14,7 @@ function scrollTo(id) {
 }
 
 export default function LandingPage({ onLoginClick }) {
-  const { cities, labs, language, isDarkMode, toggleLanguage, toggleDarkMode } = useApp()
+  const { cities, labs, timeSlots, language, isDarkMode, toggleLanguage, toggleDarkMode } = useApp()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -129,6 +129,7 @@ export default function LandingPage({ onLoginClick }) {
   ]
 
   const cityLabCount = (cityId) => labs.filter(l => String(l.city_id) === String(cityId)).length
+  const cityStudioCount = (cityName) => cityName === 'Ankara' ? 2 : 1
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#040A1C] text-gray-800 dark:text-gray-100">
@@ -389,7 +390,8 @@ export default function LandingPage({ onLoginClick }) {
                 </div>
                 <p className="font-bold text-gray-900 dark:text-white text-sm">{city.name}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
-                  {cityLabCount(city.id)} {lang === 'TR' ? 'alan' : 'area'}
+                  {cityStudioCount(city.name)} {lang === 'TR' ? 'stüdyo' : 'studio'}
+                  {cityLabCount(city.id) > 0 && ` · ${cityLabCount(city.id)} ${lang === 'TR' ? 'alan' : 'area'}`}
                 </p>
                 <div className="mt-3 flex gap-1 flex-wrap">
                   {labs.filter(l => String(l.city_id) === String(city.id)).slice(0, 2).map(lab => (

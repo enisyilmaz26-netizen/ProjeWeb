@@ -109,13 +109,6 @@ export default function AdminPanelScreen() {
   }, [confirmModal])
 
   useEffect(() => {
-    if (!resetAdminPwModal) return
-    const handler = (e) => { if (e.key === 'Escape') { setResetAdminPwModal(null); setResetAdminPwValue(''); setResetAdminPwError(''); setResetAdminPwSuccess('') } }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [resetAdminPwModal])
-
-  useEffect(() => {
     if (!resetPwModal) return
     const handler = (e) => { if (e.key === 'Escape') { setResetPwModal(null); setResetPwValue(''); setResetPwError(''); setResetPwSuccess('') } }
     document.addEventListener('keydown', handler)
@@ -147,6 +140,13 @@ export default function AdminPanelScreen() {
   const [resetAdminPwError, setResetAdminPwError] = useState('')
   const [resetAdminPwLoading, setResetAdminPwLoading] = useState(false)
   const [resetAdminPwSuccess, setResetAdminPwSuccess] = useState('')
+
+  useEffect(() => {
+    if (!resetAdminPwModal) return
+    const handler = (e) => { if (e.key === 'Escape') { setResetAdminPwModal(null); setResetAdminPwValue(''); setResetAdminPwError(''); setResetAdminPwSuccess('') } }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [resetAdminPwModal])
 
   // Available locations for current city scope
   const availableLocations = useMemo(() => {
