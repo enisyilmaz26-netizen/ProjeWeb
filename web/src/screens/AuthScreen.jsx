@@ -67,9 +67,22 @@ export default function AuthScreen({ onBack }) {
     }
   }
 
+  const passwordRequirements = [
+    { key: 'pw_req_length',  met: pw => pw.length >= 8 },
+    { key: 'pw_req_upper',   met: pw => /[A-Z]/.test(pw) },
+    { key: 'pw_req_lower',   met: pw => /[a-z]/.test(pw) },
+    { key: 'pw_req_number',  met: pw => /[0-9]/.test(pw) },
+    { key: 'pw_req_special', met: pw => /[^A-Za-z0-9]/.test(pw) },
+  ]
+  const isPasswordStrong = (pw) => passwordRequirements.every(r => r.met(pw))
+
   const handleRegister = async (e) => {
     e.preventDefault()
     setRegError('')
+    if (!isPasswordStrong(regForm.password)) {
+      setRegError(t('err_password_weak', language))
+      return
+    }
     if (regForm.password !== regForm.confirmPassword) {
       setRegError(t('err_password_mismatch', language))
       return
@@ -407,6 +420,23 @@ export default function AuthScreen({ onBack }) {
                     required
                     minLength={8}
                   />
+                  {regForm.password.length === 0 ? (
+                    <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                      {t('pw_requirement_hint', language)}
+                    </p>
+                  ) : (
+                    <ul className="mt-1.5 space-y-0.5" aria-label={t('pw_requirement_hint', language)}>
+                      {passwordRequirements.map(({ key, met }) => {
+                        const ok = met(regForm.password)
+                        return (
+                          <li key={key} className={`flex items-center gap-1.5 text-xs transition-colors ${ok ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                            <span aria-hidden="true" className="flex-shrink-0 font-bold">{ok ? '✓' : '○'}</span>
+                            {t(key, language)}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
                 </div>
 
                 <div>
@@ -419,6 +449,9 @@ export default function AuthScreen({ onBack }) {
                     required
                     minLength={8}
                   />
+                  {regForm.confirmPassword.length > 0 && regForm.password !== regForm.confirmPassword && (
+                    <p className="mt-1 text-xs text-red-500 dark:text-red-400">{t('err_password_mismatch', language)}</p>
+                  )}
                 </div>
 
                 {/* KVKK */}

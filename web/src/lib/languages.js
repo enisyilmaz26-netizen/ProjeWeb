@@ -225,6 +225,13 @@ export const translations = {
   clear_notifications_confirm: { TR: 'Tüm bildirimler kalıcı olarak silinecek. Emin misiniz?', EN: 'All notifications will be permanently deleted. Are you sure?' },
   menu_open: { TR: 'Menüyü aç', EN: 'Open menu' },
   menu_close: { TR: 'Menüyü kapat', EN: 'Close menu' },
+  pw_requirement_hint: { TR: 'Şifreniz en az 8 karakter, büyük/küçük harf, rakam ve özel karakter içermelidir.', EN: 'Password must be at least 8 characters and contain uppercase, lowercase, a number and a special character.' },
+  pw_req_length: { TR: 'En az 8 karakter', EN: 'At least 8 characters' },
+  pw_req_upper: { TR: 'Büyük harf (A-Z)', EN: 'Uppercase letter (A-Z)' },
+  pw_req_lower: { TR: 'Küçük harf (a-z)', EN: 'Lowercase letter (a-z)' },
+  pw_req_number: { TR: 'Rakam (0-9)', EN: 'Number (0-9)' },
+  pw_req_special: { TR: 'Özel karakter (!@#$...)', EN: 'Special character (!@#$...)' },
+  err_password_weak: { TR: 'Şifreniz en az 8 karakter, büyük/küçük harf, rakam ve özel karakter içermelidir.', EN: 'Password must contain at least 8 characters, uppercase/lowercase letters, a number and a special character.' },
 }
 
 export const STATUS_COLORS = {
