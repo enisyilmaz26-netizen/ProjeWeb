@@ -329,7 +329,7 @@ export function AppProvider({ children }) {
 
   // APPOINTMENT ACTIONS
   const submitAppointment = async (appointmentData) => {
-    // Prevent duplicate: same user + lab + date + slot already PENDING or APPROVED
+    // Fast client-side pre-check for immediate UX feedback (authoritative check is server-side)
     const duplicate = appointments.find(a =>
       a.user_email === appointmentData.user_email &&
       String(a.lab_id) === String(appointmentData.lab_id) &&
@@ -339,35 +339,38 @@ export function AppProvider({ children }) {
     )
     if (duplicate) return { success: false, error: 'err_duplicate_appointment' }
 
-    const { data, error } = await supabase
-      .from('appointments')
-      .insert([{
-        ...appointmentData,
-        status: 'PENDING',
-        created_timestamp: Date.now(),
-      }])
-      .select()
-      .single()
+    const { data, error } = await supabase.rpc('submit_appointment', {
+      p_lab_id:             appointmentData.lab_id,
+      p_lab_name:           appointmentData.lab_name,
+      p_city_id:            appointmentData.city_id,
+      p_city_name:          appointmentData.city_name,
+      p_date:               appointmentData.date,
+      p_time_slot:          appointmentData.time_slot,
+      p_user_name:          appointmentData.user_name,
+      p_user_surname:       appointmentData.user_surname,
+      p_user_branch:        appointmentData.user_branch,
+      p_user_work_location: appointmentData.user_work_location,
+      p_user_phone:         appointmentData.user_phone,
+      p_user_email:         appointmentData.user_email,
+      p_user_city:          appointmentData.user_city,
+      p_user_district:      appointmentData.user_district,
+      p_note:               appointmentData.note || '',
+    })
 
     if (error) {
-      if (error.code === '23505') return { success: false, error: 'err_duplicate_appointment' }
-      return { success: false, error: error.message }
+      if (error.message?.includes('err_duplicate_appointment')) return { success: false, error: 'err_duplicate_appointment' }
+      return { success: false, error: 'err_generic' }
     }
-    setAppointments(prev => [data, ...prev])
-    // Notify admin: new appointment submitted
-    const cityName = cities.find(c => String(c.id) === String(appointmentData.city_id))?.name
-    const labName = labs.find(l => String(l.id) === String(appointmentData.lab_id))?.name || ''
-    const userName = loggedInUser ? `${loggedInUser.name} ${loggedInUser.surname}` : (appointmentData.user_name || appointmentData.user_email || '')
-    if (cityName) {
-      await supabase.from('notifications').insert([{
-        title: `[${cityName}] Yeni Randevu Başvurusu`,
-        message: `${userName}, ${labName} için ${appointmentData.date} tarihli randevu başvurusu yaptı.`,
-        type: 'APPOINTMENT',
-        timestamp: Date.now(),
-        is_read: false,
-      }])
+    if (!data || data.length === 0) return { success: false, error: 'err_duplicate_appointment' }
+
+    const appt = {
+      ...appointmentData,
+      id: data[0].id,
+      status: 'PENDING',
+      created_timestamp: data[0].created_timestamp,
     }
-    return { success: true, data }
+    setAppointments(prev => [appt, ...prev])
+    return { success: true, data: appt }
   }
 
   const markAppointmentCompleted = async (id) => {
