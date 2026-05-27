@@ -155,7 +155,7 @@ export default function LandingPage({ onLoginClick }) {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#EFF8FF] via-[#BFDBFE] to-[#1565C0] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565]">
+      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#EFF8FF] via-[#BFDBFE] to-[#1565C0] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565] animate-gradient-shift" style={{ backgroundSize: '300% 300%' }}>
         {/* Decorative circles */}
         <div className="absolute top-20 right-10 w-72 h-72 bg-[#00AEEF]/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#1565C0]/15 rounded-full blur-3xl pointer-events-none" />
@@ -325,7 +325,7 @@ export default function LandingPage({ onLoginClick }) {
 
       {/* ── ŞEHİRLER ── */}
 
-      <section id="sehirler" className="relative py-20 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-white via-[#EFF8FF] to-[#1565C0] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565]">
+      <section id="sehirler" className="relative py-20 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-white via-[#EFF8FF] to-[#1565C0] dark:from-[#040A1C] dark:via-[#061A3A] dark:to-[#0A2565] animate-gradient-shift" style={{ backgroundSize: '300% 300%' }}>
         <div className="absolute top-10 right-10 w-72 h-72 bg-[#00AEEF]/10 rounded-full blur-3xl pointer-events-none animate-blob" />
         <div className="absolute bottom-10 left-10 w-96 h-96 bg-[#1565C0]/8 rounded-full blur-3xl pointer-events-none animate-blob-slow" style={{ animationDelay: '4s' }} />
 
