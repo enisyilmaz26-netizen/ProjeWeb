@@ -8,7 +8,6 @@ import PasswordInput from '../components/PasswordInput'
 export default function AuthScreen({ onBack }) {
   const { loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
   const [activeTab, setActiveTab] = useState('login')
-  const [loginType, setLoginType] = useState('user') // 'user' | 'admin'
 
   // Login form
   const [loginEmail, setLoginEmail] = useState('')
@@ -50,11 +49,9 @@ export default function AuthScreen({ onBack }) {
     setLoginError('')
     setLoginLoading(true)
     try {
-      let result
-      if (loginType === 'admin') {
+      let result = await loginUser(loginEmail, loginPassword)
+      if (!result.success && result.error === 'err_email_not_found') {
         result = await loginAdmin(loginEmail, loginPassword)
-      } else {
-        result = await loginUser(loginEmail, loginPassword)
       }
       if (!result.success) {
         if (result.error === 'err_rate_limited') {
@@ -249,22 +246,6 @@ export default function AuthScreen({ onBack }) {
           {/* Login Form */}
           {activeTab === 'login' && (
             <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow p-6">
-              {/* Login type selector */}
-              <div className="flex gap-2 mb-4">
-                <button
-                  onClick={() => setLoginType('user')}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${loginType === 'user' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-[#1565C0] dark:border-[#7DD4FC]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}`}
-                >
-                  {t('login_teacher', language)}
-                </button>
-                <button
-                  onClick={() => setLoginType('admin')}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${loginType === 'admin' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-[#1565C0] dark:border-[#7DD4FC]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}`}
-                >
-                  {t('login_admin', language)}
-                </button>
-              </div>
-
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <label className={labelClass}>{t('input_email', language)}</label>
@@ -300,16 +281,14 @@ export default function AuthScreen({ onBack }) {
                   {loginLoading ? t('loading_signin', language) : t('btn_login', language)}
                 </button>
               </form>
-              {loginType === 'user' && (
-                <div className="mt-3 text-center">
-                  <button
-                    onClick={() => setActiveTab('forgot')}
-                    className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline"
-                  >
-                    {t('forgot_password', language)}
-                  </button>
-                </div>
-              )}
+              <div className="mt-3 text-center">
+                <button
+                  onClick={() => setActiveTab('forgot')}
+                  className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline"
+                >
+                  {t('forgot_password', language)}
+                </button>
+              </div>
             </div>
           )}
 

@@ -188,8 +188,7 @@ export function AppProvider({ children }) {
       .from('users').select('*').eq('email', email).single()
 
     if (error || !data) {
-      recordFailedAttempt(email)
-      return { success: false, error: 'err_user_not_found' }
+      return { success: false, error: 'err_email_not_found' }
     }
 
     const hashed = await hashPassword(password, email)
