@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import AppLogo from '../components/AppLogo'
 import { t, formatDate } from '../lib/languages'
-import { Sun, Moon, MapPin, Calendar, Clock, Mic, Camera, Monitor, Pencil } from 'lucide-react'
+import { Sun, Moon, MapPin, Calendar, Clock, Mic, Video, Monitor, Pencil } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
 
 const NAV_LINKS = [
@@ -47,12 +47,12 @@ export default function LandingPage({ onLoginClick }) {
       color: '#1565C0',
       icon: (
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7">
-          <rect x="12" y="16" width="60" height="16" rx="7" fill="none" stroke="#1a1a1a" strokeWidth="4.5" strokeLinecap="round"/>
-          <line x1="42" y1="32" x2="42" y2="42" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round"/>
-          <rect x="8" y="42" width="72" height="38" rx="7" fill="none" stroke="#1a1a1a" strokeWidth="4.5" strokeLinecap="round"/>
-          <circle cx="44" cy="61" r="11" fill="none" stroke="#1a1a1a" strokeWidth="4"/>
-          <circle cx="44" cy="61" r="5" fill="none" stroke="#1a1a1a" strokeWidth="3"/>
-          <polygon points="80,48 92,42 92,80 80,74" fill="none" stroke="#1a1a1a" strokeWidth="4" strokeLinejoin="round"/>
+          <rect x="12" y="16" width="60" height="16" rx="7" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round"/>
+          <line x1="42" y1="32" x2="42" y2="42" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+          <rect x="8" y="42" width="72" height="38" rx="7" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round"/>
+          <circle cx="44" cy="61" r="11" fill="none" stroke="currentColor" strokeWidth="4"/>
+          <circle cx="44" cy="61" r="5" fill="none" stroke="currentColor" strokeWidth="3"/>
+          <polygon points="80,48 92,42 92,80 80,74" fill="none" stroke="currentColor" strokeWidth="4" strokeLinejoin="round"/>
         </svg>
       ),
     },
@@ -88,7 +88,7 @@ export default function LandingPage({ onLoginClick }) {
       desc: { TR: 'Profesyonel ses kayıt ekipmanlarıyla podcast ve sesli içerik üretimi.', EN: 'Podcast and audio content production with professional recording equipment.' },
     },
     {
-      icon: <Camera className="w-7 h-7" />,
+      icon: <Video className="w-7 h-7" />,
       title: { TR: 'Video Kayıt & Yeşil Ekran', EN: 'Video Recording & Green Screen' },
       desc: { TR: 'Yüksek kaliteli video içerik üretimi için profesyonel yeşil ekran stüdyoları.', EN: 'Professional green screen studios for high-quality video content production.' },
     },
