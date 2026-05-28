@@ -30,6 +30,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     return [...new Set(scopeLabs.map(l => l.location).filter(Boolean))]
   }, [labs, isGlobal, adminCityId, filterCity])
 
+  const STATUS_ORDER = { PENDING: 0, CANCELLATION_REQUESTED: 1, APPROVED: 2, COMPLETED: 3, CANCELLED: 4 }
+
   const filteredAppointments = useMemo(() => {
     let list = appointments
     if (!isGlobal && adminCityId) {
@@ -54,7 +56,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
         (a.city_name || '').toLowerCase().includes(q)
       )
     }
-    return list
+    return [...list].sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99))
   }, [appointments, isGlobal, adminCityId, filterCity, filterStatus, filterLocation, filterDateFrom, filterDateTo, search, labs])
 
   const resetFilters = () => {
@@ -241,10 +243,24 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
       )}
 
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          {filteredAppointments.length} {t('records_count', language)}
-          {filteredAppointments.length > visibleCount && ` (${visibleCount} ${t('shown', language)})`}
-        </p>
+        <div className="flex items-center gap-2">
+          {filteredAppointments.length > 0 && (
+            <input
+              type="checkbox"
+              checked={filteredAppointments.slice(0, visibleCount).every(a => selectedIds.has(a.id))}
+              onChange={() => {
+                const visible = filteredAppointments.slice(0, visibleCount)
+                const allSelected = visible.every(a => selectedIds.has(a.id))
+                setSelectedIds(allSelected ? new Set() : new Set(visible.map(a => a.id)))
+              }}
+              className="accent-[#1565C0] dark:accent-[#7DD4FC] w-4 h-4 cursor-pointer"
+            />
+          )}
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            {filteredAppointments.length} {t('records_count', language)}
+            {filteredAppointments.length > visibleCount && ` (${visibleCount} ${t('shown', language)})`}
+          </p>
+        </div>
         {filteredAppointments.length > 0 && (
           <button onClick={() => exportToCSV(filteredAppointments, language)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1">
             <Download className="w-3.5 h-3.5" />{t('export_csv', language)}
@@ -261,14 +277,12 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
               <div key={appt.id} className={`bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 ${selectedIds.has(appt.id) ? 'ring-2 ring-[#1565C0] dark:ring-[#7DD4FC]' : ''}`}>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-start gap-2 min-w-0 flex-1">
-                    {appt.status === 'PENDING' && (
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(appt.id)}
-                        onChange={() => toggleSelect(appt.id)}
-                        className="mt-0.5 flex-shrink-0 accent-[#1565C0] dark:accent-[#7DD4FC] w-4 h-4 cursor-pointer"
-                      />
-                    )}
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(appt.id)}
+                      onChange={() => toggleSelect(appt.id)}
+                      className="mt-0.5 flex-shrink-0 accent-[#1565C0] dark:accent-[#7DD4FC] w-4 h-4 cursor-pointer"
+                    />
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{appt.user_name} {appt.user_surname}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{appt.user_email}</p>
