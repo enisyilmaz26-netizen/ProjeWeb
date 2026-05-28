@@ -21,13 +21,15 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
       return
     }
     setNotifLoading(true)
-    let finalTitle = notifForm.title
+    // Strip any existing [...] prefix so admins can't spoof a different city tag
+    const rawTitle = notifForm.title.replace(/^\[[^\]]*\]\s*/, '')
+    let finalTitle = rawTitle
     if (isGlobal && notifCity) {
       const cityObj = cities.find(c => String(c.id) === String(notifCity))
-      if (cityObj) finalTitle = `[${cityObj.name}] ${notifForm.title}`
+      if (cityObj) finalTitle = `[${cityObj.name}] ${rawTitle}`
     } else if (!isGlobal && adminCityId) {
       const cityObj = cities.find(c => String(c.id) === String(adminCityId))
-      if (cityObj) finalTitle = `[${cityObj.name}] ${notifForm.title}`
+      if (cityObj) finalTitle = `[${cityObj.name}] ${rawTitle}`
     }
     const result = await createNotification({ ...notifForm, title: finalTitle })
     setNotifLoading(false)

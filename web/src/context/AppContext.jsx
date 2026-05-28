@@ -178,8 +178,11 @@ export function AppProvider({ children }) {
 
     if (error || !data || data.length === 0) {
       // Distinguish "email not found" vs "wrong password" for admin login fallback
-      const { data: exists } = await supabase.from('users').select('id').eq('email', email).maybeSingle()
-      if (!exists) return { success: false, error: 'err_email_not_found' }
+      const { data: userExists } = await supabase.from('users').select('id').eq('email', email).maybeSingle()
+      if (!userExists) return { success: false, error: 'err_email_not_found' }
+      // Email is in users but may also be in admins (admin tried user login form)
+      const { data: adminExists } = await supabase.from('admins').select('id').eq('email', email).maybeSingle()
+      if (adminExists) return { success: false, error: 'err_email_not_found' }
       recordFailedAttempt(email)
       return { success: false, error: 'err_user_not_found' }
     }
@@ -452,6 +455,7 @@ export function AppProvider({ children }) {
       .eq('status', 'PENDING')
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
+    logAudit('USER_CANCEL_APPOINTMENT', 'appointment', id, `${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
     const userName = `${loggedInUser.name} ${loggedInUser.surname}`
     if (cityName) {
@@ -475,6 +479,7 @@ export function AppProvider({ children }) {
       a.id === id ? { ...a, status: 'CANCELLATION_REQUESTED', note: note || '' } : a
     ))
     if (appt) {
+      logAudit('USER_REQUEST_CANCELLATION', 'appointment', id, `${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       const userName = loggedInUser ? `${loggedInUser.name} ${loggedInUser.surname}` : (appt.user_name || appt.user_email || '')
       if (cityName) {
@@ -488,14 +493,34 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
-  // Fire-and-forget audit logger — never blocks the main action
+  const denyCancellationRequest = async (id) => {
+    const appt = appointments.find(a => a.id === id)
+    const { error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id)
+    if (error) return { success: false, error: error.message }
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'APPROVED' } : a))
+    if (appt) {
+      logAudit('DENY_CANCELLATION', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
+      const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
+      if (cityName) {
+        const { data: nd } = await supabase.from('notifications').insert([{
+          title: `[${cityName}] İptal Talebi Reddedildi`,
+          message: `${appt.user_name || ''} ${appt.user_surname || ''} adlı öğretmenin ${appt.lab_name || ''} için ${appt.date} tarihli iptal talebi reddedildi.`,
+          type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
+        }]).select().single()
+        if (nd) setNotifications(prev => [nd, ...prev])
+      }
+    }
+    return { success: true }
+  }
+
+  // Fire-and-forget audit logger — works for both admin and user sessions
   const logAudit = (action, targetType, targetId, details) => {
-    const actor = loggedInAdmin
+    const actor = loggedInAdmin || loggedInUser
     if (!actor) return
     supabase.from('audit_logs').insert([{
       actor_email: actor.email,
-      actor_name: actor.name,
-      actor_role: actor.role || 'CITY',
+      actor_name: loggedInAdmin ? actor.name : `${actor.name} ${actor.surname}`,
+      actor_role: loggedInAdmin ? (actor.role || 'CITY') : 'USER',
       action,
       target_type: targetType || null,
       target_id: targetId || null,
@@ -777,7 +802,7 @@ export function AppProvider({ children }) {
     loadAllData,
     loginUser, loginAdmin, registerUser, addUserByAdmin, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
     toggleLanguage, toggleDarkMode,
-    submitAppointment, approveAppointment, cancelAppointment, cancelOwnAppointment, submitCancellationRequest, markAppointmentCompleted,
+    submitAppointment, approveAppointment, cancelAppointment, cancelOwnAppointment, submitCancellationRequest, denyCancellationRequest, markAppointmentCompleted,
     approveUser, revokeUser,
     markNotificationsRead, clearNotifications, createNotification,
     addTimeSlot, removeTimeSlot,

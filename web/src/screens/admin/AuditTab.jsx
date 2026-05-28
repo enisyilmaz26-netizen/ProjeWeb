@@ -13,7 +13,10 @@ const ACTION_LABELS = {
   RESET_USER_PASSWORD:  { TR: 'Kullanıcı Şifresi Sıfırlandı', EN: 'User Password Reset' },
   ADD_ADMIN:            { TR: 'Yönetici Eklendi',         EN: 'Admin Added' },
   DELETE_ADMIN:         { TR: 'Yönetici Silindi',         EN: 'Admin Deleted' },
-  RESET_ADMIN_PASSWORD: { TR: 'Yönetici Şifresi Sıfırlandı', EN: 'Admin Password Reset' },
+  RESET_ADMIN_PASSWORD:    { TR: 'Yönetici Şifresi Sıfırlandı', EN: 'Admin Password Reset' },
+  DENY_CANCELLATION:       { TR: 'İptal Talebi Reddedildi',   EN: 'Cancellation Denied' },
+  USER_CANCEL_APPOINTMENT: { TR: 'Kullanıcı Randevu İptal',   EN: 'User Cancelled Appointment' },
+  USER_REQUEST_CANCELLATION: { TR: 'Kullanıcı İptal Talebi',  EN: 'User Requested Cancellation' },
 }
 
 const ACTION_COLORS = {
@@ -25,7 +28,10 @@ const ACTION_COLORS = {
   RESET_USER_PASSWORD:  'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
   ADD_ADMIN:            'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
   DELETE_ADMIN:         'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-  RESET_ADMIN_PASSWORD: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+  RESET_ADMIN_PASSWORD:    'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+  DENY_CANCELLATION:       'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400',
+  USER_CANCEL_APPOINTMENT: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+  USER_REQUEST_CANCELLATION: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
 }
 
 function formatDateTime(iso) {

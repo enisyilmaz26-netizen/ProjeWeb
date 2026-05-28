@@ -87,19 +87,21 @@ export default function MainAppContainer() {
               aria-selected={activeTab === tab.key}
               aria-label={tab.label}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition relative ${
+              className={`flex-1 flex items-center justify-center py-2.5 text-xs font-medium transition ${
                 activeTab === tab.key
                   ? 'text-white border-b-2 border-white'
                   : 'text-white/60 hover:text-white/90'
               }`}
             >
-              <span aria-hidden="true">{tab.icon}</span>
-              <span>{tab.label}</span>
-              {tab.key === 'notifications' && unreadCount > 0 && (
-                <span aria-label={language === 'TR' ? `${unreadCount} okunmamış bildirim` : `${unreadCount} unread notifications`} className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
+              <span className="relative inline-flex items-center gap-1.5">
+                <span aria-hidden="true">{tab.icon}</span>
+                <span>{tab.label}</span>
+                {tab.key === 'notifications' && unreadCount > 0 && (
+                  <span aria-label={language === 'TR' ? `${unreadCount} okunmamış bildirim` : `${unreadCount} unread notifications`} className="absolute -top-2.5 -right-3 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </div>

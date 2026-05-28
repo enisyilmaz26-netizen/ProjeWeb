@@ -246,6 +246,15 @@ export const translations = {
   err_admin_required_fields: { TR: 'İsim, e-posta ve şifre zorunludur.', EN: 'Name, email and password are required.' },
   err_city_required: { TR: 'İl yöneticisi için il seçimi zorunludur.', EN: 'Province selection is required for province admin.' },
   no_admins: { TR: 'Yönetici bulunamadı.', EN: 'No admins found.' },
+  approve_cancellation: { TR: 'İptali Onayla', EN: 'Approve Cancellation' },
+  deny_cancellation: { TR: 'Talebi Reddet', EN: 'Deny Request' },
+  confirm_approve_cancellation: { TR: 'Kullanıcının iptal talebini onaylayıp randevuyu iptal etmek istediğinizden emin misiniz?', EN: 'Approve the cancellation request and cancel the appointment?' },
+  confirm_deny_cancellation: { TR: 'İptal talebini reddetmek istediğinizden emin misiniz? Randevu "Onaylı" durumuna döner.', EN: 'Deny this cancellation request? The appointment will return to Approved.' },
+  action_success_approved: { TR: 'Randevu onaylandı.', EN: 'Appointment approved.' },
+  action_success_cancelled: { TR: 'Randevu iptal edildi.', EN: 'Appointment cancelled.' },
+  action_success_completed: { TR: 'Randevu tamamlandı olarak işaretlendi.', EN: 'Appointment marked as completed.' },
+  action_success_cancellation_approved: { TR: 'İptal talebi onaylandı.', EN: 'Cancellation approved.' },
+  action_success_cancellation_denied: { TR: 'İptal talebi reddedildi.', EN: 'Cancellation denied.' },
 }
 
 export const STATUS_COLORS = {
