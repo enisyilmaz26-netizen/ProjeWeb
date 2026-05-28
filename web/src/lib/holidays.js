@@ -1,5 +1,5 @@
 // Fixed Turkish public holidays (MM-DD, repeat every year)
-const FIXED_MM_DD = ['01-01','04-23','05-01','05-19','08-30','10-29']
+const FIXED_MM_DD = ['01-01','04-23','05-01','05-19','07-15','08-30','10-29']
 
 // Variable religious holidays (YYYY-MM-DD)
 const VARIABLE = [
