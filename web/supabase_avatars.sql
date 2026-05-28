@@ -1,0 +1,22 @@
+-- Avatar support
+-- Run this in Supabase SQL Editor.
+
+-- Add avatar_url column to users and admins
+ALTER TABLE public.users  ADD COLUMN IF NOT EXISTS avatar_url text;
+ALTER TABLE public.admins ADD COLUMN IF NOT EXISTS avatar_url text;
+
+-- Create public storage bucket for avatars
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('avatars', 'avatars', true, 1048576, ARRAY['image/jpeg','image/png','image/webp','image/gif'])
+ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = 1048576;
+
+-- Storage RLS policies
+DROP POLICY IF EXISTS "avatars_select" ON storage.objects;
+DROP POLICY IF EXISTS "avatars_insert" ON storage.objects;
+DROP POLICY IF EXISTS "avatars_update" ON storage.objects;
+DROP POLICY IF EXISTS "avatars_delete" ON storage.objects;
+
+CREATE POLICY "avatars_select" ON storage.objects FOR SELECT USING (bucket_id = 'avatars');
+CREATE POLICY "avatars_insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'avatars');
+CREATE POLICY "avatars_update" ON storage.objects FOR UPDATE USING (bucket_id = 'avatars');
+CREATE POLICY "avatars_delete" ON storage.objects FOR DELETE USING (bucket_id = 'avatars');

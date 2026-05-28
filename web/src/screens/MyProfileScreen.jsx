@@ -8,7 +8,7 @@ import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight,
 import CalendarView from '../components/CalendarView'
 
 export default function MyProfileScreen() {
-  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities, waitlist, removeFromWaitlist } = useApp()
+  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities, waitlist, removeFromWaitlist, uploadAvatar } = useApp()
   const [apptViewMode, setApptViewMode] = useState('list')
 
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -18,6 +18,8 @@ export default function MyProfileScreen() {
   const [submitting, setSubmitting] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [showPast, setShowPast] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
 
   // Password change
   const [showPwChange, setShowPwChange] = useState(false)
@@ -173,12 +175,30 @@ export default function MyProfileScreen() {
           <button onClick={() => setSuccessMsg('')} className="ml-2 text-green-500"><X className="w-4 h-4" /></button>
         </div>
       )}
+      {avatarError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-4">{avatarError}</div>
+      )}
 
       {/* Profile Card */}
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-5 mb-5">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#1565C0] dark:bg-[#7DD4FC] flex items-center justify-center flex-shrink-0">
-            <span className="text-white dark:text-[#060E26] text-xl font-bold">{initials}</span>
+          <div className="relative flex-shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-[#1565C0] dark:bg-[#7DD4FC] flex items-center justify-center overflow-hidden">
+              {loggedInUser.avatar_url
+                ? <img src={loggedInUser.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                : <span className="text-white dark:text-[#060E26] text-xl font-bold">{initials}</span>}
+            </div>
+            <label className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#1565C0] dark:bg-[#7DD4FC] rounded-full flex items-center justify-center cursor-pointer shadow hover:opacity-90 transition">
+              {avatarUploading ? <span className="text-white dark:text-[#060E26] text-[10px]">...</span> : <Pencil className="w-3 h-3 text-white dark:text-[#060E26]" />}
+              <input type="file" accept="image/*" className="hidden" disabled={avatarUploading} onChange={async (e) => {
+                const file = e.target.files[0]; if (!file) return; e.target.value = ''
+                setAvatarError(''); setAvatarUploading(true)
+                const res = await uploadAvatar(file, 'users', loggedInUser.id)
+                if (res.success) { await updateUserProfile(loggedInUser.id, { avatar_url: res.url }) }
+                else setAvatarError(res.error)
+                setAvatarUploading(false)
+              }} />
+            </label>
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">{loggedInUser.name} {loggedInUser.surname}</h2>

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
-import { Settings, Lock, X, RefreshCw } from 'lucide-react'
+import { Settings, Lock, X, RefreshCw, Pencil } from 'lucide-react'
 import { INPUT_BASE } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
 import { isPasswordStrong } from '../lib/passwordUtils'
@@ -23,7 +23,7 @@ export default function AdminPanelScreen() {
   const {
     loggedInAdmin, language,
     appointments, cities, conversations, messagesAvailable,
-    changeAdminPassword,
+    changeAdminPassword, updateAdmin, uploadAvatar,
     loadAllData,
   } = useApp()
 
@@ -39,6 +39,24 @@ export default function AdminPanelScreen() {
   const [adminPwLoading, setAdminPwLoading] = useState(false)
   const [adminPwError, setAdminPwError] = useState('')
   const [adminPwSuccess, setAdminPwSuccess] = useState('')
+
+  const [showAdminProfileEdit, setShowAdminProfileEdit] = useState(false)
+  const [adminProfileForm, setAdminProfileForm] = useState({ name: '', phone: '' })
+  const [adminProfileLoading, setAdminProfileLoading] = useState(false)
+  const [adminProfileError, setAdminProfileError] = useState('')
+  const [adminProfileSuccess, setAdminProfileSuccess] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
+
+  const handleAdminProfileSave = async (e) => {
+    e.preventDefault()
+    setAdminProfileError('')
+    setAdminProfileLoading(true)
+    const result = await updateAdmin(loggedInAdmin.id, { name: adminProfileForm.name.trim(), phone: adminProfileForm.phone.trim() })
+    setAdminProfileLoading(false)
+    if (result.success) { setShowAdminProfileEdit(false); setAdminProfileSuccess(language === 'TR' ? 'Profil güncellendi.' : 'Profile updated.'); setTimeout(() => setAdminProfileSuccess(''), 3000) }
+    else setAdminProfileError(result.error || t('err_generic', language))
+  }
 
   useEffect(() => {
     if (!confirmModal) return
@@ -108,9 +126,26 @@ export default function AdminPanelScreen() {
 
       {/* Admin header */}
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4">
+        {adminProfileSuccess && <div className="mb-3 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 text-xs">{adminProfileSuccess}</div>}
+        {avatarError && <div className="mb-3 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs">{avatarError}</div>}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center">
-            <Settings className="w-5 h-5 text-[#1565C0] dark:text-[#7DD4FC]" />
+          <div className="relative flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center overflow-hidden">
+              {loggedInAdmin?.avatar_url
+                ? <img src={loggedInAdmin.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                : <Settings className="w-5 h-5 text-[#1565C0] dark:text-[#7DD4FC]" />}
+            </div>
+            <label className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#1565C0] dark:bg-[#7DD4FC] rounded-full flex items-center justify-center cursor-pointer shadow hover:opacity-90 transition">
+              {avatarUploading ? <span className="text-white dark:text-[#060E26] text-[8px]">...</span> : <Pencil className="w-2.5 h-2.5 text-white dark:text-[#060E26]" />}
+              <input type="file" accept="image/*" className="hidden" disabled={avatarUploading} onChange={async (e) => {
+                const file = e.target.files[0]; if (!file) return; e.target.value = ''
+                setAvatarError(''); setAvatarUploading(true)
+                const res = await uploadAvatar(file, 'admins', loggedInAdmin.id)
+                if (res.success) await updateAdmin(loggedInAdmin.id, { avatar_url: res.url })
+                else setAvatarError(res.error)
+                setAvatarUploading(false)
+              }} />
+            </label>
           </div>
           <div>
             <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{loggedInAdmin?.name || loggedInAdmin?.email}</p>
@@ -124,6 +159,12 @@ export default function AdminPanelScreen() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             <button
+              onClick={() => { setShowAdminProfileEdit(p => !p); setAdminProfileForm({ name: loggedInAdmin?.name || '', phone: loggedInAdmin?.phone || '' }); setAdminProfileError('') }}
+              className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
+            >
+              <Pencil className="w-3.5 h-3.5 inline mr-1" />{language === 'TR' ? 'Düzenle' : 'Edit'}
+            </button>
+            <button
               onClick={() => { setShowAdminPwChange(p => !p); setAdminPwError(''); setAdminPwForm({ current: '', newPw: '', confirm: '' }) }}
               className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
             >
@@ -134,6 +175,30 @@ export default function AdminPanelScreen() {
             </button>
           </div>
         </div>
+
+        {showAdminProfileEdit && (
+          <form onSubmit={handleAdminProfileSave} className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Ad Soyad' : 'Name'}</label>
+                <input type="text" className={`w-full ${inputClass}`} value={adminProfileForm.name} onChange={e => setAdminProfileForm(p => ({ ...p, name: e.target.value }))} required />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Telefon' : 'Phone'}</label>
+                <input type="text" className={`w-full ${inputClass}`} value={adminProfileForm.phone} onChange={e => setAdminProfileForm(p => ({ ...p, phone: e.target.value }))} />
+              </div>
+            </div>
+            {adminProfileError && <p className="text-red-500 dark:text-red-400 text-xs">{adminProfileError}</p>}
+            <div className="flex gap-2">
+              <button type="submit" disabled={adminProfileLoading} className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60">
+                {adminProfileLoading ? '...' : t('btn_save', language)}
+              </button>
+              <button type="button" onClick={() => setShowAdminProfileEdit(false)} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">
+                {t('btn_nevermind', language)}
+              </button>
+            </div>
+          </form>
+        )}
 
         {showAdminPwChange && (
           <form onSubmit={handleAdminPwChange} className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">

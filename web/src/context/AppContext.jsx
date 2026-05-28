@@ -415,6 +415,18 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const uploadAvatar = async (file, type, id) => {
+    if (!file) return { success: false, error: 'No file' }
+    if (file.size > 1048576) return { success: false, error: language === 'TR' ? 'Dosya 1 MB\'dan büyük olamaz.' : 'File must be under 1 MB.' }
+    if (!file.type.startsWith('image/')) return { success: false, error: language === 'TR' ? 'Lütfen bir görsel seçin.' : 'Please select an image.' }
+    const ext = file.name.split('.').pop()
+    const path = `${type}/${id}.${ext}`
+    const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
+    if (upErr) return { success: false, error: upErr.message }
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+    return { success: true, url: publicUrl + '?t=' + Date.now() }
+  }
+
   const updateUserProfile = async (userId, updates) => {
     const { error } = await supabase.from('users').update(updates).eq('id', userId)
     if (error) return { success: false, error: error.message }
@@ -1089,7 +1101,7 @@ export function AppProvider({ children }) {
     loading, loadError,
     idleWarning, dismissIdleWarning,
     loadAllData,
-    loginUser, loginAdmin, registerUser, addUserByAdmin, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
+    loginUser, loginAdmin, registerUser, addUserByAdmin, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout, uploadAvatar,
     toggleLanguage, toggleDarkMode,
     submitAppointment, approveAppointment, cancelAppointment, cancelOwnAppointment, submitCancellationRequest, denyCancellationRequest, markAppointmentCompleted,
     approveUser, revokeUser,
