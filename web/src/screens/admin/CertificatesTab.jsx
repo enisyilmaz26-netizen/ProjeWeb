@@ -38,14 +38,6 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
   const fileInputRef = useRef(null)
   const titleRef = useRef(null)
   const pendingCursorRef = useRef(null)
-
-  useEffect(() => {
-    if (pendingCursorRef.current !== null && titleRef.current) {
-      titleRef.current.selectionStart = pendingCursorRef.current
-      titleRef.current.selectionEnd = pendingCursorRef.current
-      pendingCursorRef.current = null
-    }
-  }, [form.title])
   useEffect(() => () => clearTimeout(saveTimerRef.current), [])
 
   const handleLogoFile = (e) => {
@@ -76,6 +68,14 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
   const [saving, setSaving] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [initialized, setInitialized] = useState(false)
+
+  useEffect(() => {
+    if (pendingCursorRef.current !== null && titleRef.current) {
+      titleRef.current.selectionStart = pendingCursorRef.current
+      titleRef.current.selectionEnd = pendingCursorRef.current
+      pendingCursorRef.current = null
+    }
+  }, [form.title])
 
   useEffect(() => {
     if (!initialized) {
