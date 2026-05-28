@@ -4,13 +4,11 @@
 -- conversations: each row is a thread between two parties
 create table if not exists public.conversations (
   id                   uuid primary key default gen_random_uuid(),
-  -- "sender" side: the lower-privilege initiator (user or city_admin messaging upward)
   sender_type          text not null check (sender_type in ('user', 'city_admin')),
   sender_id            uuid not null,
   sender_email         text not null,
   sender_name          text not null default '',
   city_id              uuid,
-  -- "recipient" side: city_admin (for user↔city) or global_admin
   recipient_type       text not null check (recipient_type in ('city_admin', 'global_admin')),
   last_message_at      timestamptz not null default now(),
   unread_for_sender    int not null default 0,
@@ -23,18 +21,21 @@ create table if not exists public.conversations (
 create table if not exists public.messages (
   id              uuid primary key default gen_random_uuid(),
   conversation_id uuid not null references public.conversations(id) on delete cascade,
-  -- 'sender' = initiator (user/city_admin), 'recipient' = the other side
   authored_by     text not null check (authored_by in ('sender', 'recipient')),
   author_name     text not null default '',
   body            text not null,
   created_at      timestamptz not null default now()
 );
 
--- Enable RLS
 alter table public.conversations enable row level security;
 alter table public.messages enable row level security;
 
--- Open read/write policies (auth is handled in application layer)
+drop policy if exists "conversations_select" on public.conversations;
+drop policy if exists "conversations_insert" on public.conversations;
+drop policy if exists "conversations_update" on public.conversations;
+drop policy if exists "messages_select" on public.messages;
+drop policy if exists "messages_insert" on public.messages;
+
 create policy "conversations_select" on public.conversations for select using (true);
 create policy "conversations_insert" on public.conversations for insert with check (true);
 create policy "conversations_update" on public.conversations for update using (true);

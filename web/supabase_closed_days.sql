@@ -12,6 +12,10 @@ create table if not exists public.closed_days (
 
 alter table public.closed_days enable row level security;
 
+drop policy if exists "closed_days_select" on public.closed_days;
+drop policy if exists "closed_days_insert" on public.closed_days;
+drop policy if exists "closed_days_delete" on public.closed_days;
+
 create policy "closed_days_select" on public.closed_days for select using (true);
 create policy "closed_days_insert" on public.closed_days for insert with check (true);
 create policy "closed_days_delete" on public.closed_days for delete using (true);

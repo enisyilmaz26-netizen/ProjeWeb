@@ -12,20 +12,17 @@ create table if not exists public.workshop_registrations (
   unique(workshop_id, user_id)
 );
 
--- Enable RLS
 alter table public.workshop_registrations enable row level security;
 
--- Anyone can read registrations (admins need to see all, users see their own)
+drop policy if exists "workshop_registrations_select" on public.workshop_registrations;
+drop policy if exists "workshop_registrations_insert" on public.workshop_registrations;
+drop policy if exists "workshop_registrations_delete" on public.workshop_registrations;
+
 create policy "workshop_registrations_select"
-  on public.workshop_registrations for select
-  using (true);
+  on public.workshop_registrations for select using (true);
 
--- Users can insert their own registrations
 create policy "workshop_registrations_insert"
-  on public.workshop_registrations for insert
-  with check (true);
+  on public.workshop_registrations for insert with check (true);
 
--- Users can delete their own registrations
 create policy "workshop_registrations_delete"
-  on public.workshop_registrations for delete
-  using (true);
+  on public.workshop_registrations for delete using (true);
