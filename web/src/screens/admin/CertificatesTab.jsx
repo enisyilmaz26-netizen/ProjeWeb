@@ -59,7 +59,7 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
     title: '', institution: '', body_text: '',
     signature_name: '', signature_title: '', footer_text: '',
     body_align: 'center', title_size: '2xl', body_size: 'sm',
-    name_font: 'serif', logo_url: '',
+    name_font: 'serif', logo_url: '', logo_size: 'md',
   })
   const [saveSuccess, setSaveSuccess] = useState('')
   const [saveError, setSaveError] = useState('')
@@ -81,6 +81,7 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
         body_size:      existingTemplate?.body_size      || 'sm',
         name_font:      existingTemplate?.name_font      || 'serif',
         logo_url:       existingTemplate?.logo_url       || '',
+        logo_size:      existingTemplate?.logo_size      || 'md',
       })
       setInitialized(true)
     }
@@ -154,7 +155,9 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
           <div className="px-8 py-6 text-center">
             {form.logo_url && (
               <div className="flex justify-center mb-3">
-                <img src={form.logo_url} alt="logo" className="h-12 object-contain" onError={e => { e.target.style.display='none' }} />
+                <img src={form.logo_url} alt="logo"
+                  className={`object-contain ${{ sm: 'h-8', md: 'h-12', lg: 'h-16', xl: 'h-20' }[form.logo_size] || 'h-12'}`}
+                  onError={e => { e.target.style.display='none' }} />
               </div>
             )}
             <p className="text-[10px] font-semibold text-[#1565C0] uppercase tracking-widest mb-2">{form.institution}</p>
@@ -210,6 +213,17 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
                 </button>
               </div>
             )}
+            {form.logo_url && (
+              <div className="mt-2">
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Logo Boyutu' : 'Logo Size'}</label>
+                <select className={selectClass} value={form.logo_size} onChange={e => set('logo_size', e.target.value)}>
+                  <option value="sm">{language === 'TR' ? 'Küçük' : 'Small'}</option>
+                  <option value="md">{language === 'TR' ? 'Orta' : 'Medium'}</option>
+                  <option value="lg">{language === 'TR' ? 'Büyük' : 'Large'}</option>
+                  <option value="xl">{language === 'TR' ? 'Çok Büyük' : 'X-Large'}</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Institution */}
@@ -223,7 +237,22 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Sertifika Başlığı' : 'Certificate Title'}</label>
             <textarea
               className={`w-full ${inputClass} resize-y`} rows={3}
-              value={form.title} onChange={e => set('title', e.target.value)}
+              value={form.title}
+              onChange={e => set('title', e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  const el = e.target
+                  const start = el.selectionStart
+                  const end = el.selectionEnd
+                  const next = form.title.substring(0, start) + '\n' + form.title.substring(end)
+                  set('title', next)
+                  requestAnimationFrame(() => {
+                    el.selectionStart = start + 1
+                    el.selectionEnd = start + 1
+                  })
+                }
+              }}
               placeholder={language === 'TR' ? 'Alt satır için Enter kullanın' : 'Press Enter for a new line'}
             />
           </div>

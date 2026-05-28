@@ -45,6 +45,7 @@ export default function CertificateModal({ ws, template, user, language, onClose
   const bodySize   = template?.body_size   || 'sm'
   const nameFont   = template?.name_font   || 'serif'
   const logoUrl    = template?.logo_url    || ''
+  const logoSizeClass = { sm: 'h-10', md: 'h-16', lg: 'h-24', xl: 'h-32' }[template?.logo_size || 'md'] || 'h-16'
 
   const alignClass = bodyAlign === 'left' ? 'text-left' : 'text-center'
   const alignItems = bodyAlign === 'left' ? 'items-start' : 'items-center'
@@ -74,7 +75,7 @@ export default function CertificateModal({ ws, template, user, language, onClose
 
           <div className={`px-10 py-8 flex flex-col ${alignItems}`}>
             {logoUrl && (
-              <img src={logoUrl} alt="logo" className="h-16 object-contain mb-4" />
+              <img src={logoUrl} alt="logo" className={`${logoSizeClass} object-contain mb-4`} />
             )}
 
             <p className={`text-[11px] font-semibold text-[#1565C0] uppercase tracking-widest mb-1 ${alignClass}`}>
