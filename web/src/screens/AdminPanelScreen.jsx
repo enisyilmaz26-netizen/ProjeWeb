@@ -16,11 +16,13 @@ import NotificationsTab from './admin/NotificationsTab'
 import StatsTab from './admin/StatsTab'
 import AdminManagementTab from './admin/AdminManagementTab'
 import AuditTab from './admin/AuditTab'
+import ClosedDaysTab from './admin/ClosedDaysTab'
+import AdminMessagesTab from './admin/AdminMessagesTab'
 
 export default function AdminPanelScreen() {
   const {
     loggedInAdmin, language,
-    appointments, cities,
+    appointments, cities, conversations, messagesAvailable,
     changeAdminPassword,
     loadAllData,
   } = useApp()
@@ -76,14 +78,21 @@ export default function AdminPanelScreen() {
     }
   }
 
+  const adminCityConvUnread = isGlobal
+    ? conversations.reduce((s, c) => s + (c.unread_for_recipient || 0), 0)
+    : conversations.filter(c => c.recipient_type === 'city_admin' && String(c.city_id) === String(adminCityId)).reduce((s, c) => s + (c.unread_for_recipient || 0), 0) +
+      conversations.filter(c => c.recipient_type === 'global_admin' && String(c.sender_id) === String(loggedInAdmin?.id)).reduce((s, c) => s + (c.unread_for_sender || 0), 0)
+
   const tabs = [
     { key: 'appointments', label: t('tab_appointments_label', language) },
     { key: 'workshops', label: t('tab_workshops', language) },
     { key: 'studios', label: t('tab_studios_label', language) },
     { key: 'slots', label: t('tab_slots_label', language) },
+    { key: 'closed_days', label: t('tab_closed_days', language) },
     { key: 'user_approvals', label: t('tab_approvals_label', language) },
     { key: 'notifications', label: t('tab_send_notif', language) },
     { key: 'stats', label: t('tab_stats', language) },
+    ...(messagesAvailable ? [{ key: 'messages', label: t('tab_messages', language), unread: adminCityConvUnread }] : []),
     ...(isGlobal ? [{ key: 'admins', label: t('tab_admins', language) }] : []),
     ...(isGlobal ? [{ key: 'audit', label: t('tab_audit', language) }] : []),
   ]
@@ -171,13 +180,18 @@ export default function AdminPanelScreen() {
             role="tab"
             aria-selected={activeTab === tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+            className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition whitespace-nowrap relative ${
               activeTab === tab.key
                 ? 'bg-white dark:bg-[#1565C0] text-[#1565C0] dark:text-white shadow'
                 : 'text-gray-500 dark:text-gray-400'
             }`}
           >
             {tab.label}
+            {tab.unread > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {tab.unread > 9 ? '9+' : tab.unread}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -190,6 +204,8 @@ export default function AdminPanelScreen() {
       {activeTab === 'user_approvals' && <UserApprovalsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
       {activeTab === 'notifications' && <NotificationsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
       {activeTab === 'stats' && <StatsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+      {activeTab === 'closed_days' && <ClosedDaysTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+      {activeTab === 'messages' && messagesAvailable && <AdminMessagesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
       {activeTab === 'admins' && isGlobal && <AdminManagementTab language={language} loggedInAdmin={loggedInAdmin} onRequestConfirm={onRequestConfirm} />}
       {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
 

@@ -5,7 +5,7 @@ import { BookOpen, Calendar, Clock, Users, CheckCircle2 } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
 
 export default function WorkshopsScreen() {
-  const { workshops, loggedInUser, cities, language, workshopRegistrations, registerForWorkshop, unregisterFromWorkshop } = useApp()
+  const { workshops, loggedInUser, cities, language, workshopRegistrations, workshopRegistrationsAvailable, registerForWorkshop, unregisterFromWorkshop } = useApp()
   const [registering, setRegistering] = useState(null)
   const [regMsg, setRegMsg] = useState('')
 
@@ -32,10 +32,13 @@ export default function WorkshopsScreen() {
     setRegistering(null)
     if (result.success) {
       setRegMsg(t('workshop_register_success', language))
+      setTimeout(() => setRegMsg(''), 3000)
     } else {
-      setRegMsg(t(result.error === 'err_workshop_full' ? 'err_workshop_full' : result.error === 'err_already_registered' ? 'err_already_registered' : 'err_generic', language))
+      const knownKeys = ['err_workshop_full', 'err_already_registered', 'err_generic']
+      const key = knownKeys.includes(result.error) ? result.error : 'err_generic'
+      setRegMsg(t(key, language))
+      setTimeout(() => setRegMsg(''), 4000)
     }
-    setTimeout(() => setRegMsg(''), 3000)
   }
 
   const handleUnregister = async (wsId) => {
@@ -93,7 +96,7 @@ export default function WorkshopsScreen() {
                 </span>
               )}
             </div>
-            {!isPast && (
+            {!isPast && workshopRegistrationsAvailable && (
               <div className="mt-3">
                 {isRegistered ? (
                   <button

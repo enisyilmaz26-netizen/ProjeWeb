@@ -1,16 +1,17 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
-import { Calendar, GraduationCap, User, Bell, Settings, Sun, Moon } from 'lucide-react'
+import { Calendar, GraduationCap, User, Bell, Settings, Sun, Moon, MessageSquare } from 'lucide-react'
 import UserReservationScreen from './UserReservationScreen'
 import AdminPanelScreen from './AdminPanelScreen'
 import MyProfileScreen from './MyProfileScreen'
 import NotificationCenterScreen from './NotificationCenterScreen'
 import WorkshopsScreen from './WorkshopsScreen'
+import MessagesScreen from './MessagesScreen'
 import IdleWarningModal from '../components/IdleWarningModal'
 
 export default function MainAppContainer() {
-  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading, loadError, loadAllData, idleWarning, dismissIdleWarning } = useApp()
+  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading, loadError, loadAllData, idleWarning, dismissIdleWarning, conversations, messagesAvailable } = useApp()
   const isAdmin = loggedInAdmin !== null
   const [activeTab, setActiveTab] = useState(isAdmin ? 'admin' : 'book')
 
@@ -19,12 +20,15 @@ export default function MainAppContainer() {
     : (loggedInUser ? `${loggedInUser.name} ${loggedInUser.surname}` : '')
 
   const unreadCount = notifications.filter(n => !n.is_read).length
+  const userConvs = loggedInUser ? conversations.filter(c => String(c.sender_id) === String(loggedInUser.id)) : []
+  const userMsgUnread = userConvs.reduce((s, c) => s + (c.unread_for_sender || 0), 0)
 
   const userTabs = [
     { key: 'book', label: t('tab_book', language), icon: <Calendar className="w-4 h-4" /> },
     { key: 'workshops', label: t('tab_workshops', language), icon: <GraduationCap className="w-4 h-4" /> },
     { key: 'profile', label: t('tab_profile', language), icon: <User className="w-4 h-4" /> },
     { key: 'notifications', label: t('tab_notifications', language), icon: <Bell className="w-4 h-4" /> },
+    ...(messagesAvailable ? [{ key: 'messages', label: t('tab_messages', language), icon: <MessageSquare className="w-4 h-4" />, unread: userMsgUnread }] : []),
   ]
   const adminTabs = [
     { key: 'admin', label: t('tab_admin', language), icon: <Settings className="w-4 h-4" /> },
@@ -102,6 +106,11 @@ export default function MainAppContainer() {
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
+                {tab.key === 'messages' && tab.unread > 0 && (
+                  <span className="absolute -top-2.5 -right-3 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                    {tab.unread > 9 ? '9+' : tab.unread}
+                  </span>
+                )}
               </span>
             </button>
           ))}
@@ -136,6 +145,7 @@ export default function MainAppContainer() {
           {activeTab === 'profile' && !isAdmin && <MyProfileScreen />}
           {activeTab === 'admin' && isAdmin && <AdminPanelScreen />}
           {activeTab === 'notifications' && <NotificationCenterScreen />}
+          {activeTab === 'messages' && !isAdmin && messagesAvailable && <MessagesScreen />}
         </div>
       </main>
 

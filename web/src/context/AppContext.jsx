@@ -63,6 +63,10 @@ export function AppProvider({ children }) {
   const [workshops, setWorkshops] = useState([])
   const [admins, setAdmins] = useState([])
   const [workshopRegistrations, setWorkshopRegistrations] = useState([])
+  const [workshopRegistrationsAvailable, setWorkshopRegistrationsAvailable] = useState(false)
+  const [conversations, setConversations] = useState([])
+  const [messagesAvailable, setMessagesAvailable] = useState(false)
+  const [closedDays, setClosedDays] = useState([])
   const [idleWarning, setIdleWarning] = useState(false)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
@@ -150,9 +154,13 @@ export function AppProvider({ children }) {
       if (usersData) setUsers(usersData)
       if (workshopsData) setWorkshops(workshopsData)
       if (adminsData) setAdmins(adminsData)
-      // Workshop registrations — table may not exist yet, so load separately
+      // Tables that may not exist yet — load separately to avoid failing the whole load
       const wsRegResult = await supabase.from('workshop_registrations').select('*')
-      if (wsRegResult.data) setWorkshopRegistrations(wsRegResult.data)
+      if (wsRegResult.data) { setWorkshopRegistrations(wsRegResult.data); setWorkshopRegistrationsAvailable(true) }
+      const convResult = await supabase.from('conversations').select('*').order('last_message_at', { ascending: false })
+      if (convResult.data) { setConversations(convResult.data); setMessagesAvailable(true) }
+      const closedResult = await supabase.from('closed_days').select('*').order('date')
+      if (closedResult.data) setClosedDays(closedResult.data)
       setLoadError(false)
     } catch (err) {
       console.error('[loadAllData] failed:', err)
@@ -199,6 +207,15 @@ export function AppProvider({ children }) {
       })
       .subscribe()
 
+    const convChannel = supabase
+      .channel('rt-conversations')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setConversations(prev => prev.find(c => c.id === n.id) ? prev : [n, ...prev])
+        else if (eventType === 'UPDATE') setConversations(prev => prev.map(c => c.id === n.id ? n : c))
+        else if (eventType === 'DELETE') setConversations(prev => prev.filter(c => c.id !== o.id))
+      })
+      .subscribe()
+
     const wsRegChannel = supabase
       .channel('rt-workshop-registrations')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'workshop_registrations' }, ({ eventType, new: n, old: o }) => {
@@ -208,12 +225,13 @@ export function AppProvider({ children }) {
       })
       .subscribe()
 
-    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel]
+    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel, convChannel]
     return () => {
       supabase.removeChannel(apptChannel)
       supabase.removeChannel(notifChannel)
       supabase.removeChannel(workshopChannel)
       supabase.removeChannel(wsRegChannel)
+      supabase.removeChannel(convChannel)
       rtChannelsRef.current = []
     }
   }, [])
@@ -782,6 +800,83 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  // CLOSED DAYS
+  const addClosedDay = async (date, cityId, reason) => {
+    const { data, error } = await supabase.from('closed_days').insert([{
+      date,
+      city_id: cityId || null,
+      reason: reason || '',
+    }]).select().single()
+    if (error) return { success: false, error: error.message }
+    setClosedDays(prev => [...prev, data].sort((a, b) => a.date.localeCompare(b.date)))
+    return { success: true }
+  }
+
+  const removeClosedDay = async (id) => {
+    const { error } = await supabase.from('closed_days').delete().eq('id', id)
+    if (error) return { success: false, error: error.message }
+    setClosedDays(prev => prev.filter(d => d.id !== id))
+    return { success: true }
+  }
+
+  const isDateClosed = useCallback((dateStr, cityId) => {
+    return closedDays.some(d =>
+      d.date === dateStr && (d.city_id === null || String(d.city_id) === String(cityId))
+    )
+  }, [closedDays])
+
+  // MESSAGING
+  const getOrCreateConversation = async (senderType, senderId, senderEmail, senderName, cityId, recipientType) => {
+    const existing = conversations.find(c => String(c.sender_id) === String(senderId) && c.recipient_type === recipientType)
+    if (existing) return { success: true, data: existing }
+    const { data, error } = await supabase.from('conversations').insert([{
+      sender_type: senderType,
+      sender_id: senderId,
+      sender_email: senderEmail,
+      sender_name: senderName,
+      city_id: cityId,
+      recipient_type: recipientType,
+      unread_for_sender: 0,
+      unread_for_recipient: 0,
+    }]).select().single()
+    if (error) return { success: false, error: error.message }
+    setConversations(prev => [data, ...prev])
+    return { success: true, data }
+  }
+
+  const loadConversationMessages = async (conversationId) => {
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true })
+    return data || []
+  }
+
+  const sendMessage = async (conversationId, body, authoredBy, authorName) => {
+    const { data, error } = await supabase.from('messages').insert([{
+      conversation_id: conversationId,
+      authored_by: authoredBy,
+      author_name: authorName,
+      body: body.trim(),
+    }]).select().single()
+    if (error) return { success: false, error: error.message }
+    const conv = conversations.find(c => c.id === conversationId)
+    const unreadField = authoredBy === 'sender' ? 'unread_for_recipient' : 'unread_for_sender'
+    const newUnread = (conv ? conv[unreadField] : 0) + 1
+    await supabase.from('conversations').update({
+      last_message_at: new Date().toISOString(),
+      [unreadField]: newUnread,
+    }).eq('id', conversationId)
+    return { success: true, data }
+  }
+
+  const markConversationRead = async (conversationId, side) => {
+    const field = side === 'sender' ? 'unread_for_sender' : 'unread_for_recipient'
+    await supabase.from('conversations').update({ [field]: 0 }).eq('id', conversationId)
+    setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, [field]: 0 } : c))
+  }
+
   const registerForWorkshop = async (workshopId) => {
     if (!loggedInUser) return { success: false, error: 'err_generic' }
     const ws = workshops.find(w => w.id === workshopId)
@@ -905,7 +1000,7 @@ export function AppProvider({ children }) {
   const value = {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
-    cities, labs, appointments, notifications: visibleNotifications, timeSlots, users, workshops, admins, workshopRegistrations,
+    cities, labs, appointments, notifications: visibleNotifications, timeSlots, users, workshops, admins, workshopRegistrations, workshopRegistrationsAvailable, conversations, messagesAvailable, closedDays,
     loading, loadError,
     idleWarning, dismissIdleWarning,
     loadAllData,
@@ -918,6 +1013,8 @@ export function AppProvider({ children }) {
     addLab, updateLab, deleteLab, forceDeleteLab,
     addWorkshop, updateWorkshop, deleteWorkshop,
     registerForWorkshop, unregisterFromWorkshop,
+    addClosedDay, removeClosedDay, isDateClosed,
+    getOrCreateConversation, loadConversationMessages, sendMessage, markConversationRead,
     addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
   }
 

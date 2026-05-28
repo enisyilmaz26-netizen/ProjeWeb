@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import { t, formatDate, translations } from '../lib/languages'
 import { X, MapPin } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
+import { isTurkishHoliday, isSunday } from '../lib/holidays'
 
 function getMaxCapacity(lab) {
   if (!lab) return 1
@@ -27,17 +28,13 @@ function getMaxDate() {
   return d.toISOString().split('T')[0]
 }
 
-function isWeekend(dateStr) {
-  const d = new Date(dateStr + 'T12:00:00')
-  return d.getDay() === 0 || d.getDay() === 6
-}
-
 function normalizeSlot(str) {
   return (str || '').replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/, '$1 - $2')
 }
 
 export default function UserReservationScreen() {
-  const { cities, labs, appointments, timeSlots, loggedInUser, submitAppointment, language } = useApp()
+  const { cities, labs, appointments, timeSlots, loggedInUser, submitAppointment, language, isDateClosed } = useApp()
+  const todayStr = new Date().toISOString().split('T')[0]
 
   const [step, setStep] = useState(1)
   const [selectedCity, setSelectedCity] = useState(null)
@@ -99,8 +96,16 @@ export default function UserReservationScreen() {
   }
 
   const handleDateSelect = (date) => {
-    if (isWeekend(date)) {
-      setDateError(t('weekend_restriction', language))
+    if (isSunday(date)) {
+      setDateError(t('err_sunday', language))
+      return
+    }
+    if (isTurkishHoliday(date)) {
+      setDateError(t('err_date_holiday', language))
+      return
+    }
+    if (selectedCity && isDateClosed(date, selectedCity.id)) {
+      setDateError(t('err_date_closed', language))
       return
     }
     setDateError('')
@@ -235,8 +240,15 @@ export default function UserReservationScreen() {
               {(() => {
                 const locations = [...new Set(cityLabs.map(l => l.location || '').filter(Boolean))]
                 const hasMultipleLocations = locations.length > 1
+                const labCard = (lab) => {
+                  const todayCount = appointments.filter(a =>
+                    String(a.lab_id) === String(lab.id) && a.date === todayStr &&
+                    (a.status === 'PENDING' || a.status === 'APPROVED')
+                  ).length
+                  return <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} todayCount={todayCount} />
+                }
                 if (!hasMultipleLocations) {
-                  return cityLabs.map(lab => <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} />)
+                  return cityLabs.map(labCard)
                 }
                 const noLocationLabs = cityLabs.filter(l => !l.location)
                 return (
@@ -248,15 +260,11 @@ export default function UserReservationScreen() {
                           <div className="flex-1 h-px bg-[#1565C0]/20 dark:bg-[#7DD4FC]/20" />
                         </div>
                         <div className="grid grid-cols-1 gap-3">
-                          {cityLabs.filter(l => l.location === loc).map(lab => (
-                            <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} />
-                          ))}
+                          {cityLabs.filter(l => l.location === loc).map(labCard)}
                         </div>
                       </div>
                     ))}
-                    {noLocationLabs.map(lab => (
-                      <LabCard key={lab.id} lab={lab} onClick={() => handleLabSelect(lab)} language={language} getMaxCapacity={getMaxCapacity} />
-                    ))}
+                    {noLocationLabs.map(labCard)}
                   </>
                 )
               })()}
@@ -427,7 +435,8 @@ export default function UserReservationScreen() {
   )
 }
 
-function LabCard({ lab, onClick, language, getMaxCapacity }) {
+function LabCard({ lab, onClick, language, getMaxCapacity, todayCount = 0 }) {
+  const cap = getMaxCapacity(lab)
   return (
     <button
       onClick={onClick}
@@ -440,10 +449,17 @@ function LabCard({ lab, onClick, language, getMaxCapacity }) {
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{lab.name}</p>
           {lab.description && <p className="text-xs text-gray-500 dark:text-gray-400">{lab.description}</p>}
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t('capacity_label', language)}: {getMaxCapacity(lab)}
-            {lab.branches ? ` · ${lab.branches}` : ''}
-          </p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {t('capacity_label', language)}: {cap}
+              {lab.branches ? ` · ${lab.branches}` : ''}
+            </p>
+            {todayCount > 0 && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium ${todayCount >= cap ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'}`}>
+                {todayCount}/{cap} {t('today_bookings_badge', language)}
+              </span>
+            )}
+          </div>
         </div>
         <span className="text-gray-400 dark:text-gray-500 text-sm">›</span>
       </div>

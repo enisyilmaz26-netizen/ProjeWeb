@@ -287,6 +287,34 @@ export const translations = {
   err_already_registered: { TR: 'Bu atölye için zaten kayıtlısınız.', EN: 'You are already registered for this workshop.' },
   // City change in profile
   city_change_note: { TR: 'Şehir değişikliği aktif randevularınızı etkilemez.', EN: 'City change does not affect existing appointments.' },
+  // Messaging
+  tab_messages:           { TR: 'Mesajlar',                    EN: 'Messages' },
+  msg_to_city_admin:      { TR: 'İl Yöneticisi',              EN: 'City Admin' },
+  msg_to_global_admin:    { TR: 'Genel Yönetici',             EN: 'Global Admin' },
+  msg_no_conversations:   { TR: 'Henüz mesaj yok.',           EN: 'No messages yet.' },
+  msg_no_messages:        { TR: 'Mesaj gönder.',              EN: 'Send a message.' },
+  msg_placeholder:        { TR: 'Mesajınızı yazın...',        EN: 'Type your message...' },
+  msg_send:               { TR: 'Gönder',                     EN: 'Send' },
+  msg_from_user:          { TR: 'Kullanıcıdan',               EN: 'From user' },
+  msg_conversations_title: { TR: 'Konuşmalar',               EN: 'Conversations' },
+  msg_all_cities:         { TR: 'Tüm İller',                  EN: 'All Provinces' },
+  msg_user_to_city:       { TR: 'Kullanıcı → İl',            EN: 'User → City' },
+  msg_city_to_global:     { TR: 'İl → Genel',                EN: 'City → Global' },
+  msg_user_to_global:     { TR: 'Kullanıcı → Genel',         EN: 'User → Global' },
+  msg_unread_badge:       { TR: 'okunmamış',                  EN: 'unread' },
+  msg_new_message_notif:  { TR: 'Yeni mesajınız var.',        EN: 'You have a new message.' },
+  // Closed days
+  tab_closed_days:      { TR: 'Kapalı Günler',              EN: 'Closed Days' },
+  closed_day_add:       { TR: 'Kapalı Gün Ekle',            EN: 'Add Closed Day' },
+  closed_day_reason:    { TR: 'Sebep (opsiyonel)',           EN: 'Reason (optional)' },
+  closed_day_added:     { TR: 'Kapalı gün eklendi.',         EN: 'Closed day added.' },
+  closed_day_deleted:   { TR: 'Kapalı gün silindi.',         EN: 'Closed day removed.' },
+  no_closed_days:       { TR: 'Kapalı gün yok.',             EN: 'No closed days.' },
+  err_date_closed:      { TR: 'Bu tarih kapalı olarak işaretlenmiş.', EN: 'This date is closed.' },
+  err_date_holiday:     { TR: 'Bu tarih resmi tatildir.',    EN: 'This is a public holiday.' },
+  err_sunday:           { TR: 'Pazar günleri randevu alınamaz.', EN: 'Appointments cannot be made on Sundays.' },
+  lbl_holiday:          { TR: 'Resmi Tatil',                 EN: 'Public Holiday' },
+  today_bookings_badge: { TR: 'bugün aktif',                 EN: 'active today' },
 }
 
 export const STATUS_COLORS = {
