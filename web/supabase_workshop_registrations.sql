@@ -3,7 +3,7 @@
 
 create table if not exists public.workshop_registrations (
   id            uuid primary key default gen_random_uuid(),
-  workshop_id   uuid not null references public.workshops(id) on delete cascade,
+  workshop_id   bigint not null,
   user_id       uuid not null,
   user_email    text not null,
   user_name     text not null default '',
