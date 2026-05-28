@@ -247,9 +247,9 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
           {filteredAppointments.length > 0 && (
             <input
               type="checkbox"
-              checked={filteredAppointments.slice(0, visibleCount).every(a => selectedIds.has(a.id))}
+              checked={filteredAppointments.slice(0, visibleCount).filter(a => a.status !== 'CANCELLED').every(a => selectedIds.has(a.id)) && filteredAppointments.slice(0, visibleCount).some(a => a.status !== 'CANCELLED')}
               onChange={() => {
-                const visible = filteredAppointments.slice(0, visibleCount)
+                const visible = filteredAppointments.slice(0, visibleCount).filter(a => a.status !== 'CANCELLED')
                 const allSelected = visible.every(a => selectedIds.has(a.id))
                 setSelectedIds(allSelected ? new Set() : new Set(visible.map(a => a.id)))
               }}
@@ -277,12 +277,14 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
               <div key={appt.id} className={`bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 ${selectedIds.has(appt.id) ? 'ring-2 ring-[#1565C0] dark:ring-[#7DD4FC]' : ''}`}>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-start gap-2 min-w-0 flex-1">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(appt.id)}
-                      onChange={() => toggleSelect(appt.id)}
-                      className="mt-0.5 flex-shrink-0 accent-[#1565C0] dark:accent-[#7DD4FC] w-4 h-4 cursor-pointer"
-                    />
+                    {appt.status !== 'CANCELLED' && (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(appt.id)}
+                        onChange={() => toggleSelect(appt.id)}
+                        className="mt-0.5 flex-shrink-0 accent-[#1565C0] dark:accent-[#7DD4FC] w-4 h-4 cursor-pointer"
+                      />
+                    )}
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{appt.user_name} {appt.user_surname}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{appt.user_email}</p>
