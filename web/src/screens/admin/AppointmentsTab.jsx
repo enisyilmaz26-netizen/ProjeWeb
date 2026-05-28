@@ -244,14 +244,14 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
 
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          {filteredAppointments.length > 0 && (
+          {filteredAppointments.slice(0, visibleCount).some(a => a.status === 'PENDING') && (
             <input
               type="checkbox"
-              checked={filteredAppointments.slice(0, visibleCount).filter(a => a.status !== 'CANCELLED').every(a => selectedIds.has(a.id)) && filteredAppointments.slice(0, visibleCount).some(a => a.status !== 'CANCELLED')}
+              checked={filteredAppointments.slice(0, visibleCount).filter(a => a.status === 'PENDING').every(a => selectedIds.has(a.id))}
               onChange={() => {
-                const visible = filteredAppointments.slice(0, visibleCount).filter(a => a.status !== 'CANCELLED')
-                const allSelected = visible.every(a => selectedIds.has(a.id))
-                setSelectedIds(allSelected ? new Set() : new Set(visible.map(a => a.id)))
+                const pending = filteredAppointments.slice(0, visibleCount).filter(a => a.status === 'PENDING')
+                const allSelected = pending.every(a => selectedIds.has(a.id))
+                setSelectedIds(allSelected ? new Set() : new Set(pending.map(a => a.id)))
               }}
               className="accent-[#1565C0] dark:accent-[#7DD4FC] w-4 h-4 cursor-pointer"
             />
@@ -277,7 +277,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
               <div key={appt.id} className={`bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 ${selectedIds.has(appt.id) ? 'ring-2 ring-[#1565C0] dark:ring-[#7DD4FC]' : ''}`}>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-start gap-2 min-w-0 flex-1">
-                    {appt.status !== 'CANCELLED' && (
+                    {appt.status === 'PENDING' && (
                       <input
                         type="checkbox"
                         checked={selectedIds.has(appt.id)}
