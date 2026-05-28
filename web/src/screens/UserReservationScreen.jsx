@@ -4,6 +4,7 @@ import { t, formatDate, translations } from '../lib/languages'
 import { X, MapPin } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
 import { isTurkishHoliday, isSunday } from '../lib/holidays'
+import CalendarView from '../components/CalendarView'
 
 function getMaxCapacity(lab) {
   if (!lab) return 1
@@ -280,33 +281,36 @@ export default function UserReservationScreen() {
       {step === 3 && (
         <div>
           <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{t('select_date', language)}</h2>
-          <div className={cardClass}>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">{getLabIcon(selectedLab?.name)}</span>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{selectedLab?.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedCity?.name}</p>
-              </div>
+          <div className="flex items-center gap-3 mb-3 bg-white dark:bg-[#0D1E3D] rounded-2xl shadow px-4 py-3">
+            <div className="w-9 h-9 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-[#1565C0] dark:text-[#7DD4FC] text-lg">{getLabIcon(selectedLab?.name)}</span>
             </div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('select_date', language)}</label>
-            <input
-              type="date"
-              min={getTomorrowDate()}
-              max={getMaxDate()}
-              value={selectedDate}
-              onChange={e => handleDateSelect(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC] text-sm"
-            />
-            {dateError && (
-              <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{dateError}</p>
-            )}
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              {t('date_restriction', language)}
-            </p>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{selectedLab?.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{selectedCity?.name}</p>
+            </div>
           </div>
-          <button onClick={() => resetToStep(2)} className="mt-1 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
+          <CalendarView
+            appointments={[]}
+            onDayClick={handleDateSelect}
+            language={language}
+            selectedDate={selectedDate}
+            minDate={getTomorrowDate()}
+            maxDate={getMaxDate()}
+            isDateDisabled={(date) =>
+              isSunday(date) ||
+              isTurkishHoliday(date) ||
+              (selectedCity ? isDateClosed(date, selectedCity.id) : false)
+            }
+            showLegend={false}
+          />
+          {dateError && (
+            <p className="mt-2 text-xs text-red-600 dark:text-red-400 px-1">{dateError}</p>
+          )}
+          <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 px-1">
+            {t('date_restriction', language)}
+          </p>
+          <button onClick={() => resetToStep(2)} className="mt-2 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
             ← {t('back_to_studio', language)}
           </button>
         </div>

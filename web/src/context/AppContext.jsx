@@ -430,7 +430,11 @@ export function AppProvider({ children }) {
     })
 
     if (error) {
-      if (error.message?.includes('err_duplicate_appointment')) return { success: false, error: 'err_duplicate_appointment' }
+      const msg = error.message || ''
+      if (msg.includes('err_duplicate_appointment') || error.code === '23505') return { success: false, error: 'err_duplicate_appointment' }
+      if (msg.includes('err_lab_not_found')) return { success: false, error: 'err_lab_not_found' }
+      if (msg.includes('err_lab_city_mismatch')) return { success: false, error: 'err_lab_city_mismatch' }
+      console.error('submitAppointment error:', error)
       return { success: false, error: 'err_generic' }
     }
     if (!data || data.length === 0) return { success: false, error: 'err_duplicate_appointment' }
@@ -894,7 +898,12 @@ export function AppProvider({ children }) {
       user_surname: loggedInUser.surname,
       registered_at: new Date().toISOString(),
     }]).select().single()
-    if (error) return { success: false, error: error.message }
+    if (error) {
+      if (error.code === '42P01') { setWorkshopRegistrationsAvailable(false); return { success: false, error: 'err_generic' } }
+      if (error.code === '23505') return { success: false, error: 'err_already_registered' }
+      console.error('registerForWorkshop error:', error)
+      return { success: false, error: 'err_generic' }
+    }
     if (data) setWorkshopRegistrations(prev => [...prev, data])
     return { success: true }
   }
