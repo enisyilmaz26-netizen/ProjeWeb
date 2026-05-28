@@ -188,9 +188,9 @@ export default function MyProfileScreen() {
                 ? <img src={loggedInUser.avatar_url} alt="avatar" className="w-full h-full object-cover" />
                 : <span className="text-white dark:text-[#060E26] text-xl font-bold">{initials}</span>}
             </div>
-            <label className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#1565C0] dark:bg-[#7DD4FC] rounded-full flex items-center justify-center cursor-pointer shadow hover:opacity-90 transition">
+            <label className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#1565C0] dark:bg-[#7DD4FC] rounded-full flex items-center justify-center cursor-pointer shadow hover:opacity-90 transition" title={language === 'TR' ? 'JPEG, PNG, WebP veya GIF · Maks. 1 MB' : 'JPEG, PNG, WebP or GIF · Max 1 MB'}>
               {avatarUploading ? <span className="text-white dark:text-[#060E26] text-[10px]">...</span> : <Pencil className="w-3 h-3 text-white dark:text-[#060E26]" />}
-              <input type="file" accept="image/*" className="hidden" disabled={avatarUploading} onChange={async (e) => {
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" disabled={avatarUploading} onChange={async (e) => {
                 const file = e.target.files[0]; if (!file) return; e.target.value = ''
                 setAvatarError(''); setAvatarUploading(true)
                 const res = await uploadAvatar(file, 'users', loggedInUser.id)
@@ -203,6 +203,7 @@ export default function MyProfileScreen() {
           <div className="min-w-0 flex-1">
             <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">{loggedInUser.name} {loggedInUser.surname}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{loggedInUser.email}</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{language === 'TR' ? 'Fotoğraf: JPEG, PNG, WebP, GIF · Maks. 1 MB' : 'Photo: JPEG, PNG, WebP, GIF · Max 1 MB'}</p>
           </div>
           {!editMode && (
             <button

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseUrl } from '../lib/supabase'
 
 const AppContext = createContext(null)
 
@@ -418,12 +418,13 @@ export function AppProvider({ children }) {
   const uploadAvatar = async (file, type, id) => {
     if (!file) return { success: false, error: 'No file' }
     if (file.size > 1048576) return { success: false, error: language === 'TR' ? 'Dosya 1 MB\'dan büyük olamaz.' : 'File must be under 1 MB.' }
-    if (!file.type.startsWith('image/')) return { success: false, error: language === 'TR' ? 'Lütfen bir görsel seçin.' : 'Please select an image.' }
-    const ext = file.name.split('.').pop()
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowed.includes(file.type)) return { success: false, error: language === 'TR' ? 'Yalnızca JPEG, PNG, WebP veya GIF yükleyebilirsiniz.' : 'Only JPEG, PNG, WebP or GIF allowed.' }
+    const ext = file.name.split('.').pop().toLowerCase()
     const path = `${type}/${id}.${ext}`
     const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
     if (upErr) return { success: false, error: upErr.message }
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/avatars/${path}`
     return { success: true, url: publicUrl + '?t=' + Date.now() }
   }
 
