@@ -33,6 +33,11 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
       setSlotError(language === 'TR' ? 'Geçersiz format. Örn: 09:00 - 17:00' : 'Invalid format. E.g.: 09:00 - 17:00')
       return
     }
+    const [slotStart, slotEnd] = newSlotTime.trim().split(/\s*[-–]\s*/)
+    if (slotStart >= slotEnd) {
+      setSlotError(language === 'TR' ? 'Başlangıç saati bitiş saatinden önce olmalıdır.' : 'Start time must be before end time.')
+      return
+    }
     const result = await addTimeSlot(cityId, newSlotTime.trim(), newSlotLocation.trim() || null)
     if (result.success) {
       setNewSlotTime('')

@@ -4,6 +4,7 @@ import { t } from '../lib/languages'
 import { Settings, Lock, X, RefreshCw } from 'lucide-react'
 import { INPUT_BASE } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
+import { isPasswordStrong } from '../lib/passwordUtils'
 import StatCard from '../components/admin/StatCard'
 import ConfirmModal from '../components/admin/ConfirmModal'
 import AppointmentsTab from './admin/AppointmentsTab'
@@ -60,8 +61,8 @@ export default function AdminPanelScreen() {
   const handleAdminPwChange = async (e) => {
     e.preventDefault()
     setAdminPwError('')
+    if (!isPasswordStrong(adminPwForm.newPw)) { setAdminPwError(t('err_password_weak', language)); return }
     if (adminPwForm.newPw !== adminPwForm.confirm) { setAdminPwError(t('err_password_mismatch', language)); return }
-    if (adminPwForm.newPw.length < 8) { setAdminPwError(t('err_password_min_length', language)); return }
     setAdminPwLoading(true)
     const result = await changeAdminPassword(loggedInAdmin.id, loggedInAdmin.email, adminPwForm.current, adminPwForm.newPw)
     setAdminPwLoading(false)
@@ -69,7 +70,7 @@ export default function AdminPanelScreen() {
       setAdminPwForm({ current: '', newPw: '', confirm: '' })
       setShowAdminPwChange(false)
       setAdminPwSuccess(t('password_changed', language))
-      setTimeout(() => setAdminPwSuccess(''), 4000)
+      setTimeout(() => setAdminPwSuccess(''), 3000)
     } else {
       setAdminPwError(result.error || t('err_generic', language))
     }

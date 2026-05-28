@@ -8,7 +8,7 @@ export default function ConfirmModal({ confirmModal, onClose, language }) {
         <p className="text-sm text-gray-800 dark:text-gray-100 font-medium mb-5">{confirmModal.label}</p>
         <div className="flex gap-3">
           <button
-            onClick={async () => { onClose(); await confirmModal.onConfirm() }}
+            onClick={async () => { await confirmModal.onConfirm(); onClose() }}
             className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition"
           >
             {t('btn_yes', language)}

@@ -76,6 +76,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       setAddUserError(language === 'TR' ? 'Ad, soyad, e-posta, şifre ve il zorunludur.' : 'Name, surname, email, password and province are required.')
       return
     }
+    if (!isPasswordStrong(addUserForm.password)) { setAddUserError(t('err_password_weak', language)); return }
     setAddUserLoading(true)
     const cityObj = cities.find(c => String(c.id) === String(cityId))
     const result = await addUserByAdmin({ ...addUserForm, email: addUserForm.email.trim().toLowerCase(), city_id: cityId, city_name: cityObj?.name || '' })

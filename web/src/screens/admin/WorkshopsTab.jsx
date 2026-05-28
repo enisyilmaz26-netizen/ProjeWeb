@@ -72,6 +72,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     setEditWorkshopLoading(false)
     if (result.success) {
       setEditingWorkshopId(null)
+      setWorkshopError('')
       setWorkshopSuccess(language === 'TR' ? 'Kayıt güncellendi' : 'Record updated')
       setTimeout(() => setWorkshopSuccess(''), 3000)
     } else { setWorkshopError(result.error || t('err_generic', language)) }
