@@ -3,12 +3,12 @@ import { useApp } from '../../context/AppContext'
 import { t, formatDate, STATUS_COLORS, STATUS_LABELS } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { PAGE_SIZE, statusLabel, exportToCSV } from '../../lib/adminHelpers'
-import { Download, CalendarDays, List } from 'lucide-react'
+import { Download, CalendarDays, List, Pencil, X } from 'lucide-react'
 import CalendarView from '../../components/CalendarView'
 import { isTurkishHoliday, isSunday } from '../../lib/holidays'
 
 export default function AppointmentsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
-  const { appointments, cities, labs, approveAppointment, cancelAppointment, denyCancellationRequest, markAppointmentCompleted, createNotification } = useApp()
+  const { appointments, cities, labs, timeSlots, approveAppointment, cancelAppointment, denyCancellationRequest, markAppointmentCompleted, createNotification } = useApp()
   const inputClass = INPUT_BASE
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -21,6 +21,9 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [processingId, setProcessingId] = useState(null)
   const [successMsg, setSuccessMsg] = useState('')
+  const [editingApptId, setEditingApptId] = useState(null)
+  const [editDate, setEditDate] = useState('')
+  const [editTimeSlot, setEditTimeSlot] = useState('')
   const [viewMode, setViewMode] = useState('list')
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkProcessing, setBulkProcessing] = useState(false)
@@ -104,15 +107,18 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
 
   const showSuccess = (msg) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(''), 3000) }
 
-  const execApprove = async (id) => {
+  const execApprove = async (id, newDate, newTimeSlot) => {
     setProcessingId(id)
-    await approveAppointment(id)
+    await approveAppointment(id, newDate || null, newTimeSlot || null)
     const appt = appointments.find(a => a.id === id)
     if (appt) {
+      const finalDate = newDate || appt.date
+      const finalSlot = newTimeSlot || appt.time_slot
       const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
-      await createNotification({ title: `${prefix}${t('notif_appt_approved', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'SYSTEM' })
+      await createNotification({ title: `${prefix}${t('notif_appt_approved', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${finalDate} ${finalSlot}`, type: 'SYSTEM' })
     }
     setProcessingId(null)
+    setEditingApptId(null); setEditDate(''); setEditTimeSlot('')
     showSuccess(t('action_success_approved', language))
   }
 
@@ -147,7 +153,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     showSuccess(t('action_success_cancellation_denied', language))
   }
 
-  const handleApprove = (id) => onRequestConfirm(t('confirm_approve_appt', language), () => execApprove(id))
+  const handleApprove = (id, newDate, newTimeSlot) => onRequestConfirm(t('confirm_approve_appt', language), () => execApprove(id, newDate, newTimeSlot))
   const handleCancel = (id) => onRequestConfirm(t('confirm_cancel_appt', language), () => execCancel(id))
   const handleApproveCancellation = (id) => onRequestConfirm(t('confirm_approve_cancellation', language), () => execApproveCancellation(id))
   const handleDenyCancellation = (id) => onRequestConfirm(t('confirm_deny_cancellation', language), () => execDenyCancellation(id))
@@ -313,14 +319,55 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                   </div>
                 )}
                 {appt.status === 'PENDING' && (
-                  <div className="flex gap-2">
-                    <button onClick={() => handleApprove(appt.id)} disabled={processingId === appt.id} className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
-                      {processingId === appt.id ? '...' : t('action_approve', language)}
-                    </button>
-                    <button onClick={() => handleCancel(appt.id)} disabled={processingId === appt.id} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
-                      {processingId === appt.id ? '...' : t('action_cancel', language)}
-                    </button>
-                  </div>
+                  <>
+                    {editingApptId === appt.id && (
+                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl space-y-2">
+                        <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">{language === 'TR' ? 'Tarih / Saat Değiştir' : 'Change Date / Time'}</p>
+                        <div className="flex gap-2 flex-wrap">
+                          <input
+                            type="date"
+                            value={editDate}
+                            min={todayStr}
+                            onChange={e => setEditDate(e.target.value)}
+                            className={`${inputClass} flex-1 min-w-[130px]`}
+                          />
+                          <select
+                            value={editTimeSlot}
+                            onChange={e => setEditTimeSlot(e.target.value)}
+                            className={`${inputClass} flex-1 min-w-[130px]`}
+                          >
+                            <option value="">{appt.time_slot} ({language === 'TR' ? 'mevcut' : 'current'})</option>
+                            {timeSlots.filter(s => String(s.city_id) === String(appt.city_id) && s.time_range !== appt.time_slot).map(s => (
+                              <option key={s.id} value={s.time_range}>{s.time_range}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          if (editingApptId === appt.id) { setEditingApptId(null); setEditDate(''); setEditTimeSlot('') }
+                          else { setEditingApptId(appt.id); setEditDate(appt.date); setEditTimeSlot('') }
+                        }}
+                        disabled={processingId === appt.id}
+                        className="p-2 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-60"
+                        title={language === 'TR' ? 'Tarih/Saat Değiştir' : 'Change Date/Time'}
+                      >
+                        {editingApptId === appt.id ? <X className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        onClick={() => handleApprove(appt.id, editingApptId === appt.id ? editDate : null, editingApptId === appt.id ? editTimeSlot : null)}
+                        disabled={processingId === appt.id}
+                        className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60"
+                      >
+                        {processingId === appt.id ? '...' : t('action_approve', language)}
+                      </button>
+                      <button onClick={() => handleCancel(appt.id)} disabled={processingId === appt.id} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
+                        {processingId === appt.id ? '...' : t('action_cancel', language)}
+                      </button>
+                    </div>
+                  </>
                 )}
                 {appt.status === 'CANCELLATION_REQUESTED' && (
                   <div className="flex gap-2">

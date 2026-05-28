@@ -517,12 +517,17 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
-  const approveAppointment = async (id) => {
+  const approveAppointment = async (id, newDate = null, newTimeSlot = null) => {
     const appt = appointments.find(a => a.id === id)
-    const { error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id)
+    const updates = { status: 'APPROVED' }
+    if (newDate) updates.date = newDate
+    if (newTimeSlot) updates.time_slot = newTimeSlot
+    const { error } = await supabase.from('appointments').update(updates).eq('id', id)
     if (error) return { success: false, error: error.message }
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'APPROVED' } : a))
-    if (appt) logAudit('APPROVE_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a))
+    const finalDate = newDate || appt?.date
+    const finalSlot = newTimeSlot || appt?.time_slot
+    if (appt) logAudit('APPROVE_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${finalDate} ${finalSlot}`)
     if (appt) {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       if (cityName) {
