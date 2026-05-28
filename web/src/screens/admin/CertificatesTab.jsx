@@ -222,8 +222,8 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Sertifika Başlığı' : 'Certificate Title'}</label>
             <textarea
-              className={`w-full ${inputClass} resize-none`} rows={2}
-              value={form.title} onChange={e => set('title', e.target.value)} required
+              className={`w-full ${inputClass} resize-y`} rows={3}
+              value={form.title} onChange={e => set('title', e.target.value)}
               placeholder={language === 'TR' ? 'Alt satır için Enter kullanın' : 'Press Enter for a new line'}
             />
           </div>
