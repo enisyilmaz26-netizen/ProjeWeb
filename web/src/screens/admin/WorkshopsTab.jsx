@@ -2,11 +2,12 @@ import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, formatDate } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
-import { X, Calendar, Clock, Users, Pencil, Trash2 } from 'lucide-react'
+import { X, Calendar, Clock, Users, Pencil, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
 import { getLabIcon } from '../../lib/icons'
 
 export default function WorkshopsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
-  const { cities, workshops, addWorkshop, updateWorkshop, deleteWorkshop } = useApp()
+  const { cities, workshops, addWorkshop, updateWorkshop, deleteWorkshop, workshopRegistrations } = useApp()
+  const [expandedRegistrants, setExpandedRegistrants] = useState(null)
   const inputClass = INPUT_BASE
 
   const [workshopForm, setWorkshopForm] = useState({ name: '', description: '', date: '', time: '', capacity: 1, location: '', city_id: '' })
@@ -213,24 +214,55 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                     </div>
                   </form>
                 ) : (
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0 text-[#1565C0] dark:text-[#7DD4FC]">
-                      {getLabIcon(ws.name)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{ws.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{city?.name || ws.city_name}{ws.location ? ` • ${ws.location}` : ''}</p>
-                      {ws.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{ws.description}</p>}
-                      <div className="flex flex-wrap gap-3 mt-1.5">
-                        {ws.date && <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Calendar className="w-3 h-3 inline" />{formatDate(ws.date)}</span>}
-                        {ws.time && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Clock className="w-3 h-3 inline" />{ws.time}</span>}
-                        {ws.capacity && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Users className="w-3 h-3 inline" />{ws.capacity}</span>}
+                  <div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center flex-shrink-0 text-[#1565C0] dark:text-[#7DD4FC]">
+                        {getLabIcon(ws.name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{ws.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{city?.name || ws.city_name}{ws.location ? ` • ${ws.location}` : ''}</p>
+                        {ws.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{ws.description}</p>}
+                        <div className="flex flex-wrap gap-3 mt-1.5">
+                          {ws.date && <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Calendar className="w-3 h-3 inline" />{formatDate(ws.date)}</span>}
+                          {ws.time && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Clock className="w-3 h-3 inline" />{ws.time}</span>}
+                          {(() => {
+                            const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id)).length
+                            return (
+                              <button
+                                onClick={() => setExpandedRegistrants(prev => prev === ws.id ? null : ws.id)}
+                                className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                              >
+                                <Users className="w-3 h-3 inline" />
+                                {regCount}{ws.capacity ? `/${ws.capacity}` : ''}
+                                {expandedRegistrants === ws.id ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                              </button>
+                            )
+                          })()}
+                        </div>
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button onClick={() => startEditWorkshop(ws)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleDeleteWorkshop(ws.id)} disabled={processingId === ws.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <button onClick={() => startEditWorkshop(ws)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"><Pencil className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => handleDeleteWorkshop(ws.id)} disabled={processingId === ws.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40"><Trash2 className="w-3.5 h-3.5" /></button>
-                    </div>
+                    {expandedRegistrants === ws.id && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">{t('workshop_registrants_title', language)}</p>
+                        {workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id)).length === 0 ? (
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{t('workshop_no_registrants', language)}</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id)).map(r => (
+                              <div key={r.id} className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0] dark:bg-[#7DD4FC] flex-shrink-0" />
+                                {r.user_name} {r.user_surname} <span className="text-gray-400">— {r.user_email}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

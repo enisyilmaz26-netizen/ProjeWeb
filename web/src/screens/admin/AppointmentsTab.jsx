@@ -3,7 +3,8 @@ import { useApp } from '../../context/AppContext'
 import { t, formatDate, STATUS_COLORS, STATUS_LABELS } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { PAGE_SIZE, statusLabel, exportToCSV } from '../../lib/adminHelpers'
-import { Download } from 'lucide-react'
+import { Download, CalendarDays, List } from 'lucide-react'
+import CalendarView from '../../components/CalendarView'
 
 export default function AppointmentsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { appointments, cities, labs, approveAppointment, cancelAppointment, denyCancellationRequest, markAppointmentCompleted, createNotification } = useApp()
@@ -19,6 +20,9 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [processingId, setProcessingId] = useState(null)
   const [successMsg, setSuccessMsg] = useState('')
+  const [viewMode, setViewMode] = useState('list')
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkProcessing, setBulkProcessing] = useState(false)
 
   const availableLocations = useMemo(() => {
     const scopeCityId = !isGlobal ? adminCityId : (filterCity || null)
@@ -55,8 +59,45 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
 
   const resetFilters = () => {
     setSearch(''); setFilterCity(''); setFilterStatus(''); setFilterLocation('')
-    setFilterDateFrom(''); setFilterDateTo(''); setVisibleCount(PAGE_SIZE)
+    setFilterDateFrom(''); setFilterDateTo(''); setVisibleCount(PAGE_SIZE); setSelectedIds(new Set())
   }
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const s = new Set(prev)
+      if (s.has(id)) s.delete(id)
+      else s.add(id)
+      return s
+    })
+  }
+
+  const execBulkApprove = async () => {
+    setBulkProcessing(true)
+    for (const id of selectedIds) {
+      await approveAppointment(id)
+      const appt = appointments.find(a => a.id === id)
+      if (appt) {
+        const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
+        await createNotification({ title: `${prefix}${t('notif_appt_approved', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'SYSTEM' })
+      }
+    }
+    setSelectedIds(new Set())
+    setBulkProcessing(false)
+    showSuccess(t('action_success_approved', language))
+  }
+
+  const execBulkCancel = async () => {
+    setBulkProcessing(true)
+    for (const id of selectedIds) {
+      await cancelAppointment(id)
+    }
+    setSelectedIds(new Set())
+    setBulkProcessing(false)
+    showSuccess(t('action_success_cancelled', language))
+  }
+
+  const handleBulkApprove = () => onRequestConfirm(t('bulk_approve', language), execBulkApprove)
+  const handleBulkCancel = () => onRequestConfirm(t('bulk_cancel', language), execBulkCancel)
 
   const showSuccess = (msg) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(''), 3000) }
 
@@ -111,6 +152,36 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
 
   return (
     <div>
+      <div className="flex items-center gap-2 mb-3">
+        <button
+          onClick={() => setViewMode('list')}
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition ${viewMode === 'list' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26]' : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+        >
+          <List className="w-3.5 h-3.5" />{t('view_list', language)}
+        </button>
+        <button
+          onClick={() => setViewMode('calendar')}
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition ${viewMode === 'calendar' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26]' : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+        >
+          <CalendarDays className="w-3.5 h-3.5" />{t('view_calendar', language)}
+        </button>
+      </div>
+
+      {viewMode === 'calendar' && (
+        <div className="mb-4">
+          <CalendarView
+            appointments={filteredAppointments}
+            language={language}
+            onDayClick={(dateStr) => {
+              setFilterDateFrom(dateStr)
+              setFilterDateTo(dateStr)
+              setViewMode('list')
+              setVisibleCount(PAGE_SIZE)
+            }}
+          />
+        </div>
+      )}
+
       <div className="flex flex-col gap-2 mb-3">
         <div className="flex flex-wrap gap-2">
           <input type="text" placeholder={t('search_placeholder', language)} className={`${inputClass} flex-1 min-w-[160px]`} value={search} onChange={e => { setSearch(e.target.value); setVisibleCount(PAGE_SIZE) }} />
@@ -151,6 +222,24 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
           {successMsg}
         </div>
       )}
+
+      {selectedIds.size > 0 && (
+        <div className="mb-3 px-4 py-3 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 border border-[#1565C0]/20 dark:border-[#7DD4FC]/20 rounded-xl flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-[#1565C0] dark:text-[#7DD4FC] flex-1">
+            {t('bulk_selected', language).replace('{n}', selectedIds.size)}
+          </span>
+          <button onClick={handleBulkApprove} disabled={bulkProcessing} className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg disabled:opacity-60 transition">
+            {bulkProcessing ? '...' : t('bulk_approve', language)}
+          </button>
+          <button onClick={handleBulkCancel} disabled={bulkProcessing} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg disabled:opacity-60 transition">
+            {bulkProcessing ? '...' : t('bulk_cancel', language)}
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-xs font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+            {t('bulk_deselect', language)}
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs text-gray-400 dark:text-gray-500">
           {filteredAppointments.length} {t('records_count', language)}
@@ -169,11 +258,21 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
         <>
           <div className="space-y-3">
             {filteredAppointments.slice(0, visibleCount).map(appt => (
-              <div key={appt.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
+              <div key={appt.id} className={`bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 ${selectedIds.has(appt.id) ? 'ring-2 ring-[#1565C0] dark:ring-[#7DD4FC]' : ''}`}>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{appt.user_name} {appt.user_surname}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{appt.user_email}</p>
+                  <div className="flex items-start gap-2 min-w-0 flex-1">
+                    {appt.status === 'PENDING' && (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(appt.id)}
+                        onChange={() => toggleSelect(appt.id)}
+                        className="mt-0.5 flex-shrink-0 accent-[#1565C0] dark:accent-[#7DD4FC] w-4 h-4 cursor-pointer"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{appt.user_name} {appt.user_surname}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{appt.user_email}</p>
+                    </div>
                   </div>
                   <span className={`text-xs font-medium px-2 py-1 rounded-lg flex-shrink-0 ${STATUS_COLORS[appt.status] || ''}`}>
                     {statusLabel(appt.status, language)}
@@ -187,8 +286,14 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                   {appt.user_branch && <span><span className="font-medium">{t('lbl_branch', language)}:</span> {appt.user_branch}</span>}
                   {appt.user_phone && <span><span className="font-medium">{t('lbl_phone', language)}:</span> {appt.user_phone}</span>}
                   {appt.user_work_location && <span className="col-span-2"><span className="font-medium">{t('lbl_institution', language)}:</span> {appt.user_work_location}</span>}
-                  {appt.note && <span className="col-span-2"><span className="font-medium">{t('lbl_note', language)}:</span> {appt.note}</span>}
+                  {appt.note && appt.status !== 'CANCELLATION_REQUESTED' && <span className="col-span-2"><span className="font-medium">{t('lbl_note', language)}:</span> {appt.note}</span>}
                 </div>
+                {appt.status === 'CANCELLATION_REQUESTED' && appt.note && (
+                  <div className="mb-3 px-3 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-xl">
+                    <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-0.5">{t('lbl_cancellation_reason', language)}</p>
+                    <p className="text-xs text-orange-600 dark:text-orange-300">{appt.note}</p>
+                  </div>
+                )}
                 {appt.status === 'PENDING' && (
                   <div className="flex gap-2">
                     <button onClick={() => handleApprove(appt.id)} disabled={processingId === appt.id} className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">

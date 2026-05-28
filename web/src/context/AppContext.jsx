@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AppContext = createContext(null)
@@ -13,6 +13,7 @@ function loadFromStorage(key) {
 }
 
 const RATE_LIMIT_KEY = 'rl_attempts'
+const IDLE_WARN_MS = 25 * 60 * 1000
 
 function loadRateLimits() {
   try { return JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{}') } catch { return {} }
@@ -61,9 +62,13 @@ export function AppProvider({ children }) {
   const [users, setUsers] = useState([])
   const [workshops, setWorkshops] = useState([])
   const [admins, setAdmins] = useState([])
+  const [workshopRegistrations, setWorkshopRegistrations] = useState([])
+  const [idleWarning, setIdleWarning] = useState(false)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const rtChannelsRef = React.useRef([])
+  const idleWarnRef = useRef(null)
+  const isLoggedInRef = useRef(false)
 
   // Persist session & preferences
   useEffect(() => {
@@ -83,6 +88,37 @@ export function AppProvider({ children }) {
     if (isDarkMode) document.documentElement.classList.add('dark')
     else document.documentElement.classList.remove('dark')
   }, [isDarkMode])
+
+  useEffect(() => {
+    isLoggedInRef.current = !!(loggedInUser || loggedInAdmin)
+  }, [loggedInUser, loggedInAdmin])
+
+  const resetIdleTimer = useCallback(() => {
+    if (!isLoggedInRef.current) return
+    clearTimeout(idleWarnRef.current)
+    setIdleWarning(false)
+    idleWarnRef.current = setTimeout(() => { setIdleWarning(true) }, IDLE_WARN_MS)
+  }, [])
+
+  const dismissIdleWarning = useCallback(() => {
+    setIdleWarning(false)
+    resetIdleTimer()
+  }, [resetIdleTimer])
+
+  useEffect(() => {
+    if (!loggedInUser && !loggedInAdmin) {
+      clearTimeout(idleWarnRef.current)
+      setIdleWarning(false)
+      return
+    }
+    resetIdleTimer()
+    const events = ['mousedown', 'keydown', 'touchstart', 'wheel', 'click']
+    events.forEach(ev => document.addEventListener(ev, resetIdleTimer, { passive: true }))
+    return () => {
+      clearTimeout(idleWarnRef.current)
+      events.forEach(ev => document.removeEventListener(ev, resetIdleTimer))
+    }
+  }, [loggedInUser, loggedInAdmin, resetIdleTimer])
 
   const loadAllData = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true)
@@ -114,6 +150,9 @@ export function AppProvider({ children }) {
       if (usersData) setUsers(usersData)
       if (workshopsData) setWorkshops(workshopsData)
       if (adminsData) setAdmins(adminsData)
+      // Workshop registrations — table may not exist yet, so load separately
+      const wsRegResult = await supabase.from('workshop_registrations').select('*')
+      if (wsRegResult.data) setWorkshopRegistrations(wsRegResult.data)
       setLoadError(false)
     } catch (err) {
       console.error('[loadAllData] failed:', err)
@@ -160,11 +199,21 @@ export function AppProvider({ children }) {
       })
       .subscribe()
 
-    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel]
+    const wsRegChannel = supabase
+      .channel('rt-workshop-registrations')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workshop_registrations' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setWorkshopRegistrations(prev => prev.find(r => r.id === n.id) ? prev : [...prev, n])
+        else if (eventType === 'UPDATE') setWorkshopRegistrations(prev => prev.map(r => r.id === n.id ? n : r))
+        else if (eventType === 'DELETE') setWorkshopRegistrations(prev => prev.filter(r => r.id !== o.id))
+      })
+      .subscribe()
+
+    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel]
     return () => {
       supabase.removeChannel(apptChannel)
       supabase.removeChannel(notifChannel)
       supabase.removeChannel(workshopChannel)
+      supabase.removeChannel(wsRegChannel)
       rtChannelsRef.current = []
     }
   }, [])
@@ -733,6 +782,39 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const registerForWorkshop = async (workshopId) => {
+    if (!loggedInUser) return { success: false, error: 'err_generic' }
+    const ws = workshops.find(w => w.id === workshopId)
+    if (!ws) return { success: false, error: 'err_generic' }
+    if (workshopRegistrations.some(r => String(r.workshop_id) === String(workshopId) && String(r.user_id) === String(loggedInUser.id))) {
+      return { success: false, error: 'err_already_registered' }
+    }
+    const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(workshopId)).length
+    if (ws.capacity && regCount >= ws.capacity) return { success: false, error: 'err_workshop_full' }
+    const { data, error } = await supabase.from('workshop_registrations').insert([{
+      workshop_id: workshopId,
+      user_id: loggedInUser.id,
+      user_email: loggedInUser.email,
+      user_name: loggedInUser.name,
+      user_surname: loggedInUser.surname,
+      registered_at: new Date().toISOString(),
+    }]).select().single()
+    if (error) return { success: false, error: error.message }
+    if (data) setWorkshopRegistrations(prev => [...prev, data])
+    return { success: true }
+  }
+
+  const unregisterFromWorkshop = async (workshopId) => {
+    if (!loggedInUser) return { success: false, error: 'err_generic' }
+    const { error } = await supabase.from('workshop_registrations')
+      .delete()
+      .eq('workshop_id', workshopId)
+      .eq('user_id', loggedInUser.id)
+    if (error) return { success: false, error: error.message }
+    setWorkshopRegistrations(prev => prev.filter(r => !(String(r.workshop_id) === String(workshopId) && String(r.user_id) === String(loggedInUser.id))))
+    return { success: true }
+  }
+
   const addAdmin = async ({ name, email, password, role, city_id, phone }) => {
     const normalizedEmail = email.trim().toLowerCase()
     const { data: existing } = await supabase.from('admins').select('id').eq('email', normalizedEmail).maybeSingle()
@@ -823,8 +905,9 @@ export function AppProvider({ children }) {
   const value = {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
-    cities, labs, appointments, notifications: visibleNotifications, timeSlots, users, workshops, admins,
+    cities, labs, appointments, notifications: visibleNotifications, timeSlots, users, workshops, admins, workshopRegistrations,
     loading, loadError,
+    idleWarning, dismissIdleWarning,
     loadAllData,
     loginUser, loginAdmin, registerUser, addUserByAdmin, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
     toggleLanguage, toggleDarkMode,
@@ -834,6 +917,7 @@ export function AppProvider({ children }) {
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab, forceDeleteLab,
     addWorkshop, updateWorkshop, deleteWorkshop,
+    registerForWorkshop, unregisterFromWorkshop,
     addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
   }
 

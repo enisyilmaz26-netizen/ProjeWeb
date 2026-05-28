@@ -4,10 +4,12 @@ import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../li
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
 import { isPasswordStrong } from '../lib/passwordUtils'
-import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react'
+import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight, CalendarDays, List } from 'lucide-react'
+import CalendarView from '../components/CalendarView'
 
 export default function MyProfileScreen() {
-  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language } = useApp()
+  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities } = useApp()
+  const [apptViewMode, setApptViewMode] = useState('list')
 
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelType, setCancelType] = useState('request') // 'direct' | 'request'
@@ -121,6 +123,7 @@ export default function MyProfileScreen() {
       work_location: loggedInUser.work_location || '',
       phone: loggedInUser.phone || '',
       district: loggedInUser.district || '',
+      city_id: loggedInUser.city_id || '',
     })
     setEditError('')
     setEditMode(true)
@@ -135,6 +138,7 @@ export default function MyProfileScreen() {
       return
     }
     setEditLoading(true)
+    const cityObj = cities.find(c => String(c.id) === String(editForm.city_id))
     const result = await updateUserProfile(loggedInUser.id, {
       name: editForm.name.trim(),
       surname: editForm.surname.trim(),
@@ -142,6 +146,8 @@ export default function MyProfileScreen() {
       work_location: editForm.work_location.trim(),
       phone: editForm.phone.trim(),
       district: editForm.district.trim(),
+      city_id: editForm.city_id || loggedInUser.city_id,
+      city_name: cityObj?.name || loggedInUser.city_name,
     })
     setEditLoading(false)
     if (result.success) {
@@ -218,6 +224,14 @@ export default function MyProfileScreen() {
                 <input type="text" className={inputClass} value={editForm.district} onChange={e => setEditForm(p => ({ ...p, district: e.target.value }))} required />
               </div>
             </div>
+            <div>
+              <label className={labelClass}>{t('input_city', language)}</label>
+              <select className={inputClass} value={editForm.city_id} onChange={e => setEditForm(p => ({ ...p, city_id: e.target.value }))}>
+                <option value="">{t('select_province', language)}</option>
+                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{t('city_change_note', language)}</p>
+            </div>
             {editError && (
               <p className="text-red-600 dark:text-red-400 text-xs">{editError}</p>
             )}
@@ -282,7 +296,21 @@ export default function MyProfileScreen() {
         <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
           {t('upcoming_appointments', language)} ({upcomingAppointments.length})
         </h3>
+        <div className="flex gap-1">
+          <button onClick={() => setApptViewMode('list')} className={`p-1.5 rounded-lg transition ${apptViewMode === 'list' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
+            <List className="w-4 h-4" />
+          </button>
+          <button onClick={() => setApptViewMode('calendar')} className={`p-1.5 rounded-lg transition ${apptViewMode === 'calendar' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
+            <CalendarDays className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {apptViewMode === 'calendar' && (
+        <div className="mb-4">
+          <CalendarView appointments={userAppointments} language={language} />
+        </div>
+      )}
 
       {upcomingAppointments.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-6 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">

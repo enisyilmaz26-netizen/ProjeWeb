@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate } from '../lib/languages'
-import { BookOpen, Calendar, Clock, Users } from 'lucide-react'
+import { BookOpen, Calendar, Clock, Users, CheckCircle2 } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
 
 export default function WorkshopsScreen() {
-  const { workshops, loggedInUser, cities, language } = useApp()
+  const { workshops, loggedInUser, cities, language, workshopRegistrations, registerForWorkshop, unregisterFromWorkshop } = useApp()
+  const [registering, setRegistering] = useState(null)
+  const [regMsg, setRegMsg] = useState('')
 
   const userCityId = loggedInUser?.city_id
   const userCity = cities.find(c => String(c.id) === String(userCityId))
@@ -24,9 +26,34 @@ export default function WorkshopsScreen() {
   const upcoming = cityWorkshops.filter(w => !w.date || w.date >= today)
   const past = cityWorkshops.filter(w => w.date && w.date < today)
 
+  const handleRegister = async (wsId) => {
+    setRegistering(wsId)
+    const result = await registerForWorkshop(wsId)
+    setRegistering(null)
+    if (result.success) {
+      setRegMsg(t('workshop_register_success', language))
+    } else {
+      setRegMsg(t(result.error === 'err_workshop_full' ? 'err_workshop_full' : result.error === 'err_already_registered' ? 'err_already_registered' : 'err_generic', language))
+    }
+    setTimeout(() => setRegMsg(''), 3000)
+  }
+
+  const handleUnregister = async (wsId) => {
+    setRegistering(wsId)
+    const result = await unregisterFromWorkshop(wsId)
+    setRegistering(null)
+    if (result.success) {
+      setRegMsg(t('workshop_unregister_success', language))
+      setTimeout(() => setRegMsg(''), 3000)
+    }
+  }
+
   const WorkshopCard = ({ ws }) => {
     const city = cities.find(c => String(c.id) === String(ws.city_id))
     const isPast = ws.date && ws.date < today
+    const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id)).length
+    const isRegistered = loggedInUser && workshopRegistrations.some(r => String(r.workshop_id) === String(ws.id) && String(r.user_id) === String(loggedInUser.id))
+    const isFull = ws.capacity && regCount >= ws.capacity && !isRegistered
     return (
       <div className={`bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 border-l-4 ${isPast ? 'border-gray-300 dark:border-gray-600 opacity-70' : 'border-[#1565C0] dark:border-[#7DD4FC]'}`}>
         <div className="flex items-start gap-3">
@@ -34,7 +61,14 @@ export default function WorkshopsScreen() {
             {getLabIcon(ws.name)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{ws.name}</p>
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{ws.name}</p>
+              {isRegistered && (
+                <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-lg font-medium flex-shrink-0 inline-flex items-center gap-0.5">
+                  <CheckCircle2 className="w-3 h-3" />{t('workshop_registered_badge', language)}
+                </span>
+              )}
+            </div>
             {ws.description && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{ws.description}</p>
             )}
@@ -54,11 +88,36 @@ export default function WorkshopsScreen() {
                 </span>
               )}
               {ws.capacity && (
-                <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 inline" />{ws.capacity} {t('capacity_people_label', language)}
+                <span className={`text-xs px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-1 ${isFull ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}>
+                  <Users className="w-3.5 h-3.5 inline" />{regCount}/{ws.capacity}
                 </span>
               )}
             </div>
+            {!isPast && (
+              <div className="mt-3">
+                {isRegistered ? (
+                  <button
+                    onClick={() => handleUnregister(ws.id)}
+                    disabled={registering === ws.id}
+                    className="w-full py-2 border border-red-400 text-red-600 dark:text-red-400 dark:border-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-60"
+                  >
+                    {registering === ws.id ? '...' : t('workshop_unregister', language)}
+                  </button>
+                ) : isFull ? (
+                  <div className="w-full py-2 text-center text-xs text-red-500 dark:text-red-400 font-semibold">
+                    {t('workshop_full', language)}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleRegister(ws.id)}
+                    disabled={registering === ws.id}
+                    className="w-full py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60"
+                  >
+                    {registering === ws.id ? '...' : t('workshop_register', language)}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -77,6 +136,12 @@ export default function WorkshopsScreen() {
           </p>
         )}
       </div>
+
+      {regMsg && (
+        <div className="px-4 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 text-sm">
+          {regMsg}
+        </div>
+      )}
 
       {cityWorkshops.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-12 text-center">

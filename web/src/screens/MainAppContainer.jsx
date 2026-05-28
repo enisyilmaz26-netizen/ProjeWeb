@@ -7,9 +7,10 @@ import AdminPanelScreen from './AdminPanelScreen'
 import MyProfileScreen from './MyProfileScreen'
 import NotificationCenterScreen from './NotificationCenterScreen'
 import WorkshopsScreen from './WorkshopsScreen'
+import IdleWarningModal from '../components/IdleWarningModal'
 
 export default function MainAppContainer() {
-  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading, loadError, loadAllData } = useApp()
+  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading, loadError, loadAllData, idleWarning, dismissIdleWarning } = useApp()
   const isAdmin = loggedInAdmin !== null
   const [activeTab, setActiveTab] = useState(isAdmin ? 'admin' : 'book')
 
@@ -137,6 +138,14 @@ export default function MainAppContainer() {
           {activeTab === 'notifications' && <NotificationCenterScreen />}
         </div>
       </main>
+
+      {idleWarning && (
+        <IdleWarningModal
+          language={language}
+          onContinue={dismissIdleWarning}
+          onLogout={logout}
+        />
+      )}
     </div>
   )
 }

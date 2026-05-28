@@ -256,6 +256,37 @@ export const translations = {
   action_success_completed: { TR: 'Randevu tamamlandı olarak işaretlendi.', EN: 'Appointment marked as completed.' },
   action_success_cancellation_approved: { TR: 'İptal talebi onaylandı.', EN: 'Cancellation approved.' },
   action_success_cancellation_denied: { TR: 'İptal talebi reddedildi.', EN: 'Cancellation denied.' },
+  // Session timeout
+  session_timeout_title: { TR: 'Oturum Zaman Aşımı', EN: 'Session Timeout' },
+  session_timeout_msg: { TR: 'Uzun süre işlem yapmadınız. {t} saniye sonra otomatik çıkış yapılacak.', EN: 'You have been inactive. Auto-logout in {t} seconds.' },
+  session_continue: { TR: 'Devam Et', EN: 'Stay Logged In' },
+  // Notification search
+  notif_search_placeholder: { TR: 'Bildirim ara...', EN: 'Search notifications...' },
+  // Audit search
+  audit_search_placeholder: { TR: 'Kişi, e-posta veya detay ara...', EN: 'Search by person, email or detail...' },
+  // Cancellation reason label (admin view)
+  lbl_cancellation_reason: { TR: 'İptal Sebebi', EN: 'Cancellation Reason' },
+  // Bulk operations
+  bulk_approve: { TR: 'Seçilenleri Onayla', EN: 'Approve Selected' },
+  bulk_cancel: { TR: 'Seçilenleri İptal Et', EN: 'Cancel Selected' },
+  bulk_selected: { TR: '{n} seçili', EN: '{n} selected' },
+  bulk_deselect: { TR: 'Seçimi Kaldır', EN: 'Deselect All' },
+  // Calendar view
+  view_calendar: { TR: 'Takvim', EN: 'Calendar' },
+  view_list: { TR: 'Liste', EN: 'List' },
+  // Workshop registration
+  workshop_register: { TR: 'Kayıt Ol', EN: 'Register' },
+  workshop_unregister: { TR: 'Kaydı İptal Et', EN: 'Unregister' },
+  workshop_registered_badge: { TR: 'Kayıtlısınız', EN: 'Registered' },
+  workshop_full: { TR: 'Kontenjan Dolu', EN: 'Workshop Full' },
+  workshop_register_success: { TR: 'Atölye kaydınız oluşturuldu.', EN: 'Workshop registration successful.' },
+  workshop_unregister_success: { TR: 'Atölye kaydınız iptal edildi.', EN: 'Workshop registration cancelled.' },
+  workshop_registrants_title: { TR: 'Kayıtlılar', EN: 'Registrants' },
+  workshop_no_registrants: { TR: 'Henüz kayıtlı yok.', EN: 'No registrants yet.' },
+  err_workshop_full: { TR: 'Atölye kapasitesi dolu.', EN: 'Workshop is at full capacity.' },
+  err_already_registered: { TR: 'Bu atölye için zaten kayıtlısınız.', EN: 'You are already registered for this workshop.' },
+  // City change in profile
+  city_change_note: { TR: 'Şehir değişikliği aktif randevularınızı etkilemez.', EN: 'City change does not affect existing appointments.' },
 }
 
 export const STATUS_COLORS = {
