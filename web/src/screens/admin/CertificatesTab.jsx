@@ -36,6 +36,16 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
   const inputClass = INPUT_BASE
   const saveTimerRef = useRef(null)
   const fileInputRef = useRef(null)
+  const titleRef = useRef(null)
+  const pendingCursorRef = useRef(null)
+
+  useEffect(() => {
+    if (pendingCursorRef.current !== null && titleRef.current) {
+      titleRef.current.selectionStart = pendingCursorRef.current
+      titleRef.current.selectionEnd = pendingCursorRef.current
+      pendingCursorRef.current = null
+    }
+  }, [form.title])
   useEffect(() => () => clearTimeout(saveTimerRef.current), [])
 
   const handleLogoFile = (e) => {
@@ -236,6 +246,7 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Sertifika Başlığı' : 'Certificate Title'}</label>
             <textarea
+              ref={titleRef}
               className={`w-full ${inputClass} resize-y`} rows={3}
               value={form.title}
               onChange={e => set('title', e.target.value)}
@@ -245,12 +256,9 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
                   const el = e.target
                   const start = el.selectionStart
                   const end = el.selectionEnd
-                  const next = form.title.substring(0, start) + '\n' + form.title.substring(end)
+                  const next = el.value.substring(0, start) + '\n' + el.value.substring(end)
+                  pendingCursorRef.current = start + 1
                   set('title', next)
-                  requestAnimationFrame(() => {
-                    el.selectionStart = start + 1
-                    el.selectionEnd = start + 1
-                  })
                 }
               }}
               placeholder={language === 'TR' ? 'Alt satır için Enter kullanın' : 'Press Enter for a new line'}

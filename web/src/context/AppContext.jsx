@@ -155,14 +155,16 @@ export function AppProvider({ children }) {
       if (usersData) setUsers(usersData)
       if (workshopsData) setWorkshops(workshopsData)
       if (adminsData) setAdmins(adminsData)
-      // Tables that may not exist yet — load separately to avoid failing the whole load
-      const wsRegResult = await supabase.from('workshop_registrations').select('*')
+      // Tables that may not exist yet — load in parallel but separately to avoid failing the whole load
+      const [wsRegResult, convResult, closedResult, certResult] = await Promise.all([
+        supabase.from('workshop_registrations').select('*'),
+        supabase.from('conversations').select('*').order('last_message_at', { ascending: false }),
+        supabase.from('closed_days').select('*').order('date'),
+        supabase.from('certificate_templates').select('*'),
+      ])
       if (wsRegResult.data) { setWorkshopRegistrations(wsRegResult.data); setWorkshopRegistrationsAvailable(true) }
-      const convResult = await supabase.from('conversations').select('*').order('last_message_at', { ascending: false })
       if (convResult.data) { setConversations(convResult.data); setMessagesAvailable(true) }
-      const closedResult = await supabase.from('closed_days').select('*').order('date')
       if (closedResult.data) setClosedDays(closedResult.data)
-      const certResult = await supabase.from('certificate_templates').select('*')
       if (certResult.data) setCertificateTemplates(certResult.data)
       setLoadError(false)
     } catch (err) {
@@ -228,13 +230,23 @@ export function AppProvider({ children }) {
       })
       .subscribe()
 
-    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel, convChannel]
+    const certChannel = supabase
+      .channel('rt-certificate-templates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'certificate_templates' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setCertificateTemplates(prev => prev.find(t => t.id === n.id) ? prev : [...prev, n])
+        else if (eventType === 'UPDATE') setCertificateTemplates(prev => prev.map(t => t.id === n.id ? n : t))
+        else if (eventType === 'DELETE') setCertificateTemplates(prev => prev.filter(t => t.id !== o.id))
+      })
+      .subscribe()
+
+    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel, convChannel, certChannel]
     return () => {
       supabase.removeChannel(apptChannel)
       supabase.removeChannel(notifChannel)
       supabase.removeChannel(workshopChannel)
       supabase.removeChannel(wsRegChannel)
       supabase.removeChannel(convChannel)
+      supabase.removeChannel(certChannel)
       rtChannelsRef.current = []
     }
   }, [])
