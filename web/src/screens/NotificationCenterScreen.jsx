@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatTimestamp } from '../lib/languages'
-import { AlertTriangle, Clock, Lightbulb, Bell } from 'lucide-react'
+import { AlertTriangle, Clock, Lightbulb, Bell, Calendar } from 'lucide-react'
 
 export default function NotificationCenterScreen() {
   const { notifications, loggedInAdmin, loggedInUser, clearNotifications, markNotificationsRead, language, cities } = useApp()
@@ -37,6 +37,7 @@ export default function NotificationCenterScreen() {
       case 'ALERT': return <AlertTriangle className="w-5 h-5 text-red-500" />
       case 'REMINDER': return <Clock className="w-5 h-5 text-orange-500" />
       case 'SYSTEM': return <Lightbulb className="w-5 h-5 text-blue-500" />
+      case 'APPOINTMENT': return <Calendar className="w-5 h-5 text-green-500" />
       default: return <Bell className="w-5 h-5 text-gray-500" />
     }
   }

@@ -150,6 +150,10 @@ export default function AuthScreen({ onBack }) {
   const handleForgotReset = async (e) => {
     e.preventDefault()
     setForgotError('')
+    if (!isPasswordStrong(forgotNewPassword)) {
+      setForgotError(t('err_password_weak', language))
+      return
+    }
     if (forgotNewPassword !== forgotConfirmPassword) {
       setForgotError(t('err_password_mismatch', language))
       return

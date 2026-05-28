@@ -18,7 +18,9 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
   const [editWorkshopLoading, setEditWorkshopLoading] = useState(false)
   const [workshopCityFilter, setWorkshopCityFilter] = useState('')
   const [processingId, setProcessingId] = useState(null)
+  const todayStr = new Date().toISOString().split('T')[0]
   const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0] })()
+  const TIME_RANGE_RE = /^([01]\d|2[0-3]):[0-5]\d\s*[-–]\s*([01]\d|2[0-3]):[0-5]\d$/
 
   const visibleWorkshops = useMemo(() => {
     let list = isGlobal ? workshops : workshops.filter(w => String(w.city_id) === String(adminCityId))
@@ -36,6 +38,11 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     const cityId = isGlobal ? workshopForm.city_id : adminCityId
     const cityObj = cities.find(c => String(c.id) === String(cityId))
     if (!workshopForm.name.trim() || !cityId) { setWorkshopError(t('workshop_name_required', language)); return }
+    if (workshopForm.time && !TIME_RANGE_RE.test(workshopForm.time.trim())) {
+      setWorkshopError(language === 'TR' ? 'Saat formatı geçersiz. Örnek: 09:00 - 17:00' : 'Invalid time format. Example: 09:00 - 17:00')
+      return
+    }
+    if (Number(workshopForm.capacity) < 1) { setWorkshopError(language === 'TR' ? 'Kapasite en az 1 olmalıdır.' : 'Capacity must be at least 1.'); return }
     const result = await addWorkshop({ name: workshopForm.name, description: workshopForm.description, date: workshopForm.date || null, time: workshopForm.time || null, capacity: Number(workshopForm.capacity) || 1, location: workshopForm.location, city_id: cityId, city_name: cityObj?.name || '' })
     if (result.success) {
       setShowAddWorkshop(false)
@@ -55,6 +62,11 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     e.preventDefault()
     setWorkshopError('')
     if (!editWorkshopForm.name.trim()) { setWorkshopError(t('workshop_name_required', language)); return }
+    if (editWorkshopForm.time && !TIME_RANGE_RE.test(editWorkshopForm.time.trim())) {
+      setWorkshopError(language === 'TR' ? 'Saat formatı geçersiz. Örnek: 09:00 - 17:00' : 'Invalid time format. Example: 09:00 - 17:00')
+      return
+    }
+    if (Number(editWorkshopForm.capacity) < 1) { setWorkshopError(language === 'TR' ? 'Kapasite en az 1 olmalıdır.' : 'Capacity must be at least 1.'); return }
     setEditWorkshopLoading(true)
     const result = await updateWorkshop(editingWorkshopId, { name: editWorkshopForm.name, description: editWorkshopForm.description, date: editWorkshopForm.date || null, time: editWorkshopForm.time || null, capacity: Number(editWorkshopForm.capacity) || 1, location: editWorkshopForm.location })
     setEditWorkshopLoading(false)
@@ -99,13 +111,18 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       {showAddWorkshop && (
         <form onSubmit={handleAddWorkshop} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4 space-y-3">
           <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{t('workshop_new', language)}</h4>
-          {isGlobal && (
+          {isGlobal ? (
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_province', language)} *</label>
               <select className={`${inputClass} w-full`} value={workshopForm.city_id} onChange={e => setWorkshopForm(p => ({ ...p, city_id: e.target.value }))} required>
                 <option value="">{t('select_province', language)}</option>
                 {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_province', language)}</label>
+              <p className={`${inputClass} w-full bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400`}>{cities.find(c => String(c.id) === String(adminCityId))?.name || '—'}</p>
             </div>
           )}
           <div>
@@ -119,7 +136,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_date_label', language)}</label>
-              <input type="date" max={maxDate} className={`${inputClass} w-full`} value={workshopForm.date} onChange={e => setWorkshopForm(p => ({ ...p, date: e.target.value }))} />
+              <input type="date" min={todayStr} max={maxDate} className={`${inputClass} w-full`} value={workshopForm.date} onChange={e => setWorkshopForm(p => ({ ...p, date: e.target.value }))} />
             </div>
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_time_label', language)}</label>
@@ -168,7 +185,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_date_label', language)}</label>
-                        <input type="date" className={`${inputClass} w-full`} value={editWorkshopForm.date} onChange={e => setEditWorkshopForm(p => ({ ...p, date: e.target.value }))} />
+                        <input type="date" min={todayStr} max={maxDate} className={`${inputClass} w-full`} value={editWorkshopForm.date} onChange={e => setEditWorkshopForm(p => ({ ...p, date: e.target.value }))} />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_time_label', language)}</label>

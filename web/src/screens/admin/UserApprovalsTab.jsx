@@ -45,15 +45,28 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   }, [users, isGlobal, adminCityId, userSearch, userCityFilter])
 
   const handleApproveUser = (id) => onRequestConfirm(t('confirm_approve_user', language), async () => { setProcessingId(id); await approveUser(id); setProcessingId(null) })
-  const handleRevokeUser = (id) => onRequestConfirm(t('confirm_revoke_user', language), async () => { setProcessingId(id); await revokeUser(id); setProcessingId(null) })
+  const handleRevokeUser = (id) => {
+    const u = users.find(usr => usr.id === id)
+    const label = u ? `${t('confirm_revoke_user', language)} (${u.name} ${u.surname} — ${u.email})` : t('confirm_revoke_user', language)
+    onRequestConfirm(label, async () => { setProcessingId(id); await revokeUser(id); setProcessingId(null) })
+  }
 
   const openResetPw = (user) => { setResetPwModal({ userId: user.id, email: user.email, userName: `${user.name} ${user.surname}` }); setResetPwValue(''); setResetPwError(''); setResetPwSuccess('') }
   const closeResetPw = () => { setResetPwModal(null); setResetPwValue(''); setResetPwError(''); setResetPwSuccess('') }
 
+  const passwordRequirements = [
+    { met: pw => pw.length >= 8 },
+    { met: pw => /[A-Z]/.test(pw) },
+    { met: pw => /[a-z]/.test(pw) },
+    { met: pw => /[0-9]/.test(pw) },
+    { met: pw => /[^A-Za-z0-9]/.test(pw) },
+  ]
+  const isPasswordStrong = (pw) => passwordRequirements.every(r => r.met(pw))
+
   const handleResetUserPassword = async (e) => {
     e.preventDefault()
     setResetPwError('')
-    if (resetPwValue.length < 8) { setResetPwError(t('err_password_min_length', language)); return }
+    if (!isPasswordStrong(resetPwValue)) { setResetPwError(t('err_password_weak', language)); return }
     setResetPwLoading(true)
     const result = await resetPassword(resetPwModal.userId, resetPwModal.email, resetPwValue)
     setResetPwLoading(false)
@@ -96,7 +109,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           ) : <div />}
-          <button onClick={() => { setShowAddUser(p => !p); setAddUserError('') }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition flex-shrink-0">
+          <button onClick={() => { setShowAddUser(p => !p); setAddUserError(''); setAddUserSuccess('') }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition flex-shrink-0">
             + {language === 'TR' ? 'Üye Ekle' : 'Add Member'}
           </button>
         </div>

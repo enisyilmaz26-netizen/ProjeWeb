@@ -81,10 +81,19 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
   const openResetAdminPw = (admin) => { setResetAdminPwModal({ adminId: admin.id, email: admin.email, name: admin.name || admin.email }); setResetAdminPwValue(''); setResetAdminPwError(''); setResetAdminPwSuccess('') }
   const closeResetAdminPw = () => { setResetAdminPwModal(null); setResetAdminPwValue(''); setResetAdminPwError(''); setResetAdminPwSuccess('') }
 
+  const passwordRequirements = [
+    { met: pw => pw.length >= 8 },
+    { met: pw => /[A-Z]/.test(pw) },
+    { met: pw => /[a-z]/.test(pw) },
+    { met: pw => /[0-9]/.test(pw) },
+    { met: pw => /[^A-Za-z0-9]/.test(pw) },
+  ]
+  const isPasswordStrong = (pw) => passwordRequirements.every(r => r.met(pw))
+
   const handleResetAdminPassword = async (e) => {
     e.preventDefault()
     setResetAdminPwError('')
-    if (resetAdminPwValue.length < 8) { setResetAdminPwError(t('err_password_min_length', language)); return }
+    if (!isPasswordStrong(resetAdminPwValue)) { setResetAdminPwError(t('err_password_weak', language)); return }
     setResetAdminPwLoading(true)
     const result = await resetAdminPasswordByGlobal(resetAdminPwModal.adminId, resetAdminPwModal.email, resetAdminPwValue)
     setResetAdminPwLoading(false)

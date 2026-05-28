@@ -116,7 +116,7 @@ export function AppProvider({ children }) {
       if (adminsData) setAdmins(adminsData)
       setLoadError(false)
     } catch (err) {
-      console.error('Error loading data:', err)
+      console.error('[loadAllData] failed:', err)
       setLoadError(true)
     } finally {
       if (showLoader) setLoading(false)
@@ -552,6 +552,13 @@ export function AppProvider({ children }) {
 
   const revokeUser = async (userId) => {
     const user = users.find(u => u.id === userId)
+    // Cancel active appointments before deleting user so records remain consistent
+    const activeStatuses = ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED']
+    const activeAppts = appointments.filter(a => String(a.user_id) === String(userId) && activeStatuses.includes(a.status))
+    if (activeAppts.length > 0) {
+      await supabase.from('appointments').update({ status: 'CANCELLED' }).in('id', activeAppts.map(a => a.id))
+      setAppointments(prev => prev.map(a => activeAppts.some(aa => aa.id === a.id) ? { ...a, status: 'CANCELLED' } : a))
+    }
     const { error } = await supabase.from('users').delete().eq('id', userId)
     if (error) return { success: false, error: error.message }
     setUsers(prev => prev.filter(u => u.id !== userId))
@@ -727,18 +734,25 @@ export function AppProvider({ children }) {
   }
 
   const addAdmin = async ({ name, email, password, role, city_id, phone }) => {
+    const normalizedEmail = email.trim().toLowerCase()
+    const { data: existing } = await supabase.from('admins').select('id').eq('email', normalizedEmail).maybeSingle()
+    if (existing) return { success: false, error: 'err_email_exists' }
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: password })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { data, error } = await supabase.from('admins').insert([{
-      name, email, password_hash: hashed, role: role || 'CITY', city_id: city_id || null, phone: phone || ''
+      name, email: normalizedEmail, password_hash: hashed, role: role || 'CITY', city_id: city_id || null, phone: phone || ''
     }]).select('id,name,email,role,city_id,phone').single()
-    if (error) return { success: false, error: error.message }
+    if (error) {
+      if (error.code === '23505') return { success: false, error: 'err_email_exists' }
+      return { success: false, error: error.message }
+    }
     setAdmins(prev => [...prev, data].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
-    logAudit('ADD_ADMIN', 'admin', data.id, `${name} (${email}) — ${role || 'CITY'}`)
+    logAudit('ADD_ADMIN', 'admin', data.id, `${name} (${normalizedEmail}) — ${role || 'CITY'}`)
     return { success: true }
   }
 
   const deleteAdmin = async (adminId) => {
+    if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
     const target = admins.find(a => a.id === adminId)
     const { error } = await supabase.from('admins').delete().eq('id', adminId)
     if (error) return { success: false, error: error.message }
