@@ -48,6 +48,7 @@ export default function UserReservationScreen() {
   const [errorMsg, setErrorMsg] = useState('')
   const [dateError, setDateError] = useState('')
   const [waitlistMsg, setWaitlistMsg] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
 
   // User can only see their own city
   const userCity = useMemo(() => {
@@ -123,10 +124,15 @@ export default function UserReservationScreen() {
     setStep(5)
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     if (submitting) return
     if (!loggedInUser || !selectedCity || !selectedLab || !selectedDate || !selectedSlot) return
+    setShowConfirm(true)
+  }
+
+  const doSubmit = async () => {
+    setShowConfirm(false)
     setSubmitting(true)
     setErrorMsg('')
     const result = await submitAppointment({
@@ -470,6 +476,37 @@ export default function UserReservationScreen() {
           <button onClick={() => resetToStep(4)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
             ← {t('back_to_time', language)}
           </button>
+        </div>
+      )}
+
+      {/* Randevu onay modali */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-3">
+              {language === 'TR' ? 'Randevuyu Onayla' : 'Confirm Appointment'}
+            </h3>
+            <div className="bg-gray-50 dark:bg-[#0E1A30] rounded-xl px-4 py-3 mb-4 space-y-1 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t('province_label', language)}</span><span className="font-medium text-gray-800 dark:text-gray-200">{selectedCity?.name}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t('studio_label', language)}</span><span className="font-medium text-gray-800 dark:text-gray-200">{selectedLab?.name}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t('date_label', language)}</span><span className="font-medium text-gray-800 dark:text-gray-200">{formatDate(selectedDate)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t('time_label', language)}</span><span className="font-medium text-gray-800 dark:text-gray-200">{selectedSlot?.time_range}</span></div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={doSubmit}
+                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition"
+              >
+                {language === 'TR' ? 'Onayla' : 'Confirm'}
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                {language === 'TR' ? 'Geri Dön' : 'Go Back'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

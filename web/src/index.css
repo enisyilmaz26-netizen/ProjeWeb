@@ -25,3 +25,26 @@
     display: none;
   }
 }
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  /* Hide nav, tab bar, action buttons */
+  nav, [role="tablist"], button:not(.print-visible) {
+    display: none !important;
+  }
+  /* Expand all sections */
+  .shadow { box-shadow: none !important; }
+  .dark\:bg-\[\#0D1E3D\], .dark\:bg-\[\#060E26\] {
+    background: white !important;
+    color: black !important;
+  }
+  /* Progress bars: force color visible in print */
+  .bg-\[\#1565C0\] { background-color: #1565C0 !important; print-color-adjust: exact; }
+  .bg-orange-400 { background-color: #fb923c !important; print-color-adjust: exact; }
+  .bg-green-500 { background-color: #22c55e !important; print-color-adjust: exact; }
+  /* Page breaks */
+  .bg-white { page-break-inside: avoid; }
+}

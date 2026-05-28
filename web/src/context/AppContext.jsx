@@ -650,7 +650,7 @@ export function AppProvider({ children }) {
       target_type: targetType || null,
       target_id: targetId || null,
       details: details || null,
-    }]).then()
+    }]).then().catch(err => console.error('[logAudit] failed:', err))
   }
 
   // USER APPROVAL ACTIONS
@@ -726,6 +726,7 @@ export function AppProvider({ children }) {
     } else {
       setNotifications([])
     }
+    logAudit('CLEAR_NOTIFICATIONS', 'notifications', null, cityName ? `Şehir: ${cityName}` : 'Tüm bildirimler silindi')
     return { success: true }
   }
 
@@ -1013,6 +1014,15 @@ export function AppProvider({ children }) {
     }
     setAdmins(prev => [...prev, data].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
     logAudit('ADD_ADMIN', 'admin', data.id, `${name} (${normalizedEmail}) — ${role || 'CITY'}`)
+    const cityObj = city_id ? cities.find(c => String(c.id) === String(city_id)) : null
+    const prefix = cityObj ? `[${cityObj.name}] ` : ''
+    await supabase.from('notifications').insert([{
+      title: `${prefix}${language === 'TR' ? 'Yeni Yönetici Eklendi' : 'New Admin Added'}`,
+      message: language === 'TR'
+        ? `${name} (${normalizedEmail}) yönetici olarak eklendi.`
+        : `${name} (${normalizedEmail}) has been added as admin.`,
+      type: 'SYSTEM', timestamp: Date.now(), is_read: false,
+    }])
     return { success: true }
   }
 

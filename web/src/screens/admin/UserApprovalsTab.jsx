@@ -9,7 +9,7 @@ import PasswordInput from '../../components/PasswordInput'
 import { isPasswordStrong } from '../../lib/passwordUtils'
 
 export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
-  const { cities, users, approveUser, revokeUser, resetPassword, addUserByAdmin } = useApp()
+  const { cities, users, appointments, approveUser, revokeUser, resetPassword, addUserByAdmin } = useApp()
   const inputClass = INPUT_BASE
 
   const [userSearch, setUserSearch] = useState('')
@@ -18,7 +18,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [visibleApprovedCount, setVisibleApprovedCount] = useState(PAGE_SIZE)
 
   const [showAddUser, setShowAddUser] = useState(false)
-  const [addUserForm, setAddUserForm] = useState({ name: '', surname: '', email: '', password: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
+  const [addUserForm, setAddUserForm] = useState({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
   const [addUserError, setAddUserError] = useState('')
   const [addUserSuccess, setAddUserSuccess] = useState('')
   const [addUserLoading, setAddUserLoading] = useState(false)
@@ -52,6 +52,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       const name = nameIdx >= 0 ? parts[nameIdx] : ''
       const surname = surnameIdx >= 0 ? parts[surnameIdx] : ''
       if (!email || !name || !surname) { fail++; errors.push(`Satır ${i + 1}: eksik alan`); continue }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail++; errors.push(`Satır ${i + 1}: geçersiz e-posta (${email})`); continue }
       const cityVal = cityIdx >= 0 ? parts[cityIdx] : ''
       const cityObj = cities.find(c => String(c.id) === cityVal || c.name.toLowerCase() === cityVal.toLowerCase())
       const cityId = cityObj?.id || (!isGlobal ? adminCityId : null)
@@ -90,7 +91,13 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const handleApproveUser = (id) => onRequestConfirm(t('confirm_approve_user', language), async () => { setProcessingId(id); await approveUser(id); setProcessingId(null) })
   const handleRevokeUser = (id) => {
     const u = users.find(usr => usr.id === id)
-    const label = u ? `${t('confirm_revoke_user', language)} (${u.name} ${u.surname} — ${u.email})` : t('confirm_revoke_user', language)
+    const activeAppts = appointments.filter(a =>
+      a.user_email === u?.email && ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED'].includes(a.status)
+    ).length
+    let label = u ? `${t('confirm_revoke_user', language)} (${u.name} ${u.surname} — ${u.email})` : t('confirm_revoke_user', language)
+    if (activeAppts > 0) {
+      label += ` — ${activeAppts} ${language === 'TR' ? 'aktif randevu iptal edilecek' : 'active appointment(s) will be cancelled'}`
+    }
     onRequestConfirm(label, async () => { setProcessingId(id); await revokeUser(id); setProcessingId(null) })
   }
 
@@ -119,13 +126,14 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       return
     }
     if (!isPasswordStrong(addUserForm.password)) { setAddUserError(t('err_password_weak', language)); return }
+    if (addUserForm.password !== addUserForm.confirmPassword) { setAddUserError(t('err_password_mismatch', language)); return }
     setAddUserLoading(true)
     const cityObj = cities.find(c => String(c.id) === String(cityId))
     const result = await addUserByAdmin({ ...addUserForm, email: addUserForm.email.trim().toLowerCase(), city_id: cityId, city_name: cityObj?.name || '' })
     setAddUserLoading(false)
     if (result.success) {
       setShowAddUser(false)
-      setAddUserForm({ name: '', surname: '', email: '', password: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
+      setAddUserForm({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
       setAddUserSuccess(language === 'TR' ? 'Üye eklendi.' : 'Member added.')
       setTimeout(() => setAddUserSuccess(''), 3000)
     } else {
@@ -149,7 +157,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               {csvImporting ? '...' : (language === 'TR' ? 'CSV İçe Aktar' : 'Import CSV')}
               <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={csvImporting} />
             </label>
-            <button onClick={() => { setShowAddUser(p => !p); setAddUserError(''); setAddUserSuccess(''); setAddUserForm({ name: '', surname: '', email: '', password: '', branch: '', work_location: '', phone: '', city_id: '', district: '' }) }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
+            <button onClick={() => { setShowAddUser(p => !p); setAddUserError(''); setAddUserSuccess(''); setAddUserForm({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' }) }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
               + {language === 'TR' ? 'Üye Ekle' : 'Add Member'}
             </button>
           </div>
@@ -194,6 +202,10 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Şifre *' : 'Password *'}</label>
             <PasswordInput className={`${inputClass} w-full`} value={addUserForm.password} onChange={e => setAddUserForm(p => ({ ...p, password: e.target.value }))} required minLength={8} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Şifre Tekrar *' : 'Confirm Password *'}</label>
+            <PasswordInput className={`${inputClass} w-full`} value={addUserForm.confirmPassword} onChange={e => setAddUserForm(p => ({ ...p, confirmPassword: e.target.value }))} required minLength={8} />
           </div>
           {isGlobal && (
             <div>

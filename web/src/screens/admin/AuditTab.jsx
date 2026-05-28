@@ -47,6 +47,8 @@ export default function AuditTab({ language }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [filterAction, setFilterAction] = useState('')
   const [searchText, setSearchText] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -63,6 +65,8 @@ export default function AuditTab({ language }) {
 
   const filtered = logs.filter(l => {
     if (filterAction && l.action !== filterAction) return false
+    if (dateFrom && l.created_at && l.created_at.substring(0, 10) < dateFrom) return false
+    if (dateTo && l.created_at && l.created_at.substring(0, 10) > dateTo) return false
     if (searchText.trim()) {
       const q = searchText.toLowerCase()
       if (
@@ -104,6 +108,30 @@ export default function AuditTab({ language }) {
           <option key={key} value={key}>{label[language]}</option>
         ))}
       </select>
+
+      <div className="flex flex-wrap gap-2 mb-3 items-center">
+        <span className="text-xs text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Tarih:' : 'Date:'}</span>
+        <input
+          type="date"
+          value={dateFrom}
+          max={dateTo || undefined}
+          onChange={e => { setDateFrom(e.target.value); setVisibleCount(PAGE_SIZE) }}
+          className="px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0D1E3D] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC]"
+        />
+        <span className="text-xs text-gray-400">—</span>
+        <input
+          type="date"
+          value={dateTo}
+          min={dateFrom || undefined}
+          onChange={e => { setDateTo(e.target.value); setVisibleCount(PAGE_SIZE) }}
+          className="px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0D1E3D] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC]"
+        />
+        {(dateFrom || dateTo) && (
+          <button onClick={() => { setDateFrom(''); setDateTo(''); setVisibleCount(PAGE_SIZE) }} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
+            {language === 'TR' ? 'Temizle' : 'Clear'}
+          </button>
+        )}
+      </div>
 
       <div className="relative mb-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />

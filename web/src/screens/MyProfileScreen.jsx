@@ -56,6 +56,8 @@ export default function MyProfileScreen() {
   const [editForm, setEditForm] = useState({})
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState('')
+  const [showCityChangeWarning, setShowCityChangeWarning] = useState(false)
+  const [showWaitlistRemoveConfirm, setShowWaitlistRemoveConfirm] = useState(null)
 
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -177,10 +179,18 @@ export default function MyProfileScreen() {
     e.preventDefault()
     setEditError('')
     const phoneDigits = editForm.phone.replace(/\D/g, '')
-    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-      setEditError(t('err_phone_invalid', language))
+    // Türk telefon numarası: 05XXXXXXXXX (11 hane) veya 5XXXXXXXXX (10 hane)
+    if (phoneDigits.length === 0 || !/^(0?5\d{9})$/.test(phoneDigits)) {
+      setEditError(language === 'TR' ? 'Geçerli bir telefon numarası girin. Örnek: 05XX XXX XX XX' : 'Enter a valid phone number. Example: 05XX XXX XX XX')
       return
     }
+    const cityChanged = String(editForm.city_id) !== String(loggedInUser.city_id)
+    const hasActiveAppts = upcomingAppointments.some(a => ['PENDING', 'APPROVED'].includes(a.status))
+    if (cityChanged && hasActiveAppts && !showCityChangeWarning) {
+      setShowCityChangeWarning(true)
+      return
+    }
+    setShowCityChangeWarning(false)
     setEditLoading(true)
     const cityObj = cities.find(c => String(c.id) === String(editForm.city_id))
     const result = await updateUserProfile(loggedInUser.id, {
@@ -486,7 +496,7 @@ export default function MyProfileScreen() {
                   <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(w.date)} — {w.time_slot}</p>
                 </div>
                 <button
-                  onClick={async () => await removeFromWaitlist(w.id)}
+                  onClick={() => setShowWaitlistRemoveConfirm(w.id)}
                   className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                 >
                   {language === 'TR' ? 'Çıkar' : 'Remove'}
@@ -615,6 +625,64 @@ export default function MyProfileScreen() {
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
                 {t('btn_nevermind', language)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Şehir değişikliği uyarı modali */}
+      {showCityChangeWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
+              {language === 'TR' ? 'Şehir Değişikliği' : 'City Change'}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+              {language === 'TR'
+                ? 'Aktif randevularınız var. Şehri değiştirirseniz mevcut randevularınız etkilenmez ancak yeni şehirde oluşturmanız gerekebilir. Devam etmek istiyor musunuz?'
+                : 'You have active appointments. Changing city will not cancel them but new appointments must be in the new city. Do you want to continue?'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={(e) => handleSaveProfile(e)}
+                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition"
+              >
+                {language === 'TR' ? 'Devam Et' : 'Continue'}
+              </button>
+              <button
+                onClick={() => setShowCityChangeWarning(false)}
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                {language === 'TR' ? 'Vazgeç' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bekleme listesi çıkış onay modali */}
+      {showWaitlistRemoveConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
+              {language === 'TR' ? 'Bekleme Listesinden Çıkar' : 'Remove from Waitlist'}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+              {language === 'TR' ? 'Bu bekleme listesi kaydını silmek istediğinizden emin misiniz?' : 'Are you sure you want to remove this waitlist entry?'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={async () => { await removeFromWaitlist(showWaitlistRemoveConfirm); setShowWaitlistRemoveConfirm(null) }}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition"
+              >
+                {language === 'TR' ? 'Evet, Çıkar' : 'Yes, Remove'}
+              </button>
+              <button
+                onClick={() => setShowWaitlistRemoveConfirm(null)}
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                {language === 'TR' ? 'Vazgeç' : 'Cancel'}
               </button>
             </div>
           </div>

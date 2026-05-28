@@ -22,6 +22,11 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
   const todayStr = new Date().toISOString().split('T')[0]
   const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0] })()
   const TIME_RANGE_RE = /^([01]\d|2[0-3]):[0-5]\d\s*[-–]\s*([01]\d|2[0-3]):[0-5]\d$/
+  const validateTimeRange = (time) => {
+    if (!time || !TIME_RANGE_RE.test(time.trim())) return false
+    const [start, end] = time.trim().split(/\s*[-–]\s*/)
+    return start < end
+  }
 
   const visibleWorkshops = useMemo(() => {
     let list = isGlobal ? workshops : workshops.filter(w => String(w.city_id) === String(adminCityId))
@@ -39,8 +44,8 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     const cityId = isGlobal ? workshopForm.city_id : adminCityId
     const cityObj = cities.find(c => String(c.id) === String(cityId))
     if (!workshopForm.name.trim() || !cityId) { setWorkshopError(t('workshop_name_required', language)); return }
-    if (workshopForm.time && !TIME_RANGE_RE.test(workshopForm.time.trim())) {
-      setWorkshopError(language === 'TR' ? 'Saat formatı geçersiz. Örnek: 09:00 - 17:00' : 'Invalid time format. Example: 09:00 - 17:00')
+    if (workshopForm.time && !validateTimeRange(workshopForm.time.trim())) {
+      setWorkshopError(language === 'TR' ? 'Saat formatı geçersiz veya bitiş saati başlangıçtan önce. Örnek: 09:00 - 17:00' : 'Invalid time format or end time is before start. Example: 09:00 - 17:00')
       return
     }
     if (Number(workshopForm.capacity) < 1) { setWorkshopError(language === 'TR' ? 'Kapasite en az 1 olmalıdır.' : 'Capacity must be at least 1.'); return }
@@ -63,8 +68,8 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     e.preventDefault()
     setWorkshopError('')
     if (!editWorkshopForm.name.trim()) { setWorkshopError(t('workshop_name_required', language)); return }
-    if (editWorkshopForm.time && !TIME_RANGE_RE.test(editWorkshopForm.time.trim())) {
-      setWorkshopError(language === 'TR' ? 'Saat formatı geçersiz. Örnek: 09:00 - 17:00' : 'Invalid time format. Example: 09:00 - 17:00')
+    if (editWorkshopForm.time && !validateTimeRange(editWorkshopForm.time.trim())) {
+      setWorkshopError(language === 'TR' ? 'Saat formatı geçersiz veya bitiş saati başlangıçtan önce. Örnek: 09:00 - 17:00' : 'Invalid time format or end time is before start. Example: 09:00 - 17:00')
       return
     }
     if (Number(editWorkshopForm.capacity) < 1) { setWorkshopError(language === 'TR' ? 'Kapasite en az 1 olmalıdır.' : 'Capacity must be at least 1.'); return }
@@ -80,7 +85,12 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
   }
 
   const handleDeleteWorkshop = (id) => {
-    onRequestConfirm(t('workshop_delete_confirm', language), async () => {
+    const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(id)).length
+    const base = t('workshop_delete_confirm', language)
+    const label = regCount > 0
+      ? `${base} (${regCount} ${language === 'TR' ? 'kayıtlı katılımcı silinecek' : 'registered participants will be removed'})`
+      : base
+    onRequestConfirm(label, async () => {
       setProcessingId(id)
       await deleteWorkshop(id)
       setProcessingId(null)
@@ -249,8 +259,14 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                     {expandedRegistrants === ws.id && (() => {
                       const regs = workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id))
                       const exportRegs = () => {
-                        const header = 'Ad,Soyad,E-posta'
-                        const rows = regs.map(r => `${r.user_name},${r.user_surname},${r.user_email}`)
+                        const header = language === 'TR'
+                          ? 'Ad,Soyad,E-posta,Kayıt Tarihi,Katıldı'
+                          : 'Name,Surname,Email,Registration Date,Attended'
+                        const rows = regs.map(r => {
+                          const regDate = r.created_at ? new Date(r.created_at).toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB') : ''
+                          const attended = r.attended ? (language === 'TR' ? 'Evet' : 'Yes') : (language === 'TR' ? 'Hayır' : 'No')
+                          return `${r.user_name},${r.user_surname},${r.user_email},${regDate},${attended}`
+                        })
                         const blob = new Blob(['﻿' + [header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' })
                         const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
                         a.download = `${ws.name.replace(/\s+/g, '_')}_kayitlar.csv`; a.click()

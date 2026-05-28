@@ -9,6 +9,8 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
   const { appointments, cities, workshops } = useApp()
   const inputClass = INPUT_BASE
   const [statsCity, setStatsCity] = useState('')
+  const [showAllStudios, setShowAllStudios] = useState(false)
+  const [showAllSlots, setShowAllSlots] = useState(false)
 
   const scopedAppointments = useMemo(() => {
     if (!isGlobal && adminCityId) return appointments.filter(a => String(a.city_id) === String(adminCityId))
@@ -23,7 +25,7 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
       const key = a.lab_name || '?'
       counts[key] = (counts[key] || 0) + 1
     })
-    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10)
+    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
   }, [scopedAppointments])
 
   const statusStats = useMemo(() => {
@@ -72,7 +74,7 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
       const key = a.time_slot || '?'
       counts[key] = (counts[key] || 0) + 1
     })
-    return Object.entries(counts).map(([slot, count]) => ({ slot, count })).sort((a, b) => b.count - a.count).slice(0, 8)
+    return Object.entries(counts).map(([slot, count]) => ({ slot, count })).sort((a, b) => b.count - a.count)
   }, [scopedAppointments])
 
   return (
@@ -106,10 +108,17 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
       </div>
 
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
-        <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_studio_usage', language)}</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{t('stats_studio_usage', language)}</h3>
+          {studioStats.length > 10 && (
+            <button onClick={() => setShowAllStudios(p => !p)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
+              {showAllStudios ? (language === 'TR' ? 'Daha az' : 'Show less') : `${language === 'TR' ? 'Tümünü gör' : 'Show all'} (${studioStats.length})`}
+            </button>
+          )}
+        </div>
         {studioStats.length === 0 ? <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p> : (
           <div className="space-y-2">
-            {studioStats.map((item, i) => {
+            {(showAllStudios ? studioStats : studioStats.slice(0, 10)).map((item, i) => {
               const pct = Math.round((item.count / studioStats[0].count) * 100)
               return (
                 <div key={item.name}>
@@ -196,10 +205,17 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
       </div>
 
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
-        <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_slots', language)}</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{t('stats_slots', language)}</h3>
+          {slotStats.length > 8 && (
+            <button onClick={() => setShowAllSlots(p => !p)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
+              {showAllSlots ? (language === 'TR' ? 'Daha az' : 'Show less') : `${language === 'TR' ? 'Tümünü gör' : 'Show all'} (${slotStats.length})`}
+            </button>
+          )}
+        </div>
         {slotStats.length === 0 ? <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p> : (
           <div className="space-y-2">
-            {slotStats.map(item => {
+            {(showAllSlots ? slotStats : slotStats.slice(0, 8)).map(item => {
               const pct = Math.round((item.count / slotStats[0].count) * 100)
               return (
                 <div key={item.slot}>
