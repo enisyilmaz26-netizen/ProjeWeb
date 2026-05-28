@@ -68,7 +68,7 @@ export default function MyProfileScreen() {
       a.id !== rescheduleTarget.id
     ).length
     const lab = labs.find(l => String(l.id) === String(rescheduleTarget.lab_id))
-    const maxCap = lab?.max_capacity || 1
+    const maxCap = lab?.capacity_per_slot || 1
     return { count, maxCap, isFull: count >= maxCap }
   }
 

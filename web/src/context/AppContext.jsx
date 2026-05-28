@@ -978,7 +978,7 @@ export function AppProvider({ children }) {
     const appt = appointments.find(a => a.id === appointmentId)
     if (!appt) return { success: false, error: 'err_generic' }
     const lab = labs.find(l => String(l.id) === String(appt.lab_id))
-    const maxCap = lab?.max_capacity || 1
+    const maxCap = lab?.capacity_per_slot || 1
     const { count } = await supabase.from('appointments')
       .select('id', { count: 'exact', head: true })
       .eq('lab_id', appt.lab_id).eq('date', newDate).eq('time_slot', newTimeSlot)
