@@ -1169,15 +1169,12 @@ export function AppProvider({ children }) {
 
   const saveCertificateTemplate = async (data) => {
     try {
-      const { id, ...fields } = data
-      if (id) {
-        const { error } = await supabase.from('certificate_templates').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id)
-        if (error) return { success: false, error: error.message }
-        setCertificateTemplates(prev => prev.map(t => t.id === id ? { ...t, ...fields, id } : t))
+      const { data: result, error } = await supabase.rpc('upsert_certificate_template', { p_data: data })
+      if (error) return { success: false, error: error.message }
+      if (data.id) {
+        setCertificateTemplates(prev => prev.map(t => t.id === data.id ? result : t))
       } else {
-        const { data: inserted, error } = await supabase.from('certificate_templates').insert([fields]).select().single()
-        if (error) return { success: false, error: error.message }
-        setCertificateTemplates(prev => [...prev, inserted])
+        setCertificateTemplates(prev => [...prev, result])
       }
       return { success: true }
     } catch (err) {
