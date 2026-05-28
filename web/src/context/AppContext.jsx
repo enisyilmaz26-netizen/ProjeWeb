@@ -984,9 +984,11 @@ export function AppProvider({ children }) {
       .eq('lab_id', appt.lab_id).eq('date', newDate).eq('time_slot', newTimeSlot)
       .in('status', ['PENDING', 'APPROVED']).neq('id', appointmentId)
     if (count >= maxCap) return { success: false, error: language === 'TR' ? 'Bu slot dolu.' : 'This slot is full.' }
-    const { error } = await supabase.from('appointments').update({ date: newDate, time_slot: newTimeSlot }).eq('id', appointmentId)
+    const updates = { date: newDate, time_slot: newTimeSlot }
+    if (appt.status === 'APPROVED') updates.status = 'PENDING'
+    const { error } = await supabase.from('appointments').update(updates).eq('id', appointmentId)
     if (error) return { success: false, error: error.message }
-    setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, date: newDate, time_slot: newTimeSlot } : a))
+    setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, ...updates } : a))
     return { success: true }
   }
 

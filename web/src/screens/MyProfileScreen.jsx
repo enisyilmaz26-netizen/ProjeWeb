@@ -11,6 +11,7 @@ import { isTurkishHoliday, isSunday } from '../lib/holidays'
 export default function MyProfileScreen() {
   const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities, waitlist, removeFromWaitlist, uploadAvatar, rescheduleAppointment, timeSlots, labs, closedDays } = useApp()
   const [apptViewMode, setApptViewMode] = useState('list')
+  const [calendarSelectedDay, setCalendarSelectedDay] = useState('')
 
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelType, setCancelType] = useState('request') // 'direct' | 'request'
@@ -394,7 +395,37 @@ export default function MyProfileScreen() {
 
       {apptViewMode === 'calendar' && (
         <div className="mb-4">
-          <CalendarView appointments={userAppointments} language={language} />
+          <CalendarView
+            appointments={userAppointments}
+            language={language}
+            selectedDate={calendarSelectedDay}
+            onDayClick={(date) => setCalendarSelectedDay(prev => prev === date ? '' : date)}
+          />
+          {calendarSelectedDay && (() => {
+            const dayAppts = userAppointments.filter(a => a.date === calendarSelectedDay)
+            if (dayAppts.length === 0) return (
+              <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-3">
+                {language === 'TR' ? 'Bu tarihte randevu yok.' : 'No appointments on this date.'}
+              </p>
+            )
+            return (
+              <div className="mt-3 space-y-2">
+                {dayAppts.map(appt => (
+                  <AppointmentCard
+                    key={appt.id}
+                    appt={appt}
+                    language={language}
+                    canDirectCancel={canDirectCancel(appt)}
+                    canRequestCancel={canRequestCancel(appt)}
+                    onDirectCancelClick={() => openCancelModal(appt.id, 'direct')}
+                    onRequestCancelClick={() => openCancelModal(appt.id, 'request')}
+                    canReschedule={['PENDING', 'APPROVED'].includes(appt.status) && appt.date >= todayStr}
+                    onRescheduleClick={() => { setRescheduleTarget(appt); setRescheduleDate(''); setRescheduleSlot(''); setRescheduleError(''); setShowReschedule(true) }}
+                  />
+                ))}
+              </div>
+            )
+          })()}
         </div>
       )}
 
@@ -413,7 +444,7 @@ export default function MyProfileScreen() {
               canRequestCancel={canRequestCancel(appt)}
               onDirectCancelClick={() => openCancelModal(appt.id, 'direct')}
               onRequestCancelClick={() => openCancelModal(appt.id, 'request')}
-              canReschedule={appt.status === 'PENDING' && appt.date >= todayStr}
+              canReschedule={['PENDING', 'APPROVED'].includes(appt.status) && appt.date >= todayStr}
               onRescheduleClick={() => { setRescheduleTarget(appt); setRescheduleDate(''); setRescheduleSlot(''); setRescheduleError(''); setShowReschedule(true) }}
             />
           ))}
