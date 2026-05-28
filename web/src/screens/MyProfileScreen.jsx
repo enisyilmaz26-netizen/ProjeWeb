@@ -59,11 +59,11 @@ export default function MyProfileScreen() {
 
   const todayStr = new Date().toISOString().split('T')[0]
 
-  const getRescheduleSlotAvailability = (date, slotLabel) => {
+  const getRescheduleSlotAvailability = (date, timeRange) => {
     if (!rescheduleTarget) return { count: 0, maxCap: 1, isFull: false }
     const count = appointments.filter(a =>
       String(a.lab_id) === String(rescheduleTarget.lab_id) &&
-      a.date === date && a.time_slot === slotLabel &&
+      a.date === date && a.time_slot === timeRange &&
       ['PENDING', 'APPROVED'].includes(a.status) &&
       a.id !== rescheduleTarget.id
     ).length
@@ -532,20 +532,20 @@ export default function MyProfileScreen() {
                   <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2">{language === 'TR' ? '2. Saat Seçin' : '2. Pick a Time'}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {citySlots.map(s => {
-                      const { count, maxCap, isFull } = getRescheduleSlotAvailability(rescheduleDate, s.slot_label)
-                      const isSelected = rescheduleSlot === s.slot_label
+                      const { count, maxCap, isFull } = getRescheduleSlotAvailability(rescheduleDate, s.time_range)
+                      const isSelected = rescheduleSlot === s.time_range
                       return (
                         <button
                           key={s.id}
                           disabled={isFull}
-                          onClick={() => setRescheduleSlot(s.slot_label)}
+                          onClick={() => setRescheduleSlot(s.time_range)}
                           className={`py-2 px-3 rounded-xl text-xs border transition text-left ${
                             isFull ? 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 text-gray-400' :
                             isSelected ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-transparent font-semibold' :
                             'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-[#1565C0] dark:hover:border-[#7DD4FC]'
                           }`}
                         >
-                          {s.slot_label}
+                          {s.time_range}
                           <span className="block text-[10px] mt-0.5 opacity-70">{maxCap - count}/{maxCap} {language === 'TR' ? 'boş' : 'free'}</span>
                         </button>
                       )
