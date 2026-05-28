@@ -284,6 +284,8 @@ export function AppProvider({ children }) {
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { error } = await supabase.from('users').update({ password_hash: hashed }).eq('id', userId)
     if (error) return { success: false, error: error.message }
+    const user = users.find(u => u.id === userId)
+    if (user) logAudit('RESET_USER_PASSWORD', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
     return { success: true }
   }
 
@@ -378,6 +380,7 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id)
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'COMPLETED' } : a))
+    if (appt) logAudit('COMPLETE_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     if (appt) {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       if (cityName) {
@@ -398,6 +401,7 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id)
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'APPROVED' } : a))
+    if (appt) logAudit('APPROVE_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     if (appt) {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       if (cityName) {
@@ -418,6 +422,7 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id)
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
+    if (appt) logAudit('CANCEL_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     if (appt) {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       if (cityName) {
@@ -429,6 +434,32 @@ export function AppProvider({ children }) {
         const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
         if (nd) setNotifications(prev => [nd, ...prev])
       }
+    }
+    return { success: true }
+  }
+
+  const cancelOwnAppointment = async (id) => {
+    const appt = appointments.find(a => a.id === id)
+    if (!appt || appt.user_email !== loggedInUser?.email || appt.status !== 'PENDING') {
+      return { success: false, error: 'err_generic' }
+    }
+    // DB-side guard: only updates if user_email and PENDING status both match
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'CANCELLED' })
+      .eq('id', id)
+      .eq('user_email', loggedInUser.email)
+      .eq('status', 'PENDING')
+    if (error) return { success: false, error: error.message }
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
+    const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
+    const userName = `${loggedInUser.name} ${loggedInUser.surname}`
+    if (cityName) {
+      await supabase.from('notifications').insert([{
+        title: `[${cityName}] Randevu İptal Edildi`,
+        message: `${userName} adlı öğretmen, ${appt.lab_name || ''} için ${appt.date} tarihli bekleyen randevusunu iptal etti.`,
+        type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
+      }])
     }
     return { success: true }
   }
@@ -457,12 +488,28 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  // Fire-and-forget audit logger — never blocks the main action
+  const logAudit = (action, targetType, targetId, details) => {
+    const actor = loggedInAdmin
+    if (!actor) return
+    supabase.from('audit_logs').insert([{
+      actor_email: actor.email,
+      actor_name: actor.name,
+      actor_role: actor.role || 'CITY',
+      action,
+      target_type: targetType || null,
+      target_id: targetId || null,
+      details: details || null,
+    }]).then()
+  }
+
   // USER APPROVAL ACTIONS
   const approveUser = async (userId) => {
     const user = users.find(u => u.id === userId)
     const { error } = await supabase.from('users').update({ is_approved: true }).eq('id', userId)
     if (error) return { success: false, error: error.message }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_approved: true } : u))
+    if (user) logAudit('APPROVE_USER', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
     if (user) {
       const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name
       if (cityName) {
@@ -483,6 +530,7 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('users').delete().eq('id', userId)
     if (error) return { success: false, error: error.message }
     setUsers(prev => prev.filter(u => u.id !== userId))
+    if (user) logAudit('REVOKE_USER', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
     if (user) {
       const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name
       if (cityName) {
@@ -661,13 +709,16 @@ export function AppProvider({ children }) {
     }]).select('id,name,email,role,city_id,phone').single()
     if (error) return { success: false, error: error.message }
     setAdmins(prev => [...prev, data].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
+    logAudit('ADD_ADMIN', 'admin', data.id, `${name} (${email}) — ${role || 'CITY'}`)
     return { success: true }
   }
 
   const deleteAdmin = async (adminId) => {
+    const target = admins.find(a => a.id === adminId)
     const { error } = await supabase.from('admins').delete().eq('id', adminId)
     if (error) return { success: false, error: error.message }
     setAdmins(prev => prev.filter(a => a.id !== adminId))
+    if (target) logAudit('DELETE_ADMIN', 'admin', adminId, `${target.name} (${target.email})`)
     return { success: true }
   }
 
@@ -681,10 +732,12 @@ export function AppProvider({ children }) {
   }
 
   const resetAdminPasswordByGlobal = async (adminId, _email, newPassword) => {
+    const target = admins.find(a => a.id === adminId)
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { error } = await supabase.from('admins').update({ password_hash: hashed }).eq('id', adminId)
     if (error) return { success: false, error: error.message }
+    if (target) logAudit('RESET_ADMIN_PASSWORD', 'admin', adminId, `${target.name} (${target.email})`)
     return { success: true }
   }
 
@@ -724,7 +777,7 @@ export function AppProvider({ children }) {
     loadAllData,
     loginUser, loginAdmin, registerUser, addUserByAdmin, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout,
     toggleLanguage, toggleDarkMode,
-    submitAppointment, approveAppointment, cancelAppointment, submitCancellationRequest, markAppointmentCompleted,
+    submitAppointment, approveAppointment, cancelAppointment, cancelOwnAppointment, submitCancellationRequest, markAppointmentCompleted,
     approveUser, revokeUser,
     markNotificationsRead, clearNotifications, createNotification,
     addTimeSlot, removeTimeSlot,

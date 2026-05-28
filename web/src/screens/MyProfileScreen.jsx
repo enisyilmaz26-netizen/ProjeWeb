@@ -6,9 +6,10 @@ import PasswordInput from '../components/PasswordInput'
 import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react'
 
 export default function MyProfileScreen() {
-  const { loggedInUser, appointments, submitCancellationRequest, updateUserProfile, changePassword, language } = useApp()
+  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language } = useApp()
 
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancelType, setCancelType] = useState('request') // 'direct' | 'request'
   const [cancelTargetId, setCancelTargetId] = useState(null)
   const [cancelReason, setCancelReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -53,13 +54,12 @@ export default function MyProfileScreen() {
     [userAppointments, todayStr]
   )
 
-  const canRequestCancel = (appt) => {
-    if (appt.status === 'CANCELLED' || appt.status === 'CANCELLATION_REQUESTED') return false
-    return appt.date >= todayStr
-  }
+  const canDirectCancel = (appt) => appt.status === 'PENDING' && appt.date >= todayStr
+  const canRequestCancel = (appt) => appt.status === 'APPROVED' && appt.date >= todayStr
 
-  const openCancelModal = (id) => {
+  const openCancelModal = (id, type) => {
     setCancelTargetId(id)
+    setCancelType(type)
     setCancelReason('')
     setShowCancelModal(true)
   }
@@ -67,13 +67,18 @@ export default function MyProfileScreen() {
   const handleSubmitCancel = async () => {
     if (!cancelTargetId) return
     setSubmitting(true)
-    const result = await submitCancellationRequest(cancelTargetId, cancelReason)
+    let result
+    if (cancelType === 'direct') {
+      result = await cancelOwnAppointment(cancelTargetId)
+    } else {
+      result = await submitCancellationRequest(cancelTargetId, cancelReason)
+    }
     setSubmitting(false)
     if (result.success) {
       setShowCancelModal(false)
       setCancelTargetId(null)
       setCancelReason('')
-      setSuccessMsg(t('cancellation_submitted', language))
+      setSuccessMsg(t(cancelType === 'direct' ? 'appointment_cancelled' : 'cancellation_submitted', language))
       setTimeout(() => setSuccessMsg(''), 3000)
     }
   }
@@ -285,8 +290,10 @@ export default function MyProfileScreen() {
               key={appt.id}
               appt={appt}
               language={language}
-              canCancel={canRequestCancel(appt)}
-              onCancelClick={() => openCancelModal(appt.id)}
+              canDirectCancel={canDirectCancel(appt)}
+              canRequestCancel={canRequestCancel(appt)}
+              onDirectCancelClick={() => openCancelModal(appt.id, 'direct')}
+              onRequestCancelClick={() => openCancelModal(appt.id, 'request')}
             />
           ))}
         </div>
@@ -305,7 +312,7 @@ export default function MyProfileScreen() {
           {showPast && (
             <div className="space-y-3 mb-4 opacity-75">
               {pastAppointments.map(appt => (
-                <AppointmentCard key={appt.id} appt={appt} language={language} canCancel={false} />
+                <AppointmentCard key={appt.id} appt={appt} language={language} />
               ))}
             </div>
           )}
@@ -317,25 +324,29 @@ export default function MyProfileScreen() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">
-              {t('cancel_modal_title', language)}
+              {cancelType === 'direct' ? t('action_cancel', language) : t('cancel_modal_title', language)}
             </h3>
             <p className="text-gray-500 dark:text-gray-400 text-xs mb-4">
-              {t('cancel_modal_subtitle', language)}
+              {cancelType === 'direct'
+                ? t('confirm_cancel_appt', language)
+                : t('cancel_modal_subtitle', language)}
             </p>
-            <textarea
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] text-sm resize-none mb-4"
-              rows={4}
-              placeholder={t('cancel_reason_placeholder', language)}
-              value={cancelReason}
-              onChange={e => setCancelReason(e.target.value)}
-            />
+            {cancelType === 'request' && (
+              <textarea
+                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] text-sm resize-none mb-4"
+                rows={4}
+                placeholder={t('cancel_reason_placeholder', language)}
+                value={cancelReason}
+                onChange={e => setCancelReason(e.target.value)}
+              />
+            )}
             <div className="flex gap-2">
               <button
                 onClick={handleSubmitCancel}
                 disabled={submitting}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition disabled:opacity-60"
               >
-                {submitting ? '...' : t('btn_submit', language)}
+                {submitting ? '...' : t('action_cancel', language)}
               </button>
               <button
                 onClick={() => setShowCancelModal(false)}
@@ -351,7 +362,7 @@ export default function MyProfileScreen() {
   )
 }
 
-function AppointmentCard({ appt, language, canCancel, onCancelClick }) {
+function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, onDirectCancelClick, onRequestCancelClick }) {
   return (
     <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -372,10 +383,18 @@ function AppointmentCard({ appt, language, canCancel, onCancelClick }) {
           {t('lbl_cancel_reason', language)}: {appt.note}
         </p>
       )}
-      {canCancel && (
+      {canDirectCancel && (
         <button
-          onClick={onCancelClick}
+          onClick={onDirectCancelClick}
           className="w-full py-2 border border-red-400 text-red-600 dark:text-red-400 dark:border-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+        >
+          {t('action_cancel', language)}
+        </button>
+      )}
+      {canRequestCancel && (
+        <button
+          onClick={onRequestCancelClick}
+          className="w-full py-2 border border-orange-400 text-orange-600 dark:text-orange-400 dark:border-orange-600 text-xs font-semibold rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 transition"
         >
           {t('btn_request_cancellation', language)}
         </button>

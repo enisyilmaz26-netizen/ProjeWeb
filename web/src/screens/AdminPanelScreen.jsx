@@ -14,6 +14,7 @@ import UserApprovalsTab from './admin/UserApprovalsTab'
 import NotificationsTab from './admin/NotificationsTab'
 import StatsTab from './admin/StatsTab'
 import AdminManagementTab from './admin/AdminManagementTab'
+import AuditTab from './admin/AuditTab'
 
 export default function AdminPanelScreen() {
   const {
@@ -83,6 +84,7 @@ export default function AdminPanelScreen() {
     { key: 'notifications', label: t('tab_send_notif', language) },
     { key: 'stats', label: t('tab_stats', language) },
     ...(isGlobal ? [{ key: 'admins', label: t('tab_admins', language) }] : []),
+    ...(isGlobal ? [{ key: 'audit', label: t('tab_audit', language) }] : []),
   ]
 
   return (
@@ -188,6 +190,7 @@ export default function AdminPanelScreen() {
       {activeTab === 'notifications' && <NotificationsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
       {activeTab === 'stats' && <StatsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
       {activeTab === 'admins' && isGlobal && <AdminManagementTab language={language} loggedInAdmin={loggedInAdmin} onRequestConfirm={onRequestConfirm} />}
+      {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
 
       <ConfirmModal confirmModal={confirmModal} onClose={() => setConfirmModal(null)} language={language} />
     </div>

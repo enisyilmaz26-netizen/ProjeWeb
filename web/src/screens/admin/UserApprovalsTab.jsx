@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, translations } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
+import { PAGE_SIZE } from '../../lib/adminHelpers'
 import UserCard from '../../components/admin/UserCard'
 import ResetPasswordModal from '../../components/admin/ResetPasswordModal'
 import PasswordInput from '../../components/PasswordInput'
@@ -13,6 +14,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [userSearch, setUserSearch] = useState('')
   const [userCityFilter, setUserCityFilter] = useState('')
   const [processingId, setProcessingId] = useState(null)
+  const [visibleApprovedCount, setVisibleApprovedCount] = useState(PAGE_SIZE)
 
   const [showAddUser, setShowAddUser] = useState(false)
   const [addUserForm, setAddUserForm] = useState({ name: '', surname: '', email: '', password: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
@@ -89,7 +91,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       <div className="mb-4 flex flex-col gap-2">
         <div className="flex items-center justify-between">
           {isGlobal ? (
-            <select className={`${inputClass} flex-1 mr-2`} value={userCityFilter} onChange={e => setUserCityFilter(e.target.value)}>
+            <select className={`${inputClass} flex-1 mr-2`} value={userCityFilter} onChange={e => { setUserCityFilter(e.target.value); setVisibleApprovedCount(PAGE_SIZE) }}>
               <option value="">{t('filter_all_provinces', language)}</option>
               {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -98,7 +100,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
             + {language === 'TR' ? 'Üye Ekle' : 'Add Member'}
           </button>
         </div>
-        <input type="text" placeholder={t('search_user_placeholder', language)} className={`${inputClass} w-full`} value={userSearch} onChange={e => setUserSearch(e.target.value)} />
+        <input type="text" placeholder={t('search_user_placeholder', language)} className={`${inputClass} w-full`} value={userSearch} onChange={e => { setUserSearch(e.target.value); setVisibleApprovedCount(PAGE_SIZE) }} />
       </div>
 
       {addUserSuccess && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{addUserSuccess}</div>}
@@ -176,15 +178,30 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
         </div>
       )}
 
-      <h3 className="font-bold text-green-600 dark:text-green-400 text-sm mb-2">{t('approved_users_title', language)} ({approvedUsers.length})</h3>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-bold text-green-600 dark:text-green-400 text-sm">{t('approved_users_title', language)} ({approvedUsers.length})</h3>
+        {approvedUsers.length > visibleApprovedCount && (
+          <span className="text-xs text-gray-400 dark:text-gray-500">{visibleApprovedCount} {t('shown', language)}</span>
+        )}
+      </div>
       {approvedUsers.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm">{t('no_approved_users', language)}</div>
       ) : (
-        <div className="space-y-3">
-          {approvedUsers.map(user => (
-            <UserCard key={user.id} user={user} language={language} processingId={processingId} onApprove={handleApproveUser} onRevoke={handleRevokeUser} onResetPassword={() => openResetPw(user)} showRevoke />
-          ))}
-        </div>
+        <>
+          <div className="space-y-3">
+            {approvedUsers.slice(0, visibleApprovedCount).map(user => (
+              <UserCard key={user.id} user={user} language={language} processingId={processingId} onApprove={handleApproveUser} onRevoke={handleRevokeUser} onResetPassword={() => openResetPw(user)} showRevoke />
+            ))}
+          </div>
+          {approvedUsers.length > visibleApprovedCount && (
+            <button
+              onClick={() => setVisibleApprovedCount(c => c + PAGE_SIZE)}
+              className="w-full mt-3 py-3 border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 text-[#1565C0] dark:text-[#7DD4FC] rounded-xl text-sm font-medium hover:bg-[#1565C0]/5 transition"
+            >
+              {t('show_more', language)} ({approvedUsers.length - visibleApprovedCount} {t('remaining', language)})
+            </button>
+          )}
+        </>
       )}
 
       <ResetPasswordModal
