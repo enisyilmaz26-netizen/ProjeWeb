@@ -1,13 +1,17 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate } from '../lib/languages'
-import { BookOpen, Calendar, Clock, Users, CheckCircle2 } from 'lucide-react'
+import { BookOpen, Calendar, Clock, Users, CheckCircle2, Award } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
+import CertificateModal from '../components/CertificateModal'
 
 export default function WorkshopsScreen() {
-  const { workshops, loggedInUser, cities, language, workshopRegistrations, workshopRegistrationsAvailable, registerForWorkshop, unregisterFromWorkshop } = useApp()
+  const { workshops, loggedInUser, cities, language, workshopRegistrations, workshopRegistrationsAvailable, registerForWorkshop, unregisterFromWorkshop, certificateTemplates } = useApp()
   const [registering, setRegistering] = useState(null)
   const [regMsg, setRegMsg] = useState('')
+  const regTimerRef = useRef(null)
+  useEffect(() => () => clearTimeout(regTimerRef.current), [])
+  const [certModal, setCertModal] = useState(null) // { ws, template }
 
   const userCityId = loggedInUser?.city_id
   const userCity = cities.find(c => String(c.id) === String(userCityId))
@@ -32,12 +36,12 @@ export default function WorkshopsScreen() {
     setRegistering(null)
     if (result.success) {
       setRegMsg(t('workshop_register_success', language))
-      setTimeout(() => setRegMsg(''), 3000)
+      clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 3000)
     } else {
       const knownKeys = ['err_workshop_full', 'err_already_registered', 'err_generic']
       const key = knownKeys.includes(result.error) ? result.error : 'err_generic'
       setRegMsg(t(key, language))
-      setTimeout(() => setRegMsg(''), 4000)
+      clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 4000)
     }
   }
 
@@ -47,15 +51,24 @@ export default function WorkshopsScreen() {
     setRegistering(null)
     if (result.success) {
       setRegMsg(t('workshop_unregister_success', language))
-      setTimeout(() => setRegMsg(''), 3000)
+      clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 3000)
     }
+  }
+
+  const openCertificate = (ws) => {
+    const template = certificateTemplates.find(t =>
+      String(t.city_id) === String(ws.city_id)
+    ) || certificateTemplates.find(t => !t.city_id) || null
+    setCertModal({ ws, template })
   }
 
   const WorkshopCard = ({ ws }) => {
     const city = cities.find(c => String(c.id) === String(ws.city_id))
     const isPast = ws.date && ws.date < today
     const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id)).length
-    const isRegistered = loggedInUser && workshopRegistrations.some(r => String(r.workshop_id) === String(ws.id) && String(r.user_id) === String(loggedInUser.id))
+    const userReg = loggedInUser && workshopRegistrations.find(r => String(r.workshop_id) === String(ws.id) && String(r.user_id) === String(loggedInUser.id))
+    const isRegistered = !!userReg
+    const hasAttended = userReg?.attended === true
     const isFull = ws.capacity && regCount >= ws.capacity && !isRegistered
     return (
       <div className={`bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 border-l-4 ${isPast ? 'border-gray-300 dark:border-gray-600 opacity-70' : 'border-[#1565C0] dark:border-[#7DD4FC]'}`}>
@@ -96,6 +109,17 @@ export default function WorkshopsScreen() {
                 </span>
               )}
             </div>
+            {isPast && hasAttended && (
+              <div className="mt-3">
+                <button
+                  onClick={() => openCertificate(ws)}
+                  className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5"
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  {language === 'TR' ? 'Sertifikamı Görüntüle' : 'View My Certificate'}
+                </button>
+              </div>
+            )}
             {!isPast && workshopRegistrationsAvailable && (
               <div className="mt-3">
                 {isRegistered ? (
@@ -129,6 +153,15 @@ export default function WorkshopsScreen() {
 
   return (
     <div className="px-4 py-4 space-y-4">
+      {certModal && (
+        <CertificateModal
+          ws={certModal.ws}
+          template={certModal.template}
+          user={loggedInUser}
+          language={language}
+          onClose={() => setCertModal(null)}
+        />
+      )}
       <div>
         <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">
           {t('tab_workshops', language)}

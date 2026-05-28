@@ -61,6 +61,7 @@ export function AppProvider({ children }) {
   const [timeSlots, setTimeSlots] = useState([])
   const [users, setUsers] = useState([])
   const [workshops, setWorkshops] = useState([])
+  const [certificateTemplates, setCertificateTemplates] = useState([])
   const [admins, setAdmins] = useState([])
   const [workshopRegistrations, setWorkshopRegistrations] = useState([])
   const [workshopRegistrationsAvailable, setWorkshopRegistrationsAvailable] = useState(false)
@@ -161,6 +162,8 @@ export function AppProvider({ children }) {
       if (convResult.data) { setConversations(convResult.data); setMessagesAvailable(true) }
       const closedResult = await supabase.from('closed_days').select('*').order('date')
       if (closedResult.data) setClosedDays(closedResult.data)
+      const certResult = await supabase.from('certificate_templates').select('*')
+      if (certResult.data) setCertificateTemplates(certResult.data)
       setLoadError(false)
     } catch (err) {
       console.error('[loadAllData] failed:', err)
@@ -1163,10 +1166,28 @@ export function AppProvider({ children }) {
     }])
   }
 
+  const saveCertificateTemplate = async (data) => {
+    try {
+      const { id, ...fields } = data
+      if (id) {
+        const { error } = await supabase.from('certificate_templates').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id)
+        if (error) return { success: false, error: error.message }
+        setCertificateTemplates(prev => prev.map(t => t.id === id ? { ...t, ...fields, id } : t))
+      } else {
+        const { data: inserted, error } = await supabase.from('certificate_templates').insert([fields]).select().single()
+        if (error) return { success: false, error: error.message }
+        setCertificateTemplates(prev => [...prev, inserted])
+      }
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  }
+
   const value = {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
-    cities, labs, appointments, notifications: visibleNotifications, timeSlots, users, workshops, admins, workshopRegistrations, workshopRegistrationsAvailable, conversations, messagesAvailable, closedDays,
+    cities, labs, appointments, notifications: visibleNotifications, timeSlots, users, workshops, admins, workshopRegistrations, workshopRegistrationsAvailable, conversations, messagesAvailable, closedDays, certificateTemplates,
     loading, loadError,
     idleWarning, dismissIdleWarning,
     loadAllData,
@@ -1184,6 +1205,7 @@ export function AppProvider({ children }) {
     getOrCreateConversation, loadConversationMessages, sendMessage, markConversationRead,
     addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
     waitlist, loadWaitlist, addToWaitlist, removeFromWaitlist, notifyNextOnWaitlist,
+    saveCertificateTemplate,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

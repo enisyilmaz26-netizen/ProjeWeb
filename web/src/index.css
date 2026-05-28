@@ -47,4 +47,16 @@
   .bg-green-500 { background-color: #22c55e !important; print-color-adjust: exact; }
   /* Page breaks */
   .bg-white { page-break-inside: avoid; }
+  /* Certificate print mode: hide everything, show only #certificate-print */
+  body.printing-certificate > * { visibility: hidden !important; }
+  body.printing-certificate #certificate-print,
+  body.printing-certificate #certificate-print * { visibility: visible !important; }
+  body.printing-certificate #certificate-print {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important;
+    background: white !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }

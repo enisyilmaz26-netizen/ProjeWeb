@@ -18,6 +18,7 @@ import AdminManagementTab from './admin/AdminManagementTab'
 import AuditTab from './admin/AuditTab'
 import ClosedDaysTab from './admin/ClosedDaysTab'
 import AdminMessagesTab from './admin/AdminMessagesTab'
+import CertificatesTab from './admin/CertificatesTab'
 
 export default function AdminPanelScreen() {
   const {
@@ -132,6 +133,7 @@ export default function AdminPanelScreen() {
     { key: 'notifications', label: t('tab_send_notif', language) },
     { key: 'stats', label: t('tab_stats', language) },
     ...(messagesAvailable ? [{ key: 'messages', label: t('tab_messages', language), unread: adminCityConvUnread }] : []),
+    { key: 'certificates', label: language === 'TR' ? 'Sertifika' : 'Certificate' },
     ...(isGlobal ? [{ key: 'admins', label: t('tab_admins', language) }] : []),
     ...(isGlobal ? [{ key: 'audit', label: t('tab_audit', language) }] : []),
   ], [language, messagesAvailable, adminCityConvUnread, isGlobal])
@@ -297,6 +299,7 @@ export default function AdminPanelScreen() {
       {activeTab === 'stats' && <StatsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
       {activeTab === 'closed_days' && <ClosedDaysTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
       {activeTab === 'messages' && messagesAvailable && <AdminMessagesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+      {activeTab === 'certificates' && <CertificatesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
       {activeTab === 'admins' && isGlobal && <AdminManagementTab language={language} loggedInAdmin={loggedInAdmin} onRequestConfirm={onRequestConfirm} />}
       {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
 
