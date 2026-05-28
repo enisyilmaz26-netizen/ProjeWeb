@@ -31,7 +31,7 @@ export default function ForcePasswordChange() {
     // On success: must_change_password becomes false → this component unmounts automatically
   }
 
-  const reqs = passwordRequirements(form.newPw)
+  const reqs = passwordRequirements.map(r => ({ ...r, met: r.met(form.newPw) }))
 
   return (
     <div className="min-h-screen bg-[#EFF8FF] dark:bg-[#060E26] flex items-center justify-center px-4">
@@ -88,7 +88,7 @@ export default function ForcePasswordChange() {
               {reqs.map(r => (
                 <li key={r.key} className={`flex items-center gap-1.5 text-xs ${r.met ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                   {r.met ? <Check className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
-                  {r.label[language]}
+                  {t(r.key, language)}
                 </li>
               ))}
             </ul>
