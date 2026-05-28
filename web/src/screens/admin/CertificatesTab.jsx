@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
-import { Award, Eye, Save } from 'lucide-react'
+import { Award, Eye, Save, Upload, X } from 'lucide-react'
 
 const DEFAULT_BODY_TR = '"{{atolye}}" başlıklı atölyeye {{tarih}} tarihinde katılmış olduğunuz tescil edilmiştir.'
 const DEFAULT_BODY_EN = 'This is to certify that you have successfully attended the "{{atolye}}" workshop on {{tarih}}.'
@@ -35,7 +35,21 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
   const { certificateTemplates, saveCertificateTemplate, cities } = useApp()
   const inputClass = INPUT_BASE
   const saveTimerRef = useRef(null)
+  const fileInputRef = useRef(null)
   useEffect(() => () => clearTimeout(saveTimerRef.current), [])
+
+  const handleLogoFile = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      setSaveError(language === 'TR' ? 'Logo dosyası 2 MB\'dan büyük olamaz.' : 'Logo file must be under 2 MB.')
+      e.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (ev) => set('logo_url', ev.target.result)
+    reader.readAsDataURL(file)
+  }
 
   const existingTemplate = certificateTemplates.find(tmpl =>
     isGlobal ? !tmpl.city_id : String(tmpl.city_id) === String(adminCityId)
@@ -74,8 +88,7 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
-  const handleSave = async (e) => {
-    e.preventDefault()
+  const handleSave = async () => {
     setSaveError('')
     setSaving(true)
     const payload = {
@@ -170,19 +183,31 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
         </div>
       ) : (
         /* ── Form ── */
-        <form onSubmit={handleSave} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 space-y-3">
+        <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 space-y-3">
 
           {/* Logo */}
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-              {language === 'TR' ? 'Logo URL (isteğe bağlı)' : 'Logo URL (optional)'}
+              {language === 'TR' ? 'Logo (isteğe bağlı)' : 'Logo (optional)'}
             </label>
-            <input className={`w-full ${inputClass}`} value={form.logo_url} onChange={e => set('logo_url', e.target.value)}
-              placeholder="https://..." />
+            <div className="flex gap-2">
+              <input className={`flex-1 ${inputClass}`} value={form.logo_url.startsWith('data:') ? '' : form.logo_url}
+                onChange={e => set('logo_url', e.target.value)} placeholder="https://..." />
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                <Upload className="w-3.5 h-3.5" />
+                {language === 'TR' ? 'Dosya Seç' : 'Choose File'}
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoFile} />
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">{language === 'TR' ? 'Maks. 2 MB · URL veya dosya yükle' : 'Max 2 MB · Enter URL or upload file'}</p>
             {form.logo_url && (
               <div className="mt-1.5 flex items-center gap-2">
-                <img src={form.logo_url} alt="logo önizleme" className="h-8 object-contain rounded border border-gray-200" onError={e => { e.target.style.display='none' }} />
-                <span className="text-xs text-gray-400">{language === 'TR' ? 'önizleme' : 'preview'}</span>
+                <img src={form.logo_url} alt="logo" className="h-8 object-contain rounded border border-gray-200" onError={e => { e.target.style.display='none' }} />
+                <button type="button" onClick={() => { set('logo_url', ''); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                  className="text-gray-400 hover:text-red-500 transition">
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
           </div>
@@ -255,12 +280,12 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
             <input className={`w-full ${inputClass}`} value={form.footer_text} onChange={e => set('footer_text', e.target.value)} />
           </div>
 
-          <button type="submit" disabled={saving}
+          <button type="button" onClick={handleSave} disabled={saving}
             className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60 flex items-center justify-center gap-2">
             <Save className="w-4 h-4" />
             {saving ? '...' : (language === 'TR' ? 'Şablonu Kaydet' : 'Save Template')}
           </button>
-        </form>
+        </div>
       )}
     </div>
   )
