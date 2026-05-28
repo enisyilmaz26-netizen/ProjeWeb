@@ -173,7 +173,7 @@ export default function AdminPanelScreen() {
       </div>
 
       {/* Tab Bar */}
-      <div role="tablist" className="flex bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-4 overflow-x-auto gap-1 scrollbar-hide">
+      <div role="tablist" className="flex flex-wrap bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-4 gap-1">
         {tabs.map(tab => (
           <button
             key={tab.key}
