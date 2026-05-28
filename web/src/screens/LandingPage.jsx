@@ -81,7 +81,10 @@ export default function LandingPage({ onLoginClick }) {
   ]
 
   const cityLabCount = (cityId) => labs.filter(l => String(l.city_id) === String(cityId)).length
-  const cityStudioCount = (cityName) => cityName === 'Ankara' ? 2 : 1
+  const cityStudioCount = (cityId) => {
+    const locations = [...new Set(labs.filter(l => String(l.city_id) === String(cityId) && l.location).map(l => l.location))]
+    return locations.length || 1
+  }
   const cityWorkshopCount = (cityId) => workshops.filter(w => String(w.city_id) === String(cityId)).length
 
   return (
@@ -345,7 +348,7 @@ export default function LandingPage({ onLoginClick }) {
                 </div>
                 <p className="font-bold text-gray-900 dark:text-white text-sm">{city.name}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
-                  {cityStudioCount(city.name)} {lang === 'TR' ? 'stüdyo' : 'studio'}
+                  {cityStudioCount(city.id)} {lang === 'TR' ? 'stüdyo' : 'studio'}
                   {cityLabCount(city.id) > 0 && ` · ${cityLabCount(city.id)} ${lang === 'TR' ? 'alan' : 'area'}`}
                   {cityWorkshopCount(city.id) > 0 && ` · ${cityWorkshopCount(city.id)} ${lang === 'TR' ? 'atölye' : 'workshop'}`}
                 </p>

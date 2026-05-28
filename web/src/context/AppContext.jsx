@@ -763,6 +763,18 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('admins').update({ password_hash: hashed }).eq('id', adminId)
     if (error) return { success: false, error: error.message }
     if (target) logAudit('RESET_ADMIN_PASSWORD', 'admin', adminId, `${target.name} (${target.email})`)
+    if (target) {
+      const cityObj = target.city_id ? cities.find(c => String(c.id) === String(target.city_id)) : null
+      const prefix = cityObj ? `[${cityObj.name}] ` : ''
+      const { data: nd } = await supabase.from('notifications').insert([{
+        title: `${prefix}${language === 'TR' ? 'Yönetici Şifresi Sıfırlandı' : 'Admin Password Reset'}`,
+        message: language === 'TR'
+          ? `${target.name} (${target.email}) adlı yöneticinin şifresi genel yönetici tarafından sıfırlandı.`
+          : `Admin ${target.name} (${target.email}) had their password reset by a global admin.`,
+        type: 'SYSTEM', timestamp: Date.now(), is_read: false,
+      }]).select().single()
+      if (nd) setNotifications(prev => [nd, ...prev])
+    }
     return { success: true }
   }
 

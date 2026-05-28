@@ -18,6 +18,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
   const [editWorkshopLoading, setEditWorkshopLoading] = useState(false)
   const [workshopCityFilter, setWorkshopCityFilter] = useState('')
   const [processingId, setProcessingId] = useState(null)
+  const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0] })()
 
   const visibleWorkshops = useMemo(() => {
     let list = isGlobal ? workshops : workshops.filter(w => String(w.city_id) === String(adminCityId))
@@ -118,7 +119,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_date_label', language)}</label>
-              <input type="date" className={`${inputClass} w-full`} value={workshopForm.date} onChange={e => setWorkshopForm(p => ({ ...p, date: e.target.value }))} />
+              <input type="date" max={maxDate} className={`${inputClass} w-full`} value={workshopForm.date} onChange={e => setWorkshopForm(p => ({ ...p, date: e.target.value }))} />
             </div>
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_time_label', language)}</label>

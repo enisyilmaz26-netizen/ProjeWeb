@@ -5,7 +5,7 @@ import { INPUT_BASE } from '../../lib/ui'
 import { statusLabel } from '../../lib/adminHelpers'
 
 export default function StatsTab({ language, isGlobal, adminCityId }) {
-  const { appointments, cities } = useApp()
+  const { appointments, cities, workshops } = useApp()
   const inputClass = INPUT_BASE
   const [statsCity, setStatsCity] = useState('')
 
@@ -47,6 +47,22 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
     })
     return Object.values(months)
   }, [scopedAppointments, language])
+
+  const todayStr = new Date().toISOString().split('T')[0]
+
+  const workshopStats = useMemo(() => {
+    const scoped = !isGlobal && adminCityId
+      ? workshops.filter(w => String(w.city_id) === String(adminCityId))
+      : isGlobal && statsCity
+      ? workshops.filter(w => String(w.city_id) === String(statsCity))
+      : workshops
+    return {
+      total: scoped.length,
+      upcoming: scoped.filter(w => w.date && w.date >= todayStr).length,
+      past: scoped.filter(w => w.date && w.date < todayStr).length,
+      noDate: scoped.filter(w => !w.date).length,
+    }
+  }, [workshops, isGlobal, adminCityId, statsCity, todayStr])
 
   const slotStats = useMemo(() => {
     const counts = {}
@@ -143,6 +159,25 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
             </div>
           )
         })()}
+      </div>
+
+      <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
+        <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('tab_workshops', language)}</h3>
+        {workshopStats.total === 0 ? <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p> : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: language === 'TR' ? 'Toplam' : 'Total', value: workshopStats.total, color: 'text-gray-800 dark:text-gray-100' },
+              { label: language === 'TR' ? 'Yaklaşan' : 'Upcoming', value: workshopStats.upcoming, color: 'text-green-600 dark:text-green-400' },
+              { label: language === 'TR' ? 'Geçmiş' : 'Past', value: workshopStats.past, color: 'text-gray-500 dark:text-gray-400' },
+              { label: language === 'TR' ? 'Tarifsiz' : 'No Date', value: workshopStats.noDate, color: 'text-orange-500 dark:text-orange-400' },
+            ].map(s => (
+              <div key={s.label} className="bg-gray-50 dark:bg-[#0E1A30] rounded-xl px-3 py-3 text-center">
+                <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">

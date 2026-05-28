@@ -20,11 +20,17 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
     return isGlobal ? timeSlots : timeSlots.filter(s => String(s.city_id) === String(adminCityId))
   }, [timeSlots, isGlobal, adminCityId])
 
+  const TIME_RANGE_RE = /^([01]\d|2[0-3]):[0-5]\d\s*[-–]\s*([01]\d|2[0-3]):[0-5]\d$/
+
   const handleAddSlot = async () => {
     setSlotError('')
     const cityId = isGlobal ? newSlotCityId : adminCityId
     if (!cityId || !newSlotTime.trim()) {
       setSlotError(t('slot_required_fields', language))
+      return
+    }
+    if (!TIME_RANGE_RE.test(newSlotTime.trim())) {
+      setSlotError(language === 'TR' ? 'Geçersiz format. Örn: 09:00 - 17:00' : 'Invalid format. E.g.: 09:00 - 17:00')
       return
     }
     const result = await addTimeSlot(cityId, newSlotTime.trim(), newSlotLocation.trim() || null)

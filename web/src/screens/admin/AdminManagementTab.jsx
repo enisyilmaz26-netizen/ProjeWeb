@@ -67,6 +67,8 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     }
   }
 
+  const originalRole = (modal) => admins.find(a => a.id === modal?.adminId)?.role
+
   const handleDeleteAdmin = (adminId) => {
     if (adminId === loggedInAdmin?.id) return
     onRequestConfirm(t('admin_delete_confirm', language), async () => {
@@ -215,6 +217,13 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
                   <option value="CITY">{t('admin_type_city', language)}</option>
                   <option value="GLOBAL">{t('admin_type_global', language)}</option>
                 </select>
+                {originalRole(editAdminModal) && editAdminModal.role !== originalRole(editAdminModal) && (
+                  <p className="mt-1.5 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg px-2.5 py-1.5">
+                    {language === 'TR'
+                      ? `⚠️ Rol değişiyor: ${originalRole(editAdminModal)} → ${editAdminModal.role}. Kaydet'e basarak onaylıyorsunuz.`
+                      : `⚠️ Role will change: ${originalRole(editAdminModal)} → ${editAdminModal.role}. Saving confirms this change.`}
+                  </p>
+                )}
               </div>
               {editAdminModal.role === 'CITY' && (
                 <div>

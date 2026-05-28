@@ -34,10 +34,11 @@ const ACTION_COLORS = {
   USER_REQUEST_CANCELLATION: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
 }
 
-function formatDateTime(iso) {
+function formatDateTime(iso, language) {
   if (!iso) return '—'
   const d = new Date(iso)
-  return d.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const locale = language === 'TR' ? 'tr-TR' : 'en-GB'
+  return d.toLocaleString(locale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 export default function AuditTab({ language }) {
@@ -110,7 +111,7 @@ export default function AuditTab({ language }) {
                     {ACTION_LABELS[log.action]?.[language] || log.action}
                   </span>
                   <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
-                    {formatDateTime(log.created_at)}
+                    {formatDateTime(log.created_at, language)}
                   </span>
                 </div>
                 {log.details && (
