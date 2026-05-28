@@ -88,14 +88,22 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
         : 'Data migration cannot be undone. Continue?',
       async () => {
         setMigrating(true)
+        let errors = 0
         const golbasiLabs = labs.filter(l => l.name.includes('Gölbaşı BİLSEM ÖÖL') && !l.name.startsWith('Ankara '))
-        for (const lab of golbasiLabs) await updateLab(lab.id, { name: 'Ankara ' + lab.name })
+        for (const lab of golbasiLabs) {
+          const r = await updateLab(lab.id, { name: 'Ankara ' + lab.name })
+          if (!r.success) errors++
+        }
         const atolyeLabs = labs.filter(l => l.name.includes('Öğretim Tasarımı ve Senaryo Atölyesi'))
         for (const lab of atolyeLabs) {
           const wsResult = await addWorkshop({ name: lab.name, city_id: lab.city_id, description: lab.description || '', location: lab.location || '', date: '', time: '', capacity: lab.capacity_per_slot || 1 })
-          if (wsResult.success) await forceDeleteLab(lab.id)
+          if (wsResult.success) {
+            const dr = await forceDeleteLab(lab.id)
+            if (!dr.success) errors++
+          } else { errors++ }
         }
         setMigrating(false)
+        if (errors > 0) setLabError(language === 'TR' ? `Göç tamamlandı ancak ${errors} kayıtta hata oluştu.` : `Migration completed with ${errors} error(s).`)
       }
     )
   }

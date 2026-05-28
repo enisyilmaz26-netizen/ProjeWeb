@@ -14,6 +14,7 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
   const [newSlotTime, setNewSlotTime] = useState('')
   const [newSlotLocation, setNewSlotLocation] = useState('')
   const [slotError, setSlotError] = useState('')
+  const [addingSlot, setAddingSlot] = useState(false)
   const [processingId, setProcessingId] = useState(null)
 
   const visibleSlots = useMemo(() => {
@@ -38,7 +39,9 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
       setSlotError(language === 'TR' ? 'Başlangıç saati bitiş saatinden önce olmalıdır.' : 'Start time must be before end time.')
       return
     }
+    setAddingSlot(true)
     const result = await addTimeSlot(cityId, newSlotTime.trim(), newSlotLocation.trim() || null)
+    setAddingSlot(false)
     if (result.success) {
       setNewSlotTime('')
       setNewSlotLocation('')
@@ -70,8 +73,8 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
                   {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
                 <input type="text" placeholder={t('slot_placeholder', language)} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
-                <button onClick={handleAddSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
-                  + {t('btn_add', language)}
+                <button onClick={handleAddSlot} disabled={addingSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60">
+                  {addingSlot ? '...' : `+ ${t('btn_add', language)}`}
                 </button>
               </div>
               {newSlotCityId && (
@@ -162,8 +165,8 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
               <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{t('slot_add_new', language)}</h4>
               <div className="flex flex-col sm:flex-row gap-2">
                 <input type="text" placeholder={t('slot_placeholder', language)} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
-                <button onClick={handleAddSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
-                  + {t('btn_add', language)}
+                <button onClick={handleAddSlot} disabled={addingSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60">
+                  {addingSlot ? '...' : `+ ${t('btn_add', language)}`}
                 </button>
               </div>
               {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" /></button></p>}

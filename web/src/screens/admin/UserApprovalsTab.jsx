@@ -102,7 +102,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           ) : <div />}
-          <button onClick={() => { setShowAddUser(p => !p); setAddUserError(''); setAddUserSuccess('') }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition flex-shrink-0">
+          <button onClick={() => { setShowAddUser(p => !p); setAddUserError(''); setAddUserSuccess(''); setAddUserForm({ name: '', surname: '', email: '', password: '', branch: '', work_location: '', phone: '', city_id: '', district: '' }) }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition flex-shrink-0">
             + {language === 'TR' ? 'Üye Ekle' : 'Add Member'}
           </button>
         </div>
