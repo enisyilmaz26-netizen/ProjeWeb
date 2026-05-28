@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
+import { isPasswordStrong } from '../lib/passwordUtils'
 import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react'
 
 export default function MyProfileScreen() {
@@ -90,12 +91,12 @@ export default function MyProfileScreen() {
   const handleChangePassword = async (e) => {
     e.preventDefault()
     setPwError('')
-    if (pwForm.newPw !== pwForm.confirm) {
-      setPwError(t('err_password_mismatch', language))
+    if (!isPasswordStrong(pwForm.newPw)) {
+      setPwError(t('err_password_weak', language))
       return
     }
-    if (pwForm.newPw.length < 8) {
-      setPwError(t('err_password_min_length', language))
+    if (pwForm.newPw !== pwForm.confirm) {
+      setPwError(t('err_password_mismatch', language))
       return
     }
     setPwLoading(true)

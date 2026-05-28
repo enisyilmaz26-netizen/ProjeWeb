@@ -91,6 +91,7 @@ export const translations = {
   date_label: { TR: 'Tarih', EN: 'Date' },
   time_label: { TR: 'Saat', EN: 'Time' },
   capacity_label: { TR: 'Kapasite', EN: 'Capacity' },
+  capacity_people_label: { TR: 'kişi', EN: 'people' },
   delete_lab_confirm: { TR: 'Bu alanı silmek istediğinizden emin misiniz?', EN: 'Are you sure you want to delete this area?' },
   notif_required_fields: { TR: 'Başlık ve mesaj zorunludur.', EN: 'Title and message are required.' },
   notif_sent: { TR: 'Bildirim gönderildi.', EN: 'Notification sent.' },

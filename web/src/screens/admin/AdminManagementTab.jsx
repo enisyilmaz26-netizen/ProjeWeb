@@ -102,7 +102,7 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     <div>
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{t('tab_admins', language)}</h3>
-        <button onClick={() => { setShowAddAdmin(true); setAdminFormError('') }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
+        <button onClick={() => { setShowAddAdmin(true); setAdminFormError(''); setAdminFormSuccess('') }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
           {t('admin_add', language)}
         </button>
       </div>

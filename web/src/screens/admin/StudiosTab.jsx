@@ -42,7 +42,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
       setShowAddLab(false)
       setLabForm({ name: '', description: '', capacity_per_slot: 1, location: '', branches: '', city_id: '' })
       setLabSaveSuccess(language === 'TR' ? 'Kayıt eklendi.' : 'Record added.')
-      setTimeout(() => setLabSaveSuccess(''), 2500)
+      setTimeout(() => setLabSaveSuccess(''), 3000)
     } else { setLabError(result.error || 'Error') }
   }
 
@@ -62,7 +62,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
     if (result.success) {
       setEditingLabId(null)
       setLabSaveSuccess(language === 'TR' ? 'Kayıt güncellendi.' : 'Record updated.')
-      setTimeout(() => setLabSaveSuccess(''), 2500)
+      setTimeout(() => setLabSaveSuccess(''), 3000)
     } else {
       const errKey = result.error
       setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
@@ -81,16 +81,23 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
     })
   }
 
-  const handleMigrateData = async () => {
-    setMigrating(true)
-    const golbasiLabs = labs.filter(l => l.name.includes('Gölbaşı BİLSEM ÖÖL') && !l.name.startsWith('Ankara '))
-    for (const lab of golbasiLabs) await updateLab(lab.id, { name: 'Ankara ' + lab.name })
-    const atolyeLabs = labs.filter(l => l.name.includes('Öğretim Tasarımı ve Senaryo Atölyesi'))
-    for (const lab of atolyeLabs) {
-      const wsResult = await addWorkshop({ name: lab.name, city_id: lab.city_id, description: lab.description || '', location: lab.location || '', date: '', time: '', capacity: lab.capacity_per_slot || 1 })
-      if (wsResult.success) await forceDeleteLab(lab.id)
-    }
-    setMigrating(false)
+  const handleMigrateData = () => {
+    onRequestConfirm(
+      language === 'TR'
+        ? 'Veri göçü geri alınamaz. Devam etmek istiyor musunuz?'
+        : 'Data migration cannot be undone. Continue?',
+      async () => {
+        setMigrating(true)
+        const golbasiLabs = labs.filter(l => l.name.includes('Gölbaşı BİLSEM ÖÖL') && !l.name.startsWith('Ankara '))
+        for (const lab of golbasiLabs) await updateLab(lab.id, { name: 'Ankara ' + lab.name })
+        const atolyeLabs = labs.filter(l => l.name.includes('Öğretim Tasarımı ve Senaryo Atölyesi'))
+        for (const lab of atolyeLabs) {
+          const wsResult = await addWorkshop({ name: lab.name, city_id: lab.city_id, description: lab.description || '', location: lab.location || '', date: '', time: '', capacity: lab.capacity_per_slot || 1 })
+          if (wsResult.success) await forceDeleteLab(lab.id)
+        }
+        setMigrating(false)
+      }
+    )
   }
 
   return (

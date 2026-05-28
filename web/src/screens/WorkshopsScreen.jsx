@@ -55,7 +55,7 @@ export default function WorkshopsScreen() {
               )}
               {ws.capacity && (
                 <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 inline" />{ws.capacity} {language === 'TR' ? 'kişi' : 'people'}
+                  <Users className="w-3.5 h-3.5 inline" />{ws.capacity} {t('capacity_people_label', language)}
                 </span>
               )}
             </div>
