@@ -1006,7 +1006,7 @@ export function AppProvider({ children }) {
   }
 
   const toggleWorkshopAttendance = async (regId, attended) => {
-    const { error } = await supabase.from('workshop_registrations').update({ attended }).eq('id', regId)
+    const { error } = await supabase.rpc('set_workshop_attendance', { p_reg_id: regId, p_attended: attended })
     if (error) return { success: false, error: error.message }
     setWorkshopRegistrations(prev => prev.map(r => r.id === regId ? { ...r, attended } : r))
     return { success: true }
