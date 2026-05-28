@@ -2,11 +2,11 @@ import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, formatDate } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
-import { X, Calendar, Clock, Users, Pencil, Trash2, ChevronDown, ChevronRight, Download } from 'lucide-react'
+import { X, Calendar, Clock, Users, Pencil, Trash2, ChevronDown, ChevronRight, Download, CheckCircle2, Circle } from 'lucide-react'
 import { getLabIcon } from '../../lib/icons'
 
 export default function WorkshopsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
-  const { cities, workshops, addWorkshop, updateWorkshop, deleteWorkshop, workshopRegistrations } = useApp()
+  const { cities, workshops, addWorkshop, updateWorkshop, deleteWorkshop, workshopRegistrations, toggleWorkshopAttendance } = useApp()
   const [expandedRegistrants, setExpandedRegistrants] = useState(null)
   const inputClass = INPUT_BASE
 
@@ -268,11 +268,21 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                           {regs.length === 0 ? (
                             <p className="text-xs text-gray-400 dark:text-gray-500">{t('workshop_no_registrants', language)}</p>
                           ) : (
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                               {regs.map(r => (
-                                <div key={r.id} className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0] dark:bg-[#7DD4FC] flex-shrink-0" />
-                                  {r.user_name} {r.user_surname} <span className="text-gray-400">— {r.user_email}</span>
+                                <div key={r.id} className="flex items-center justify-between gap-2">
+                                  <div className="text-xs text-gray-700 dark:text-gray-300 min-w-0">
+                                    <span className="font-medium">{r.user_name} {r.user_surname}</span>
+                                    <span className="text-gray-400"> — {r.user_email}</span>
+                                  </div>
+                                  <button
+                                    onClick={() => toggleWorkshopAttendance(r.id, !r.attended)}
+                                    className={`flex-shrink-0 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition ${r.attended ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-400'}`}
+                                  >
+                                    {r.attended
+                                      ? <><CheckCircle2 className="w-3 h-3" />{language === 'TR' ? 'Katıldı' : 'Attended'}</>
+                                      : <><Circle className="w-3 h-3" />{language === 'TR' ? 'Katılmadı' : 'Not yet'}</>}
+                                  </button>
                                 </div>
                               ))}
                             </div>

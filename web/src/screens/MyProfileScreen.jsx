@@ -4,11 +4,12 @@ import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../li
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
 import { isPasswordStrong } from '../lib/passwordUtils'
-import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight, CalendarDays, List } from 'lucide-react'
+import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight, CalendarDays, List, RefreshCw } from 'lucide-react'
 import CalendarView from '../components/CalendarView'
+import { isTurkishHoliday, isSunday } from '../lib/holidays'
 
 export default function MyProfileScreen() {
-  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities, waitlist, removeFromWaitlist, uploadAvatar } = useApp()
+  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities, waitlist, removeFromWaitlist, uploadAvatar, rescheduleAppointment, timeSlots, labs, closedDays } = useApp()
   const [apptViewMode, setApptViewMode] = useState('list')
 
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -21,6 +22,14 @@ export default function MyProfileScreen() {
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState('')
 
+  // Reschedule
+  const [showReschedule, setShowReschedule] = useState(false)
+  const [rescheduleTarget, setRescheduleTarget] = useState(null)
+  const [rescheduleDate, setRescheduleDate] = useState('')
+  const [rescheduleSlot, setRescheduleSlot] = useState('')
+  const [rescheduleError, setRescheduleError] = useState('')
+  const [rescheduleLoading, setRescheduleLoading] = useState(false)
+
   // Password change
   const [showPwChange, setShowPwChange] = useState(false)
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' })
@@ -28,17 +37,18 @@ export default function MyProfileScreen() {
   const [pwError, setPwError] = useState('')
 
   useEffect(() => {
-    if (!showPwChange && !showCancelModal) return
+    if (!showPwChange && !showCancelModal && !showReschedule) return
     const handler = (e) => {
       if (e.key === 'Escape') {
-        if (submitting) return
+        if (submitting || rescheduleLoading) return
         setShowPwChange(false)
         setShowCancelModal(false)
+        setShowReschedule(false)
       }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [showPwChange, showCancelModal, submitting])
+  }, [showPwChange, showCancelModal, showReschedule, submitting, rescheduleLoading])
 
   // Profile editing
   const [editMode, setEditMode] = useState(false)
@@ -47,6 +57,37 @@ export default function MyProfileScreen() {
   const [editError, setEditError] = useState('')
 
   const todayStr = new Date().toISOString().split('T')[0]
+
+  const getRescheduleSlotAvailability = (date, slotLabel) => {
+    if (!rescheduleTarget) return { count: 0, maxCap: 1, isFull: false }
+    const count = appointments.filter(a =>
+      String(a.lab_id) === String(rescheduleTarget.lab_id) &&
+      a.date === date && a.time_slot === slotLabel &&
+      ['PENDING', 'APPROVED'].includes(a.status) &&
+      a.id !== rescheduleTarget.id
+    ).length
+    const lab = labs.find(l => String(l.id) === String(rescheduleTarget.lab_id))
+    const maxCap = lab?.max_capacity || 1
+    return { count, maxCap, isFull: count >= maxCap }
+  }
+
+  const handleReschedule = async () => {
+    if (!rescheduleDate || !rescheduleSlot) return
+    setRescheduleError('')
+    setRescheduleLoading(true)
+    const res = await rescheduleAppointment(rescheduleTarget.id, rescheduleDate, rescheduleSlot)
+    setRescheduleLoading(false)
+    if (res.success) {
+      setShowReschedule(false)
+      setRescheduleTarget(null)
+      setRescheduleDate('')
+      setRescheduleSlot('')
+      setSuccessMsg(language === 'TR' ? 'Randevu yeniden zamanlandı.' : 'Appointment rescheduled.')
+      setTimeout(() => setSuccessMsg(''), 3000)
+    } else {
+      setRescheduleError(res.error)
+    }
+  }
 
   const userAppointments = useMemo(() => {
     if (!loggedInUser) return []
@@ -312,6 +353,30 @@ export default function MyProfileScreen() {
         )}
       </div>
 
+      {/* Cancellation Requests */}
+      {upcomingAppointments.filter(a => a.status === 'CANCELLATION_REQUESTED').length > 0 && (
+        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 mb-4">
+          <h3 className="font-bold text-orange-700 dark:text-orange-300 text-sm mb-2 flex items-center gap-1.5">
+            <Clock className="w-4 h-4" />
+            {language === 'TR' ? 'Bekleyen İptal Talepleriniz' : 'Pending Cancellation Requests'}
+          </h3>
+          <div className="space-y-2">
+            {upcomingAppointments.filter(a => a.status === 'CANCELLATION_REQUESTED').map(appt => (
+              <div key={appt.id} className="bg-white dark:bg-[#0D1E3D] rounded-xl px-3 py-2.5">
+                <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">{appt.lab_name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(appt.date)} — {appt.time_slot}</p>
+                {appt.note && (
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 italic">"{appt.note}"</p>
+                )}
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                  {language === 'TR' ? 'Yönetici onayı bekleniyor.' : 'Waiting for admin review.'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Upcoming Appointments */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
@@ -348,6 +413,8 @@ export default function MyProfileScreen() {
               canRequestCancel={canRequestCancel(appt)}
               onDirectCancelClick={() => openCancelModal(appt.id, 'direct')}
               onRequestCancelClick={() => openCancelModal(appt.id, 'request')}
+              canReschedule={appt.status === 'PENDING' && appt.date >= todayStr}
+              onRescheduleClick={() => { setRescheduleTarget(appt); setRescheduleDate(''); setRescheduleSlot(''); setRescheduleError(''); setShowReschedule(true) }}
             />
           ))}
         </div>
@@ -399,6 +466,84 @@ export default function MyProfileScreen() {
         </div>
       )}
 
+      {/* Reschedule Modal */}
+      {showReschedule && rescheduleTarget && (() => {
+        const citySlots = timeSlots.filter(s => String(s.city_id) === String(rescheduleTarget.city_id))
+        const minDate = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0] })()
+        const maxDate = (() => { const d = new Date(); d.setDate(d.getDate() + 60); return d.toISOString().split('T')[0] })()
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base flex items-center gap-1.5">
+                  <RefreshCw className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
+                  {language === 'TR' ? 'Yeniden Zamanla' : 'Reschedule'}
+                </h3>
+                <button onClick={() => setShowReschedule(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{rescheduleTarget.lab_name} — {rescheduleTarget.city_name}</p>
+
+              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">{language === 'TR' ? '1. Yeni Tarih Seçin' : '1. Pick a New Date'}</p>
+              <CalendarView
+                selectedDate={rescheduleDate}
+                onDayClick={(date) => { setRescheduleDate(date); setRescheduleSlot('') }}
+                minDate={minDate}
+                maxDate={maxDate}
+                isDateDisabled={(date) => {
+                  if (isSunday(date) || isTurkishHoliday(date)) return true
+                  return closedDays.some(cd => cd.date === date && (!cd.city_id || String(cd.city_id) === String(rescheduleTarget.city_id)))
+                }}
+                language={language}
+              />
+
+              {rescheduleDate && citySlots.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2">{language === 'TR' ? '2. Saat Seçin' : '2. Pick a Time'}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {citySlots.map(s => {
+                      const { count, maxCap, isFull } = getRescheduleSlotAvailability(rescheduleDate, s.slot_label)
+                      const isSelected = rescheduleSlot === s.slot_label
+                      return (
+                        <button
+                          key={s.id}
+                          disabled={isFull}
+                          onClick={() => setRescheduleSlot(s.slot_label)}
+                          className={`py-2 px-3 rounded-xl text-xs border transition text-left ${
+                            isFull ? 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 text-gray-400' :
+                            isSelected ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-transparent font-semibold' :
+                            'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-[#1565C0] dark:hover:border-[#7DD4FC]'
+                          }`}
+                        >
+                          {s.slot_label}
+                          <span className="block text-[10px] mt-0.5 opacity-70">{maxCap - count}/{maxCap} {language === 'TR' ? 'boş' : 'free'}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+
+              {rescheduleError && <p className="text-red-500 dark:text-red-400 text-xs mt-3">{rescheduleError}</p>}
+              <div className="flex gap-2 mt-4">
+                <button
+                  disabled={!rescheduleDate || !rescheduleSlot || rescheduleLoading}
+                  onClick={handleReschedule}
+                  className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl disabled:opacity-40 transition"
+                >
+                  {rescheduleLoading ? '...' : (language === 'TR' ? 'Güncelle' : 'Update')}
+                </button>
+                <button
+                  onClick={() => setShowReschedule(false)}
+                  className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl"
+                >
+                  {t('btn_nevermind', language)}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Cancel Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
@@ -448,7 +593,7 @@ export default function MyProfileScreen() {
   )
 }
 
-function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, onDirectCancelClick, onRequestCancelClick }) {
+function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, onDirectCancelClick, onRequestCancelClick, canReschedule, onRescheduleClick }) {
   return (
     <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -469,21 +614,33 @@ function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, on
           {t('lbl_cancel_reason', language)}: {appt.note}
         </p>
       )}
-      {canDirectCancel && (
-        <button
-          onClick={onDirectCancelClick}
-          className="w-full py-2 border border-red-400 text-red-600 dark:text-red-400 dark:border-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition"
-        >
-          {t('action_cancel', language)}
-        </button>
-      )}
-      {canRequestCancel && (
-        <button
-          onClick={onRequestCancelClick}
-          className="w-full py-2 border border-orange-400 text-orange-600 dark:text-orange-400 dark:border-orange-600 text-xs font-semibold rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 transition"
-        >
-          {t('btn_request_cancellation', language)}
-        </button>
+      {(canReschedule || canDirectCancel || canRequestCancel) && (
+        <div className="flex gap-2 mt-1">
+          {canReschedule && (
+            <button
+              onClick={onRescheduleClick}
+              className="flex-1 py-2 border border-[#1565C0]/40 text-[#1565C0] dark:text-[#7DD4FC] dark:border-[#7DD4FC]/40 text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition inline-flex items-center justify-center gap-1"
+            >
+              <RefreshCw className="w-3 h-3" />{language === 'TR' ? 'Yeniden Zamanla' : 'Reschedule'}
+            </button>
+          )}
+          {canDirectCancel && (
+            <button
+              onClick={onDirectCancelClick}
+              className="flex-1 py-2 border border-red-400 text-red-600 dark:text-red-400 dark:border-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+            >
+              {t('action_cancel', language)}
+            </button>
+          )}
+          {canRequestCancel && (
+            <button
+              onClick={onRequestCancelClick}
+              className="flex-1 py-2 border border-orange-400 text-orange-600 dark:text-orange-400 dark:border-orange-600 text-xs font-semibold rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 transition"
+            >
+              {t('btn_request_cancellation', language)}
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

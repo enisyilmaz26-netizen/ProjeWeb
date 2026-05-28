@@ -967,6 +967,29 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const toggleWorkshopAttendance = async (regId, attended) => {
+    const { error } = await supabase.from('workshop_registrations').update({ attended }).eq('id', regId)
+    if (error) return { success: false, error: error.message }
+    setWorkshopRegistrations(prev => prev.map(r => r.id === regId ? { ...r, attended } : r))
+    return { success: true }
+  }
+
+  const rescheduleAppointment = async (appointmentId, newDate, newTimeSlot) => {
+    const appt = appointments.find(a => a.id === appointmentId)
+    if (!appt) return { success: false, error: 'err_generic' }
+    const lab = labs.find(l => String(l.id) === String(appt.lab_id))
+    const maxCap = lab?.max_capacity || 1
+    const { count } = await supabase.from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .eq('lab_id', appt.lab_id).eq('date', newDate).eq('time_slot', newTimeSlot)
+      .in('status', ['PENDING', 'APPROVED']).neq('id', appointmentId)
+    if (count >= maxCap) return { success: false, error: language === 'TR' ? 'Bu slot dolu.' : 'This slot is full.' }
+    const { error } = await supabase.from('appointments').update({ date: newDate, time_slot: newTimeSlot }).eq('id', appointmentId)
+    if (error) return { success: false, error: error.message }
+    setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, date: newDate, time_slot: newTimeSlot } : a))
+    return { success: true }
+  }
+
   const addAdmin = async ({ name, email, password, role, city_id, phone }) => {
     const normalizedEmail = email.trim().toLowerCase()
     const { data: existing } = await supabase.from('admins').select('id').eq('email', normalizedEmail).maybeSingle()
@@ -1110,7 +1133,8 @@ export function AppProvider({ children }) {
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab, forceDeleteLab,
     addWorkshop, updateWorkshop, deleteWorkshop,
-    registerForWorkshop, unregisterFromWorkshop,
+    registerForWorkshop, unregisterFromWorkshop, toggleWorkshopAttendance,
+    rescheduleAppointment,
     addClosedDay, removeClosedDay, isDateClosed,
     getOrCreateConversation, loadConversationMessages, sendMessage, markConversationRead,
     addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
