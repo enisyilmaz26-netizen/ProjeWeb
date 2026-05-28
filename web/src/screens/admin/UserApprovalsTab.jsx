@@ -6,6 +6,7 @@ import { PAGE_SIZE } from '../../lib/adminHelpers'
 import UserCard from '../../components/admin/UserCard'
 import ResetPasswordModal from '../../components/admin/ResetPasswordModal'
 import PasswordInput from '../../components/PasswordInput'
+import { isPasswordStrong } from '../../lib/passwordUtils'
 
 export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { cities, users, approveUser, revokeUser, resetPassword, addUserByAdmin } = useApp()
@@ -53,15 +54,6 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
 
   const openResetPw = (user) => { setResetPwModal({ userId: user.id, email: user.email, userName: `${user.name} ${user.surname}` }); setResetPwValue(''); setResetPwError(''); setResetPwSuccess('') }
   const closeResetPw = () => { setResetPwModal(null); setResetPwValue(''); setResetPwError(''); setResetPwSuccess('') }
-
-  const passwordRequirements = [
-    { met: pw => pw.length >= 8 },
-    { met: pw => /[A-Z]/.test(pw) },
-    { met: pw => /[a-z]/.test(pw) },
-    { met: pw => /[0-9]/.test(pw) },
-    { met: pw => /[^A-Za-z0-9]/.test(pw) },
-  ]
-  const isPasswordStrong = (pw) => passwordRequirements.every(r => r.met(pw))
 
   const handleResetUserPassword = async (e) => {
     e.preventDefault()

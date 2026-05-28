@@ -4,6 +4,7 @@ import { t, translations } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import ResetPasswordModal from '../../components/admin/ResetPasswordModal'
 import PasswordInput from '../../components/PasswordInput'
+import { isPasswordStrong } from '../../lib/passwordUtils'
 import { Pencil } from 'lucide-react'
 
 export default function AdminManagementTab({ language, loggedInAdmin, onRequestConfirm }) {
@@ -70,7 +71,10 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
   const originalRole = (modal) => admins.find(a => a.id === modal?.adminId)?.role
 
   const handleDeleteAdmin = (adminId) => {
-    if (adminId === loggedInAdmin?.id) return
+    if (adminId === loggedInAdmin?.id) {
+      setAdminFormError(language === 'TR' ? 'Kendi hesabınızı silemezsiniz.' : 'You cannot delete your own account.')
+      return
+    }
     onRequestConfirm(t('admin_delete_confirm', language), async () => {
       setProcessingId(adminId)
       await deleteAdmin(adminId)
@@ -80,15 +84,6 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
 
   const openResetAdminPw = (admin) => { setResetAdminPwModal({ adminId: admin.id, email: admin.email, name: admin.name || admin.email }); setResetAdminPwValue(''); setResetAdminPwError(''); setResetAdminPwSuccess('') }
   const closeResetAdminPw = () => { setResetAdminPwModal(null); setResetAdminPwValue(''); setResetAdminPwError(''); setResetAdminPwSuccess('') }
-
-  const passwordRequirements = [
-    { met: pw => pw.length >= 8 },
-    { met: pw => /[A-Z]/.test(pw) },
-    { met: pw => /[a-z]/.test(pw) },
-    { met: pw => /[0-9]/.test(pw) },
-    { met: pw => /[^A-Za-z0-9]/.test(pw) },
-  ]
-  const isPasswordStrong = (pw) => passwordRequirements.every(r => r.met(pw))
 
   const handleResetAdminPassword = async (e) => {
     e.preventDefault()

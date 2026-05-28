@@ -25,11 +25,15 @@ export default function MyProfileScreen() {
   useEffect(() => {
     if (!showPwChange && !showCancelModal) return
     const handler = (e) => {
-      if (e.key === 'Escape') { setShowPwChange(false); setShowCancelModal(false) }
+      if (e.key === 'Escape') {
+        if (submitting) return
+        setShowPwChange(false)
+        setShowCancelModal(false)
+      }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [showPwChange, showCancelModal])
+  }, [showPwChange, showCancelModal, submitting])
 
   // Profile editing
   const [editMode, setEditMode] = useState(false)
@@ -45,12 +49,12 @@ export default function MyProfileScreen() {
   }, [appointments, loggedInUser])
 
   const upcomingAppointments = useMemo(() =>
-    userAppointments.filter(a => a.date >= todayStr && a.status !== 'CANCELLED'),
+    userAppointments.filter(a => a.date >= todayStr),
     [userAppointments, todayStr]
   )
 
   const pastAppointments = useMemo(() =>
-    userAppointments.filter(a => a.date < todayStr || a.status === 'CANCELLED'),
+    userAppointments.filter(a => a.date < todayStr),
     [userAppointments, todayStr]
   )
 

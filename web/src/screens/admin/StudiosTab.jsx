@@ -15,6 +15,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
   const [labError, setLabError] = useState('')
   const [editingLabId, setEditingLabId] = useState(null)
   const [editLabForm, setEditLabForm] = useState({})
+  const [editLabLoading, setEditLabLoading] = useState(false)
   const [labCityFilter, setLabCityFilter] = useState('')
   const [labSaveSuccess, setLabSaveSuccess] = useState('')
   const [migrating, setMigrating] = useState(false)
@@ -55,7 +56,9 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
     e.preventDefault()
     setLabError('')
     if (!editLabForm.name.trim()) { setLabError(t('studio_name_required', language)); return }
+    setEditLabLoading(true)
     const result = await updateLab(editingLabId, { name: editLabForm.name, description: editLabForm.description, capacity_per_slot: Number(editLabForm.capacity_per_slot) || 1, location: editLabForm.location, branches: editLabForm.branches })
+    setEditLabLoading(false)
     if (result.success) {
       setEditingLabId(null)
       setLabSaveSuccess(language === 'TR' ? 'Kayıt güncellendi.' : 'Record updated.')
@@ -144,8 +147,10 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{t('studio_edit', language)}</h4>
                   <LabFormFields form={editLabForm} setForm={setEditLabForm} cities={cities} inputClass={inputClass} language={language} showCity={false} />
                   <div className="flex gap-2">
-                    <button type="submit" className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl">{t('btn_save', language)}</button>
-                    <button type="button" onClick={() => { setEditingLabId(null); setEditLabForm({}) }} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{t('btn_nevermind', language)}</button>
+                    <button type="submit" disabled={editLabLoading} className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60">
+                      {editLabLoading ? '...' : t('btn_save', language)}
+                    </button>
+                    <button type="button" onClick={() => { setEditingLabId(null); setEditLabForm({}); setLabError('') }} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{t('btn_nevermind', language)}</button>
                   </div>
                 </form>
               ) : (

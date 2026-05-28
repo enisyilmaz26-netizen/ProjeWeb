@@ -156,7 +156,7 @@ export default function UserReservationScreen() {
   }
 
   const resetToStep = (s) => {
-    if (s <= 1) { setSelectedCity(null); setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(1) }
+    if (s <= 1) { setSelectedCity(null); setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(1); setSuccessMsg('') }
     else if (s <= 2) { setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(2) }
     else if (s <= 3) { setSelectedDate(''); setSelectedSlot(null); setStep(3) }
     else if (s <= 4) { setSelectedSlot(null); setStep(4) }
