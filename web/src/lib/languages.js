@@ -100,6 +100,7 @@ export const translations = {
   notif_sent: { TR: 'Bildirim gönderildi.', EN: 'Notification sent.' },
   btn_yes: { TR: 'Evet', EN: 'Yes' },
   btn_nevermind: { TR: 'Vazgeç', EN: 'Cancel' },
+  processing_please_wait: { TR: 'İşleminiz gerçekleştiriliyor, lütfen bekleyiniz...', EN: 'Processing, please wait...' },
   btn_logout: { TR: 'Çıkış', EN: 'Logout' },
   btn_back: { TR: 'Geri', EN: 'Back' },
   toggle_dark: { TR: 'Karanlık mod', EN: 'Dark mode' },
