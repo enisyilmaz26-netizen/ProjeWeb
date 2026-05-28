@@ -182,7 +182,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               {csvResult.errors.length > 5 && <li>... ve {csvResult.errors.length - 5} daha</li>}
             </ul>
           )}
-          <p className="text-xs mt-1 opacity-70">{language === 'TR' ? 'Varsayılan şifre: Gecici2024!' : 'Default password: Gecici2024!'}</p>
+          <p className="text-xs mt-1 opacity-70">{language === 'TR' ? 'Varsayılan şifre: Gecici2024! — Kullanıcılar ilk girişte şifre değiştirmek zorunda kalacak.' : 'Default password: Gecici2024! — Users will be forced to change their password on first login.'}</p>
         </div>
       )}
 
@@ -210,6 +210,9 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Şifre Tekrar *' : 'Confirm Password *'}</label>
             <PasswordInput className={`${inputClass} w-full`} value={addUserForm.confirmPassword} onChange={e => setAddUserForm(p => ({ ...p, confirmPassword: e.target.value }))} required minLength={8} />
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              {language === 'TR' ? 'Kullanıcı ilk girişte bu şifreyi değiştirmek zorunda kalacak.' : 'User will be required to change this password on first login.'}
+            </p>
           </div>
           {isGlobal && (
             <div>
