@@ -160,7 +160,7 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
                   onError={e => { e.target.style.display='none' }} />
               </div>
             )}
-            <p className="text-[10px] font-semibold text-[#1565C0] uppercase tracking-widest mb-2">{form.institution}</p>
+            <p className="text-[10px] font-semibold text-[#1565C0] uppercase tracking-widest mb-2 whitespace-pre-line">{form.institution}</p>
             {!form.logo_url && (
               <div className="flex justify-center my-3">
                 <div className="w-10 h-10 rounded-full bg-[#1565C0]/10 flex items-center justify-center">
@@ -229,7 +229,11 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
           {/* Institution */}
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Kurum Adı' : 'Institution Name'}</label>
-            <input className={`w-full ${inputClass}`} value={form.institution} onChange={e => set('institution', e.target.value)} required />
+            <textarea
+              className={`w-full ${inputClass} resize-y`} rows={3}
+              value={form.institution} onChange={e => set('institution', e.target.value)}
+              placeholder={language === 'TR' ? 'Alt satır için Enter kullanın' : 'Press Enter for a new line'}
+            />
           </div>
 
           {/* Title + size */}

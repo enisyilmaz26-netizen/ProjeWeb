@@ -78,7 +78,7 @@ export default function CertificateModal({ ws, template, user, language, onClose
               <img src={logoUrl} alt="logo" className={`${logoSizeClass} object-contain mb-4`} />
             )}
 
-            <p className={`text-[11px] font-semibold text-[#1565C0] uppercase tracking-widest mb-1 ${alignClass}`}>
+            <p className={`text-[11px] font-semibold text-[#1565C0] uppercase tracking-widest mb-1 whitespace-pre-line ${alignClass}`}>
               {institution}
             </p>
 
