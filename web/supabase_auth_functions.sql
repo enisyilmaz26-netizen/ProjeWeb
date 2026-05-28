@@ -1,25 +1,28 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Server-side password hashing (bcrypt via pgcrypto)
 -- Run this once in Supabase SQL Editor.
---
--- What this does:
---   • login_user / login_admin  → verify credentials on DB, never return hash
---   • Auto-migrates SHA-256 hashes to bcrypt on first successful login
---   • hash_password_bcrypt      → bcrypt for register / addUser / resetPassword
---   • change_user/admin_password → verify current password server-side, then update
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- Drop old versions to avoid return-type conflicts
+DROP FUNCTION IF EXISTS public.login_user(text, text);
+DROP FUNCTION IF EXISTS public.login_admin(text, text);
+DROP FUNCTION IF EXISTS public.change_user_password(uuid, text, text, text);
+DROP FUNCTION IF EXISTS public.change_admin_password(uuid, text, text, text);
+DROP FUNCTION IF EXISTS public.change_user_password(integer, text, text, text);
+DROP FUNCTION IF EXISTS public.change_admin_password(integer, text, text, text);
+DROP FUNCTION IF EXISTS public.hash_password_bcrypt(text);
+
 -- ─── USER LOGIN ──────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.login_user(p_email TEXT, p_password TEXT)
 RETURNS TABLE(
-  id            uuid,
+  id            integer,
   name          text,
   surname       text,
   email         text,
   is_approved   boolean,
-  city_id       uuid,
+  city_id       integer,
   city_name     text,
   phone         text,
   branch        text,
@@ -28,13 +31,13 @@ RETURNS TABLE(
 )
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
-  v_id       uuid;
+  v_id       integer;
   v_name     text;
   v_surname  text;
   v_email    text;
   v_hash     text;
   v_approved boolean;
-  v_city_id  uuid;
+  v_city_id  integer;
   v_city_nm  text;
   v_phone    text;
   v_branch   text;
@@ -53,12 +56,9 @@ BEGIN
   IF NOT FOUND THEN RETURN; END IF;
 
   IF v_hash LIKE '$2%' THEN
-    -- bcrypt
     IF crypt(p_password, v_hash) <> v_hash THEN RETURN; END IF;
   ELSE
-    -- Legacy SHA-256: client did encode(email + password + 'lab_rezervasyon_2024')
     IF encode(digest(p_email || p_password || 'lab_rezervasyon_2024', 'sha256'), 'hex') <> v_hash THEN RETURN; END IF;
-    -- Auto-migrate to bcrypt
     v_new_hash := crypt(p_password, gen_salt('bf', 10));
     UPDATE public.users SET password_hash = v_new_hash WHERE users.id = v_id;
   END IF;
@@ -72,21 +72,21 @@ $$;
 -- ─── ADMIN LOGIN ─────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.login_admin(p_email TEXT, p_password TEXT)
 RETURNS TABLE(
-  id      uuid,
+  id      integer,
   name    text,
   email   text,
   role    text,
-  city_id uuid,
+  city_id integer,
   phone   text
 )
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
-  v_id      uuid;
+  v_id      integer;
   v_name    text;
   v_email   text;
   v_hash    text;
   v_role    text;
-  v_city_id uuid;
+  v_city_id integer;
   v_phone   text;
   v_new_hash text;
 BEGIN
@@ -120,7 +120,7 @@ $$;
 
 -- ─── CHANGE USER PASSWORD ────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.change_user_password(
-  p_user_id          uuid,
+  p_user_id          integer,
   p_email            text,
   p_current_password text,
   p_new_password     text
@@ -145,7 +145,7 @@ $$;
 
 -- ─── CHANGE ADMIN PASSWORD ───────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.change_admin_password(
-  p_admin_id         uuid,
+  p_admin_id         integer,
   p_email            text,
   p_current_password text,
   p_new_password     text
@@ -169,8 +169,8 @@ END;
 $$;
 
 -- ─── GRANT ANON ACCESS ───────────────────────────────────────────────────────
-GRANT EXECUTE ON FUNCTION public.login_user(text, text)                            TO anon;
-GRANT EXECUTE ON FUNCTION public.login_admin(text, text)                           TO anon;
-GRANT EXECUTE ON FUNCTION public.hash_password_bcrypt(text)                        TO anon;
-GRANT EXECUTE ON FUNCTION public.change_user_password(uuid, text, text, text)      TO anon;
-GRANT EXECUTE ON FUNCTION public.change_admin_password(uuid, text, text, text)     TO anon;
+GRANT EXECUTE ON FUNCTION public.login_user(text, text)                               TO anon;
+GRANT EXECUTE ON FUNCTION public.login_admin(text, text)                              TO anon;
+GRANT EXECUTE ON FUNCTION public.hash_password_bcrypt(text)                           TO anon;
+GRANT EXECUTE ON FUNCTION public.change_user_password(integer, text, text, text)      TO anon;
+GRANT EXECUTE ON FUNCTION public.change_admin_password(integer, text, text, text)     TO anon;
