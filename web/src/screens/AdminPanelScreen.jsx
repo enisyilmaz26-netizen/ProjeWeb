@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 import { Settings, Lock, X, RefreshCw, Pencil } from 'lucide-react'
@@ -47,6 +47,13 @@ export default function AdminPanelScreen() {
   const [adminProfileSuccess, setAdminProfileSuccess] = useState('')
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState('')
+  const pwSuccessTimer = useRef(null)
+  const profileSuccessTimer = useRef(null)
+
+  useEffect(() => () => {
+    clearTimeout(pwSuccessTimer.current)
+    clearTimeout(profileSuccessTimer.current)
+  }, [])
 
   const handleAdminProfileSave = async (e) => {
     e.preventDefault()
@@ -59,7 +66,12 @@ export default function AdminPanelScreen() {
     setAdminProfileLoading(true)
     const result = await updateAdmin(loggedInAdmin.id, { name: adminProfileForm.name.trim(), phone: adminProfileForm.phone.trim(), email: emailTrim })
     setAdminProfileLoading(false)
-    if (result.success) { setShowAdminProfileEdit(false); setAdminProfileSuccess(language === 'TR' ? 'Profil güncellendi.' : 'Profile updated.'); setTimeout(() => setAdminProfileSuccess(''), 3000) }
+    if (result.success) {
+      setShowAdminProfileEdit(false)
+      setAdminProfileSuccess(language === 'TR' ? 'Profil güncellendi.' : 'Profile updated.')
+      clearTimeout(profileSuccessTimer.current)
+      profileSuccessTimer.current = setTimeout(() => setAdminProfileSuccess(''), 3000)
+    }
     else setAdminProfileError(result.error || t('err_generic', language))
   }
 
@@ -95,18 +107,22 @@ export default function AdminPanelScreen() {
       setAdminPwForm({ current: '', newPw: '', confirm: '' })
       setShowAdminPwChange(false)
       setAdminPwSuccess(t('password_changed', language))
-      setTimeout(() => setAdminPwSuccess(''), 3000)
+      clearTimeout(pwSuccessTimer.current)
+      pwSuccessTimer.current = setTimeout(() => setAdminPwSuccess(''), 3000)
     } else {
       setAdminPwError(result.error || t('err_generic', language))
     }
   }
 
-  const adminCityConvUnread = isGlobal
-    ? conversations.reduce((s, c) => s + (c.unread_for_recipient || 0), 0)
-    : conversations.filter(c => c.recipient_type === 'city_admin' && String(c.city_id) === String(adminCityId)).reduce((s, c) => s + (c.unread_for_recipient || 0), 0) +
+  const adminCityConvUnread = useMemo(() => {
+    if (isGlobal) return conversations.reduce((s, c) => s + (c.unread_for_recipient || 0), 0)
+    return (
+      conversations.filter(c => c.recipient_type === 'city_admin' && String(c.city_id) === String(adminCityId)).reduce((s, c) => s + (c.unread_for_recipient || 0), 0) +
       conversations.filter(c => c.recipient_type === 'global_admin' && String(c.sender_id) === String(loggedInAdmin?.id)).reduce((s, c) => s + (c.unread_for_sender || 0), 0)
+    )
+  }, [isGlobal, adminCityId, conversations, loggedInAdmin?.id])
 
-  const tabs = [
+  const tabs = useMemo(() => [
     { key: 'appointments', label: t('tab_appointments_label', language) },
     { key: 'workshops', label: t('tab_workshops', language) },
     { key: 'studios', label: t('tab_studios_label', language) },
@@ -118,7 +134,7 @@ export default function AdminPanelScreen() {
     ...(messagesAvailable ? [{ key: 'messages', label: t('tab_messages', language), unread: adminCityConvUnread }] : []),
     ...(isGlobal ? [{ key: 'admins', label: t('tab_admins', language) }] : []),
     ...(isGlobal ? [{ key: 'audit', label: t('tab_audit', language) }] : []),
-  ]
+  ], [language, messagesAvailable, adminCityConvUnread, isGlobal])
 
   return (
     <div className="px-4 py-4">

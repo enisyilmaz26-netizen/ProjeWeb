@@ -188,8 +188,8 @@ export default function CalendarView({
               </span>
               {dayAppts.length > 0 && (
                 <div className="flex flex-wrap gap-0.5 justify-center">
-                  {dayAppts.slice(0, 4).map((a, i) => (
-                    <span key={i} className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUS_DOT[a.status] || 'bg-gray-400'}`} />
+                  {dayAppts.slice(0, 4).map((a) => (
+                    <span key={a.id} className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUS_DOT[a.status] || 'bg-gray-400'}`} />
                   ))}
                   {dayAppts.length > 4 && (
                     <span className="text-[8px] text-gray-400 leading-none">+{dayAppts.length - 4}</span>

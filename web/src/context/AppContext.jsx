@@ -274,23 +274,25 @@ export function AppProvider({ children }) {
       .gte('date', todayStr)
       .lte('date', in2daysStr)
     if (upcoming && upcoming.length > 0) {
+      const reminderTitle = language === 'TR' ? 'Yaklaşan Randevu Hatırlatması' : 'Upcoming Appointment Reminder'
+      const toInsert = []
       for (const appt of upcoming) {
-        const reminderTitle = language === 'TR' ? 'Yaklaşan Randevu Hatırlatması' : 'Upcoming Appointment Reminder'
-        const reminderMsg = language === 'TR'
-          ? `${appt.lab_name} - ${appt.date} ${appt.time_slot} tarihli randevunuz yaklaşıyor.`
-          : `Your appointment at ${appt.lab_name} on ${appt.date} ${appt.time_slot} is coming up.`
         const { data: existing } = await supabase.from('notifications')
           .select('id').eq('type', 'REMINDER').ilike('message', `%${appt.id}%`).maybeSingle()
         if (!existing) {
-          await supabase.from('notifications').insert([{
+          const reminderMsg = language === 'TR'
+            ? `${appt.lab_name} - ${appt.date} ${appt.time_slot} tarihli randevunuz yaklaşıyor.`
+            : `Your appointment at ${appt.lab_name} on ${appt.date} ${appt.time_slot} is coming up.`
+          toInsert.push({
             title: reminderTitle,
             message: `[${appt.id}] ${reminderMsg}`,
             type: 'REMINDER',
             timestamp: Date.now(),
             is_read: false,
-          }])
+          })
         }
       }
+      if (toInsert.length > 0) await supabase.from('notifications').insert(toInsert)
     }
 
     return { success: true }
@@ -354,7 +356,7 @@ export function AppProvider({ children }) {
     const email = formData.email.trim().toLowerCase()
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: formData.password })
     if (hashErr || !hashed) { console.error('hash_password_bcrypt error:', hashErr); return { success: false, error: hashErr?.message || 'err_generic' } }
-    const { error } = await supabase.from('users').insert([{
+    const { data: newUser, error } = await supabase.from('users').insert([{
       name: formData.name,
       surname: formData.surname,
       email,
@@ -366,10 +368,9 @@ export function AppProvider({ children }) {
       city_name: formData.city_name,
       district: formData.district,
       is_approved: true,
-    }])
+    }]).select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district').single()
     if (error) return { success: false, error: error.message }
-    const { data: all } = await supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district').order('name')
-    if (all) setUsers(all)
+    if (newUser) setUsers(prev => [...prev, newUser].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
     return { success: true }
   }
 

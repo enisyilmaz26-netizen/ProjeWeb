@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, formatDate, STATUS_COLORS, STATUS_LABELS } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
@@ -12,7 +12,16 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const inputClass = INPUT_BASE
   const todayStr = new Date().toISOString().split('T')[0]
 
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const successTimer = useRef(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput), 300)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  useEffect(() => () => clearTimeout(successTimer.current), [])
   const [filterCity, setFilterCity] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterLocation, setFilterLocation] = useState('')
@@ -64,7 +73,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   }, [appointments, isGlobal, adminCityId, filterCity, filterStatus, filterLocation, filterDateFrom, filterDateTo, search, labs])
 
   const resetFilters = () => {
-    setSearch(''); setFilterCity(''); setFilterStatus(''); setFilterLocation('')
+    setSearchInput(''); setSearch(''); setFilterCity(''); setFilterStatus(''); setFilterLocation('')
     setFilterDateFrom(''); setFilterDateTo(''); setVisibleCount(PAGE_SIZE); setSelectedIds(new Set())
   }
 
@@ -79,8 +88,11 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
 
   const execBulkApprove = async () => {
     setBulkProcessing(true)
-    for (const id of selectedIds) {
-      await approveAppointment(id)
+    const ids = [...selectedIds]
+    let failCount = 0
+    for (const id of ids) {
+      const result = await approveAppointment(id)
+      if (result?.success === false) { failCount++; continue }
       const appt = appointments.find(a => a.id === id)
       if (appt) {
         const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
@@ -89,7 +101,10 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     }
     setSelectedIds(new Set())
     setBulkProcessing(false)
-    showSuccess(t('action_success_approved', language))
+    const successCount = ids.length - failCount
+    showSuccess(failCount > 0
+      ? `${t('action_success_approved', language)} (${successCount}/${ids.length})`
+      : t('action_success_approved', language))
   }
 
   const execBulkCancel = async () => {
@@ -105,7 +120,11 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const handleBulkApprove = () => onRequestConfirm(t('bulk_approve', language), execBulkApprove)
   const handleBulkCancel = () => onRequestConfirm(t('bulk_cancel', language), execBulkCancel)
 
-  const showSuccess = (msg) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(''), 3000) }
+  const showSuccess = (msg) => {
+    setSuccessMsg(msg)
+    clearTimeout(successTimer.current)
+    successTimer.current = setTimeout(() => setSuccessMsg(''), 3000)
+  }
 
   const execApprove = async (id, newDate, newTimeSlot) => {
     setProcessingId(id)
@@ -194,7 +213,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
 
       <div className="flex flex-col gap-2 mb-3">
         <div className="flex flex-wrap gap-2">
-          <input type="text" placeholder={t('search_placeholder', language)} className={`${inputClass} flex-1 min-w-[160px]`} value={search} onChange={e => { setSearch(e.target.value); setVisibleCount(PAGE_SIZE) }} />
+          <input type="text" placeholder={t('search_placeholder', language)} className={`${inputClass} flex-1 min-w-[160px]`} value={searchInput} onChange={e => { setSearchInput(e.target.value); setVisibleCount(PAGE_SIZE) }} />
           {isGlobal && (
             <select className={inputClass} value={filterCity} onChange={e => { setFilterCity(e.target.value); setFilterLocation(''); setVisibleCount(PAGE_SIZE) }}>
               <option value="">{t('filter_all_provinces', language)}</option>
@@ -221,7 +240,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
           <input type="date" className={inputClass} value={filterDateFrom} max={filterDateTo || undefined} onChange={e => { setFilterDateFrom(e.target.value); setVisibleCount(PAGE_SIZE) }} />
           <span className="text-xs text-gray-400">—</span>
           <input type="date" className={inputClass} value={filterDateTo} min={filterDateFrom || undefined} onChange={e => { setFilterDateTo(e.target.value); setVisibleCount(PAGE_SIZE) }} />
-          {(search || filterCity || filterStatus || filterLocation || filterDateFrom || filterDateTo) && (
+          {(searchInput || filterCity || filterStatus || filterLocation || filterDateFrom || filterDateTo) && (
             <button onClick={resetFilters} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">{t('filter_clear', language)}</button>
           )}
         </div>

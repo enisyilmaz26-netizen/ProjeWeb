@@ -27,7 +27,7 @@ export default function NotificationCenterScreen() {
     const unreadIds = visibleNotifications.filter(n => !n.is_read).map(n => n.id)
     if (unreadIds.length > 0) markNotificationsRead(unreadIds)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [notifications])
 
   const handleClearAll = async () => {
     await clearNotifications(cityName)
