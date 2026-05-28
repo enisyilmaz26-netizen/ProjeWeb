@@ -183,7 +183,7 @@ export default function AdminPanelScreen() {
             className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition whitespace-nowrap relative ${
               activeTab === tab.key
                 ? 'bg-white dark:bg-[#1565C0] text-[#1565C0] dark:text-white shadow'
-                : 'text-gray-500 dark:text-gray-400'
+                : 'text-gray-500 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-[#1565C0]/20 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer'
             }`}
           >
             {tab.label}
