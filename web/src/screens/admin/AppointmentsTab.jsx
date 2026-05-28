@@ -5,6 +5,7 @@ import { INPUT_BASE } from '../../lib/ui'
 import { PAGE_SIZE, statusLabel, exportToCSV } from '../../lib/adminHelpers'
 import { Download, CalendarDays, List } from 'lucide-react'
 import CalendarView from '../../components/CalendarView'
+import { isTurkishHoliday, isSunday } from '../../lib/holidays'
 
 export default function AppointmentsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { appointments, cities, labs, approveAppointment, cancelAppointment, denyCancellationRequest, markAppointmentCompleted, createNotification } = useApp()
@@ -174,6 +175,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
           <CalendarView
             appointments={filteredAppointments}
             language={language}
+            isDateDisabled={(date) => isSunday(date) || isTurkishHoliday(date)}
             onDayClick={(dateStr) => {
               setFilterDateFrom(dateStr)
               setFilterDateTo(dateStr)
