@@ -394,6 +394,7 @@ export function AppProvider({ children }) {
       city_name: formData.city_name,
       district: formData.district,
       is_approved: true,
+      must_change_password: true,
     }]).select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password').single()
     if (error) return { success: false, error: error.message }
     if (newUser) setUsers(prev => [...prev, newUser].sort((a, b) => (a.name || '').localeCompare(b.name || '')))

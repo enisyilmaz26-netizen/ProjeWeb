@@ -16,7 +16,7 @@ export default function WorkshopsScreen() {
   const userCityId = loggedInUser?.city_id
   const userCity = cities.find(c => String(c.id) === String(userCityId))
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` })()
 
   const cityWorkshops = workshops
     .filter(w => !w.city_id || String(w.city_id) === String(userCityId))
@@ -109,15 +109,21 @@ export default function WorkshopsScreen() {
                 </span>
               )}
             </div>
-            {isPast && hasAttended && (
+            {isPast && isRegistered && (
               <div className="mt-3">
-                <button
-                  onClick={() => openCertificate(ws)}
-                  className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5"
-                >
-                  <Award className="w-3.5 h-3.5" />
-                  {language === 'TR' ? 'Sertifikamı Görüntüle' : 'View My Certificate'}
-                </button>
+                {hasAttended ? (
+                  <button
+                    onClick={() => openCertificate(ws)}
+                    className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5"
+                  >
+                    <Award className="w-3.5 h-3.5" />
+                    {language === 'TR' ? 'Sertifikamı Görüntüle' : 'View My Certificate'}
+                  </button>
+                ) : (
+                  <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-1">
+                    {language === 'TR' ? 'Katılım onayı bekleniyor…' : 'Awaiting attendance confirmation…'}
+                  </p>
+                )}
               </div>
             )}
             {!isPast && workshopRegistrationsAvailable && (
