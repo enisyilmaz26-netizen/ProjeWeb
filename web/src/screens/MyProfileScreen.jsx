@@ -8,7 +8,7 @@ import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight,
 import CalendarView from '../components/CalendarView'
 
 export default function MyProfileScreen() {
-  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities } = useApp()
+  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities, waitlist, removeFromWaitlist } = useApp()
   const [apptViewMode, setApptViewMode] = useState('list')
 
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -350,6 +350,32 @@ export default function MyProfileScreen() {
             </div>
           )}
         </>
+      )}
+
+      {/* Waitlist */}
+      {waitlist.length > 0 && (
+        <div className="mb-4">
+          <h3 className="font-bold text-blue-600 dark:text-blue-400 text-sm mb-2 flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            {language === 'TR' ? `Bekleme Listesi (${waitlist.length})` : `Waitlist (${waitlist.length})`}
+          </h3>
+          <div className="space-y-2">
+            {waitlist.map(w => (
+              <div key={w.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow px-4 py-3 flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{w.lab_name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(w.date)} — {w.time_slot}</p>
+                </div>
+                <button
+                  onClick={async () => await removeFromWaitlist(w.id)}
+                  className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                >
+                  {language === 'TR' ? 'Çıkar' : 'Remove'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Cancel Modal */}

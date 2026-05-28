@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate, translations } from '../lib/languages'
-import { X, MapPin } from 'lucide-react'
+import { X, MapPin, Clock } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
 import { isTurkishHoliday, isSunday } from '../lib/holidays'
 import CalendarView from '../components/CalendarView'
@@ -34,7 +34,7 @@ function normalizeSlot(str) {
 }
 
 export default function UserReservationScreen() {
-  const { cities, labs, appointments, timeSlots, loggedInUser, submitAppointment, language, isDateClosed } = useApp()
+  const { cities, labs, appointments, timeSlots, loggedInUser, submitAppointment, language, isDateClosed, waitlist, addToWaitlist, removeFromWaitlist } = useApp()
   const todayStr = new Date().toISOString().split('T')[0]
 
   const [step, setStep] = useState(1)
@@ -47,6 +47,7 @@ export default function UserReservationScreen() {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [dateError, setDateError] = useState('')
+  const [waitlistMsg, setWaitlistMsg] = useState('')
 
   // User can only see their own city
   const userCity = useMemo(() => {
@@ -335,28 +336,64 @@ export default function UserReservationScreen() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {waitlistMsg && (
+                <div className="col-span-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl text-blue-700 dark:text-blue-300 text-xs">{waitlistMsg}</div>
+              )}
               {citySlots.map(slot => {
                 const avail = getSlotAvailability(slot)
+                const onWaitlist = waitlist.some(w =>
+                  String(w.lab_id) === String(selectedLab?.id) &&
+                  w.date === selectedDate &&
+                  w.time_slot === slot.time_range
+                )
                 return (
-                  <button
-                    key={slot.id}
-                    onClick={() => handleSlotSelect(slot)}
-                    disabled={avail.full}
-                    className={`rounded-2xl p-4 text-left border-2 transition active:scale-[0.98] ${
-                      avail.full
-                        ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed'
-                        : 'bg-white dark:bg-[#0D1E3D] border-transparent hover:border-[#1565C0] dark:hover:border-[#7DD4FC] shadow'
-                    }`}
-                  >
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{normalizeSlot(slot.time_range)}</p>
-                    {avail.full ? (
-                      <p className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">{t('slot_full', language)}</p>
-                    ) : (
-                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                        {t('slots_remaining', language)}: <span className="font-bold">{avail.remaining}</span>/{avail.maxCapacity}
-                      </p>
+                  <div key={slot.id} className="flex flex-col gap-1">
+                    <button
+                      onClick={() => handleSlotSelect(slot)}
+                      disabled={avail.full}
+                      className={`rounded-2xl p-4 text-left border-2 transition active:scale-[0.98] ${
+                        avail.full
+                          ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed'
+                          : 'bg-white dark:bg-[#0D1E3D] border-transparent hover:border-[#1565C0] dark:hover:border-[#7DD4FC] shadow'
+                      }`}
+                    >
+                      <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{normalizeSlot(slot.time_range)}</p>
+                      {avail.full ? (
+                        <p className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">{t('slot_full', language)}</p>
+                      ) : (
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                          {t('slots_remaining', language)}: <span className="font-bold">{avail.remaining}</span>/{avail.maxCapacity}
+                        </p>
+                      )}
+                    </button>
+                    {avail.full && (
+                      <button
+                        onClick={async () => {
+                          setWaitlistMsg('')
+                          if (onWaitlist) {
+                            const entry = waitlist.find(w => String(w.lab_id) === String(selectedLab?.id) && w.date === selectedDate && w.time_slot === slot.time_range)
+                            if (entry) { await removeFromWaitlist(entry.id); setWaitlistMsg(language === 'TR' ? 'Bekleme listesinden çıkarıldınız.' : 'Removed from waitlist.') }
+                          } else {
+                            const res = await addToWaitlist({
+                              lab_id: selectedLab.id, lab_name: selectedLab.name,
+                              city_id: selectedCity.id, city_name: selectedCity.name,
+                              date: selectedDate, time_slot: slot.time_range,
+                              user_id: loggedInUser.id, user_email: loggedInUser.email,
+                              user_name: loggedInUser.name, user_surname: loggedInUser.surname,
+                              user_phone: loggedInUser.phone || '', user_branch: loggedInUser.branch || '',
+                              user_work_location: loggedInUser.work_location || '',
+                              user_city: loggedInUser.city_name || '', user_district: loggedInUser.district || '',
+                            })
+                            setWaitlistMsg(res.success ? (language === 'TR' ? 'Bekleme listesine eklendiniz. Yer açıldığında bildirim alacaksınız.' : 'Added to waitlist. You will be notified when a slot opens.') : (res.error || ''))
+                          }
+                        }}
+                        className={`w-full py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1 ${onWaitlist ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200' : 'border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+                      >
+                        <Clock className="w-3 h-3" />
+                        {onWaitlist ? (language === 'TR' ? '✓ Bekleme Listesinde' : '✓ On Waitlist') : (language === 'TR' ? 'Bekleme Listesine Ekle' : 'Join Waitlist')}
+                      </button>
                     )}
-                  </button>
+                  </div>
                 )
               })}
             </div>

@@ -23,6 +23,48 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [addUserSuccess, setAddUserSuccess] = useState('')
   const [addUserLoading, setAddUserLoading] = useState(false)
 
+  const [csvImporting, setCsvImporting] = useState(false)
+  const [csvResult, setCsvResult] = useState(null)
+
+  const handleCsvImport = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    e.target.value = ''
+    setCsvResult(null)
+    setCsvImporting(true)
+    const text = await file.text()
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+    const header = lines[0].toLowerCase().replace(/\r/g, '')
+    const cols = header.split(',').map(c => c.trim().replace(/^"|"$/g, ''))
+    const idxOf = (names) => { for (const n of names) { const i = cols.indexOf(n); if (i !== -1) return i } return -1 }
+    const nameIdx = idxOf(['ad', 'name', 'isim'])
+    const surnameIdx = idxOf(['soyad', 'surname', 'soyadı'])
+    const emailIdx = idxOf(['eposta', 'e-posta', 'email', 'e_posta'])
+    const phoneIdx = idxOf(['telefon', 'phone', 'tel'])
+    const branchIdx = idxOf(['branş', 'brans', 'branch'])
+    const workLocIdx = idxOf(['kurum', 'work_location', 'okul', 'school'])
+    const districtIdx = idxOf(['ilçe', 'district', 'ilce'])
+    const cityIdx = idxOf(['il', 'city', 'şehir', 'sehir', 'il_id', 'city_id'])
+    let ok = 0, fail = 0, errors = []
+    for (let i = 1; i < lines.length; i++) {
+      const parts = lines[i].replace(/\r/g, '').split(',').map(p => p.trim().replace(/^"|"$/g, ''))
+      const email = emailIdx >= 0 ? parts[emailIdx]?.trim().toLowerCase() : ''
+      const name = nameIdx >= 0 ? parts[nameIdx] : ''
+      const surname = surnameIdx >= 0 ? parts[surnameIdx] : ''
+      if (!email || !name || !surname) { fail++; errors.push(`Satır ${i + 1}: eksik alan`); continue }
+      const cityVal = cityIdx >= 0 ? parts[cityIdx] : ''
+      const cityObj = cities.find(c => String(c.id) === cityVal || c.name.toLowerCase() === cityVal.toLowerCase())
+      const cityId = cityObj?.id || (!isGlobal ? adminCityId : null)
+      if (!cityId) { fail++; errors.push(`Satır ${i + 1}: il bulunamadı (${cityVal})`); continue }
+      const password = 'Gecici2024!'
+      const result = await addUserByAdmin({ name, surname, email, password, phone: phoneIdx >= 0 ? parts[phoneIdx] || '' : '', branch: branchIdx >= 0 ? parts[branchIdx] || '' : '', work_location: workLocIdx >= 0 ? parts[workLocIdx] || '' : '', district: districtIdx >= 0 ? parts[districtIdx] || '' : '', city_id: cityId, city_name: cityObj?.name || '' })
+      if (result.success) ok++
+      else { fail++; errors.push(`Satır ${i + 1} (${email}): ${result.error}`) }
+    }
+    setCsvImporting(false)
+    setCsvResult({ ok, fail, errors })
+  }
+
   const [resetPwModal, setResetPwModal] = useState(null)
   const [resetPwValue, setResetPwValue] = useState('')
   const [resetPwError, setResetPwError] = useState('')
@@ -102,14 +144,35 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           ) : <div />}
-          <button onClick={() => { setShowAddUser(p => !p); setAddUserError(''); setAddUserSuccess(''); setAddUserForm({ name: '', surname: '', email: '', password: '', branch: '', work_location: '', phone: '', city_id: '', district: '' }) }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition flex-shrink-0">
-            + {language === 'TR' ? 'Üye Ekle' : 'Add Member'}
-          </button>
+          <div className="flex gap-2 flex-shrink-0">
+            <label className="py-2 px-3 border border-[#1565C0]/40 dark:border-[#7DD4FC]/40 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition cursor-pointer flex items-center gap-1">
+              {csvImporting ? '...' : (language === 'TR' ? 'CSV İçe Aktar' : 'Import CSV')}
+              <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={csvImporting} />
+            </label>
+            <button onClick={() => { setShowAddUser(p => !p); setAddUserError(''); setAddUserSuccess(''); setAddUserForm({ name: '', surname: '', email: '', password: '', branch: '', work_location: '', phone: '', city_id: '', district: '' }) }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
+              + {language === 'TR' ? 'Üye Ekle' : 'Add Member'}
+            </button>
+          </div>
         </div>
         <input type="text" placeholder={t('search_user_placeholder', language)} className={`${inputClass} w-full`} value={userSearch} onChange={e => { setUserSearch(e.target.value); setVisibleApprovedCount(PAGE_SIZE) }} />
       </div>
 
       {addUserSuccess && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{addUserSuccess}</div>}
+      {csvResult && (
+        <div className={`rounded-xl px-4 py-3 text-sm mb-3 ${csvResult.fail === 0 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300' : 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300'}`}>
+          <div className="flex items-center justify-between">
+            <span>{language === 'TR' ? `${csvResult.ok} eklendi, ${csvResult.fail} başarısız` : `${csvResult.ok} added, ${csvResult.fail} failed`}</span>
+            <button onClick={() => setCsvResult(null)} className="text-xs opacity-60 hover:opacity-100">✕</button>
+          </div>
+          {csvResult.errors.length > 0 && (
+            <ul className="mt-2 space-y-0.5 text-xs">
+              {csvResult.errors.slice(0, 5).map((e, i) => <li key={i}>• {e}</li>)}
+              {csvResult.errors.length > 5 && <li>... ve {csvResult.errors.length - 5} daha</li>}
+            </ul>
+          )}
+          <p className="text-xs mt-1 opacity-70">{language === 'TR' ? 'Varsayılan şifre: Gecici2024!' : 'Default password: Gecici2024!'}</p>
+        </div>
+      )}
 
       {showAddUser && (
         <form onSubmit={handleAddUserByAdmin} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4 space-y-3">

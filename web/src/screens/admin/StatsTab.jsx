@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
-import { statusLabel } from '../../lib/adminHelpers'
+import { statusLabel, exportToCSV } from '../../lib/adminHelpers'
+import { Printer, Download } from 'lucide-react'
 
 export default function StatsTab({ language, isGlobal, adminCityId }) {
   const { appointments, cities, workshops } = useApp()
@@ -89,6 +90,20 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
           )}
         </div>
       )}
+      <div className="flex gap-2 justify-end">
+        <button
+          onClick={() => exportToCSV(scopedAppointments, language)}
+          className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1"
+        >
+          <Download className="w-3.5 h-3.5" />{language === 'TR' ? 'CSV İndir' : 'Download CSV'}
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="text-xs text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition inline-flex items-center gap-1"
+        >
+          <Printer className="w-3.5 h-3.5" />{language === 'TR' ? 'Yazdır / PDF' : 'Print / PDF'}
+        </button>
+      </div>
 
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
         <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">{t('stats_studio_usage', language)}</h3>

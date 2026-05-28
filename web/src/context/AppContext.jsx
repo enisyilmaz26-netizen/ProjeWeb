@@ -259,6 +259,40 @@ export function AppProvider({ children }) {
 
     clearAttempts(email)
     setLoggedInUser(user)
+    loadWaitlist(email)
+
+    // Yaklaşan randevular için hatırlatma bildirimi oluştur (2 gün içinde)
+    const today = new Date()
+    const in2days = new Date(today); in2days.setDate(today.getDate() + 2)
+    const todayStr = today.toISOString().split('T')[0]
+    const in2daysStr = in2days.toISOString().split('T')[0]
+    const { data: upcoming } = await supabase
+      .from('appointments')
+      .select('id, lab_name, date, time_slot')
+      .eq('user_email', email)
+      .in('status', ['APPROVED'])
+      .gte('date', todayStr)
+      .lte('date', in2daysStr)
+    if (upcoming && upcoming.length > 0) {
+      for (const appt of upcoming) {
+        const reminderTitle = language === 'TR' ? 'Yaklaşan Randevu Hatırlatması' : 'Upcoming Appointment Reminder'
+        const reminderMsg = language === 'TR'
+          ? `${appt.lab_name} - ${appt.date} ${appt.time_slot} tarihli randevunuz yaklaşıyor.`
+          : `Your appointment at ${appt.lab_name} on ${appt.date} ${appt.time_slot} is coming up.`
+        const { data: existing } = await supabase.from('notifications')
+          .select('id').eq('type', 'REMINDER').ilike('message', `%${appt.id}%`).maybeSingle()
+        if (!existing) {
+          await supabase.from('notifications').insert([{
+            title: reminderTitle,
+            message: `[${appt.id}] ${reminderMsg}`,
+            type: 'REMINDER',
+            timestamp: Date.now(),
+            is_read: false,
+          }])
+        }
+      }
+    }
+
     return { success: true }
   }
 
@@ -284,7 +318,7 @@ export function AppProvider({ children }) {
     if (existing) return { success: false, error: 'err_email_exists' }
 
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: formData.password })
-    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
+    if (hashErr || !hashed) { console.error('hash_password_bcrypt error:', hashErr); return { success: false, error: hashErr?.message || 'err_generic' } }
     const { error } = await supabase.from('users').insert([{
       name: formData.name,
       surname: formData.surname,
@@ -319,7 +353,7 @@ export function AppProvider({ children }) {
 
     const email = formData.email.trim().toLowerCase()
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: formData.password })
-    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
+    if (hashErr || !hashed) { console.error('hash_password_bcrypt error:', hashErr); return { success: false, error: hashErr?.message || 'err_generic' } }
     const { error } = await supabase.from('users').insert([{
       name: formData.name,
       surname: formData.surname,
@@ -508,6 +542,7 @@ export function AppProvider({ children }) {
         const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
         if (nd) setNotifications(prev => [nd, ...prev])
       }
+      notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot)
     }
     return { success: true }
   }
@@ -1006,6 +1041,47 @@ export function AppProvider({ children }) {
     })
   }, [notifications, loggedInAdmin, loggedInUser, cities])
 
+  // WAITLIST
+  const [waitlist, setWaitlist] = useState([])
+
+  const loadWaitlist = async (userEmail) => {
+    if (!userEmail) return
+    const { data } = await supabase.from('waitlist').select('*').eq('user_email', userEmail).eq('status', 'WAITING').order('created_at', { ascending: true })
+    if (data) setWaitlist(data)
+  }
+
+  const addToWaitlist = async (slotData) => {
+    const { data: existing } = await supabase.from('waitlist')
+      .select('id').eq('lab_id', slotData.lab_id).eq('date', slotData.date).eq('time_slot', slotData.time_slot).eq('user_email', slotData.user_email).maybeSingle()
+    if (existing) return { success: false, error: language === 'TR' ? 'Zaten bekleme listelesindesiniz.' : 'Already on the waitlist.' }
+    const { data, error } = await supabase.from('waitlist').insert([{ ...slotData, status: 'WAITING' }]).select().single()
+    if (error) return { success: false, error: error.message }
+    setWaitlist(prev => [...prev, data])
+    return { success: true }
+  }
+
+  const removeFromWaitlist = async (waitlistId) => {
+    const { error } = await supabase.from('waitlist').delete().eq('id', waitlistId)
+    if (error) return { success: false, error: error.message }
+    setWaitlist(prev => prev.filter(w => w.id !== waitlistId))
+    return { success: true }
+  }
+
+  const notifyNextOnWaitlist = async (labId, date, timeSlot) => {
+    const { data: next } = await supabase.from('waitlist')
+      .select('*').eq('lab_id', labId).eq('date', date).eq('time_slot', timeSlot).eq('status', 'WAITING')
+      .order('created_at', { ascending: true }).limit(1).maybeSingle()
+    if (!next) return
+    await supabase.from('waitlist').update({ status: 'NOTIFIED' }).eq('id', next.id)
+    await supabase.from('notifications').insert([{
+      title: language === 'TR' ? 'Bekleme Listesi: Slot Açıldı' : 'Waitlist: Slot Available',
+      message: language === 'TR'
+        ? `[${next.id}] ${next.lab_name} - ${next.date} ${next.time_slot} için bir yer açıldı. Lütfen randevu alın.`
+        : `[${next.id}] A slot opened at ${next.lab_name} on ${next.date} ${next.time_slot}. Please book now.`,
+      type: 'REMINDER', timestamp: Date.now(), is_read: false,
+    }])
+  }
+
   const value = {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
@@ -1025,6 +1101,7 @@ export function AppProvider({ children }) {
     addClosedDay, removeClosedDay, isDateClosed,
     getOrCreateConversation, loadConversationMessages, sendMessage, markConversationRead,
     addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
+    waitlist, loadWaitlist, addToWaitlist, removeFromWaitlist, notifyNextOnWaitlist,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

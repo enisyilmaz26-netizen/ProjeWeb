@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, formatDate } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
-import { X, Calendar, Clock, Users, Pencil, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
+import { X, Calendar, Clock, Users, Pencil, Trash2, ChevronDown, ChevronRight, Download } from 'lucide-react'
 import { getLabIcon } from '../../lib/icons'
 
 export default function WorkshopsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
@@ -246,23 +246,40 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                         <button onClick={() => handleDeleteWorkshop(ws.id)} disabled={processingId === ws.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     </div>
-                    {expandedRegistrants === ws.id && (
-                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">{t('workshop_registrants_title', language)}</p>
-                        {workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id)).length === 0 ? (
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{t('workshop_no_registrants', language)}</p>
-                        ) : (
-                          <div className="space-y-1">
-                            {workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id)).map(r => (
-                              <div key={r.id} className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0] dark:bg-[#7DD4FC] flex-shrink-0" />
-                                {r.user_name} {r.user_surname} <span className="text-gray-400">— {r.user_email}</span>
-                              </div>
-                            ))}
+                    {expandedRegistrants === ws.id && (() => {
+                      const regs = workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id))
+                      const exportRegs = () => {
+                        const header = 'Ad,Soyad,E-posta'
+                        const rows = regs.map(r => `${r.user_name},${r.user_surname},${r.user_email}`)
+                        const blob = new Blob(['﻿' + [header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' })
+                        const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
+                        a.download = `${ws.name.replace(/\s+/g, '_')}_kayitlar.csv`; a.click()
+                      }
+                      return (
+                        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">{t('workshop_registrants_title', language)}</p>
+                            {regs.length > 0 && (
+                              <button onClick={exportRegs} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] inline-flex items-center gap-1 hover:underline">
+                                <Download className="w-3 h-3" />{language === 'TR' ? 'CSV İndir' : 'Download CSV'}
+                              </button>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )}
+                          {regs.length === 0 ? (
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{t('workshop_no_registrants', language)}</p>
+                          ) : (
+                            <div className="space-y-1">
+                              {regs.map(r => (
+                                <div key={r.id} className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0] dark:bg-[#7DD4FC] flex-shrink-0" />
+                                  {r.user_name} {r.user_surname} <span className="text-gray-400">— {r.user_email}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                 )}
               </div>

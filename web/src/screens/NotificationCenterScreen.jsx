@@ -7,18 +7,21 @@ export default function NotificationCenterScreen() {
   const { notifications, loggedInAdmin, loggedInUser, clearNotifications, markNotificationsRead, language, cities } = useApp()
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [notifSearch, setNotifSearch] = useState('')
+  const [notifType, setNotifType] = useState('')
 
   // Filtering is handled in AppContext (visibleNotifications); notifications here is already
   // scoped to the current user's city. We only need the city name for the clear action.
   const adminCity = cities.find(c => String(c.id) === String(loggedInAdmin?.city_id))
   const cityName = (loggedInAdmin?.role === 'CITY' && adminCity) ? adminCity.name : null
 
-  const visibleNotifications = notifSearch.trim()
-    ? notifications.filter(n =>
-        (n.title || '').toLowerCase().includes(notifSearch.toLowerCase()) ||
-        (n.message || '').toLowerCase().includes(notifSearch.toLowerCase())
-      )
-    : notifications
+  const visibleNotifications = notifications.filter(n => {
+    if (notifType && n.type !== notifType) return false
+    if (notifSearch.trim()) {
+      const q = notifSearch.toLowerCase()
+      return (n.title || '').toLowerCase().includes(q) || (n.message || '').toLowerCase().includes(q)
+    }
+    return true
+  })
 
   useEffect(() => {
     const unreadIds = visibleNotifications.filter(n => !n.is_read).map(n => n.id)
@@ -62,15 +65,28 @@ export default function NotificationCenterScreen() {
         )}
       </div>
 
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-        <input
-          type="text"
-          placeholder={t('notif_search_placeholder', language)}
-          value={notifSearch}
-          onChange={e => setNotifSearch(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0D1E3D] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC]"
-        />
+      <div className="flex gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder={t('notif_search_placeholder', language)}
+            value={notifSearch}
+            onChange={e => setNotifSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0D1E3D] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC]"
+          />
+        </div>
+        <select
+          value={notifType}
+          onChange={e => setNotifType(e.target.value)}
+          className="px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0D1E3D] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC]"
+        >
+          <option value="">{language === 'TR' ? 'Tüm Türler' : 'All Types'}</option>
+          <option value="APPOINTMENT">{language === 'TR' ? 'Randevu' : 'Appointment'}</option>
+          <option value="SYSTEM">{language === 'TR' ? 'Sistem' : 'System'}</option>
+          <option value="ALERT">{language === 'TR' ? 'Uyarı' : 'Alert'}</option>
+          <option value="REMINDER">{language === 'TR' ? 'Hatırlatma' : 'Reminder'}</option>
+        </select>
       </div>
 
       {visibleNotifications.length === 0 ? (
