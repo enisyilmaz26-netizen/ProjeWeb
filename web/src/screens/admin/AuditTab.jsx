@@ -17,6 +17,7 @@ const ACTION_LABELS = {
   DENY_CANCELLATION:       { TR: 'İptal Talebi Reddedildi',   EN: 'Cancellation Denied' },
   USER_CANCEL_APPOINTMENT: { TR: 'Kullanıcı Randevu İptal',   EN: 'User Cancelled Appointment' },
   USER_REQUEST_CANCELLATION: { TR: 'Kullanıcı İptal Talebi',  EN: 'User Requested Cancellation' },
+  CLEAR_NOTIFICATIONS:       { TR: 'Bildirimler Temizlendi',  EN: 'Notifications Cleared' },
 }
 
 const ACTION_COLORS = {
@@ -32,6 +33,7 @@ const ACTION_COLORS = {
   DENY_CANCELLATION:       'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400',
   USER_CANCEL_APPOINTMENT: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
   USER_REQUEST_CANCELLATION: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  CLEAR_NOTIFICATIONS:       'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400',
 }
 
 function formatDateTime(iso, language) {

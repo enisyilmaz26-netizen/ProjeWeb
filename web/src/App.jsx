@@ -3,6 +3,7 @@ import { useApp } from './context/AppContext'
 import AuthScreen from './screens/AuthScreen'
 import MainAppContainer from './screens/MainAppContainer'
 import LandingPage from './screens/LandingPage'
+import ForcePasswordChange from './components/ForcePasswordChange'
 
 export default function App() {
   const { loggedInUser, loggedInAdmin } = useApp()
@@ -10,6 +11,7 @@ export default function App() {
 
   const isLoggedIn = loggedInUser !== null || loggedInAdmin !== null
 
+  if (isLoggedIn && loggedInUser?.must_change_password) return <ForcePasswordChange />
   if (isLoggedIn) return <MainAppContainer />
   if (showAuth) return <AuthScreen onBack={() => setShowAuth(false)} />
   return <LandingPage onLoginClick={() => setShowAuth(true)} />

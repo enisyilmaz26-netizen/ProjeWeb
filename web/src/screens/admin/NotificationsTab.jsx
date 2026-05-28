@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
@@ -11,7 +11,10 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
   const [notifCity, setNotifCity] = useState('')
   const [notifLoading, setNotifLoading] = useState(false)
   const [notifSuccess, setNotifSuccess] = useState('')
+  const successTimerRef = useRef(null)
   const [notifError, setNotifError] = useState('')
+
+  useEffect(() => () => clearTimeout(successTimerRef.current), [])
 
   const handleCreateNotification = async (e) => {
     e.preventDefault()
@@ -37,7 +40,7 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
       setNotifForm({ title: '', message: '', type: 'SYSTEM' })
       setNotifCity('')
       setNotifSuccess(t('notif_sent', language))
-      setTimeout(() => setNotifSuccess(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setNotifSuccess(''), 3000)
     } else {
       setNotifError(result.error || 'Error')
     }

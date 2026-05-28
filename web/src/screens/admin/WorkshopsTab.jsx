@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, formatDate } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
@@ -13,6 +13,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
   const [workshopForm, setWorkshopForm] = useState({ name: '', description: '', date: '', time: '', capacity: 1, location: '', city_id: '' })
   const [workshopError, setWorkshopError] = useState('')
   const [workshopSuccess, setWorkshopSuccess] = useState('')
+  const successTimerRef = useRef(null)
   const [showAddWorkshop, setShowAddWorkshop] = useState(false)
   const [editingWorkshopId, setEditingWorkshopId] = useState(null)
   const [editWorkshopForm, setEditWorkshopForm] = useState({})
@@ -27,6 +28,8 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     const [start, end] = time.trim().split(/\s*[-–]\s*/)
     return start < end
   }
+
+  useEffect(() => () => clearTimeout(successTimerRef.current), [])
 
   const visibleWorkshops = useMemo(() => {
     let list = isGlobal ? workshops : workshops.filter(w => String(w.city_id) === String(adminCityId))
@@ -54,7 +57,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       setShowAddWorkshop(false)
       setWorkshopForm({ name: '', description: '', date: '', time: '', capacity: 1, location: '', city_id: '' })
       setWorkshopSuccess(t('workshop_added', language))
-      setTimeout(() => setWorkshopSuccess(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setWorkshopSuccess(''), 3000)
     } else { setWorkshopError(result.error || t('err_generic', language)) }
   }
 
@@ -80,7 +83,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       setEditingWorkshopId(null)
       setWorkshopError('')
       setWorkshopSuccess(language === 'TR' ? 'Kayıt güncellendi' : 'Record updated')
-      setTimeout(() => setWorkshopSuccess(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setWorkshopSuccess(''), 3000)
     } else { setWorkshopError(result.error || t('err_generic', language)) }
   }
 

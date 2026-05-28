@@ -142,7 +142,7 @@ export function AppProvider({ children }) {
         supabase.from('appointments').select('*').order('created_timestamp', { ascending: false }),
         supabase.from('notifications').select('*').order('timestamp', { ascending: false }),
         supabase.from('city_time_slots').select('*').order('id'),
-        supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district').order('name'),
+        supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password').order('name'),
         supabase.from('workshops').select('*').order('date', { ascending: false }),
         supabase.from('admins').select('id,name,email,role,city_id,phone').order('name'),
       ])
@@ -236,6 +236,27 @@ export function AppProvider({ children }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (!loggedInUser?.email) return
+    const email = loggedInUser.email
+    const waitlistChannel = supabase
+      .channel('rt-waitlist')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'waitlist' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT' && n.user_email === email && n.status === 'WAITING') {
+          setWaitlist(prev => prev.find(w => w.id === n.id) ? prev : [...prev, n])
+        } else if (eventType === 'UPDATE') {
+          setWaitlist(prev => n.status === 'WAITING'
+            ? prev.map(w => w.id === n.id ? n : w)
+            : prev.filter(w => w.id !== n.id)
+          )
+        } else if (eventType === 'DELETE') {
+          setWaitlist(prev => prev.filter(w => w.id !== o.id))
+        }
+      })
+      .subscribe()
+    return () => supabase.removeChannel(waitlistChannel)
+  }, [loggedInUser?.email])
+
   // AUTH ACTIONS
   const loginUser = async (email, password) => {
     const rl = checkRateLimit(email)
@@ -258,7 +279,9 @@ export function AppProvider({ children }) {
     if (!user.is_approved) return { success: false, error: 'err_not_approved' }
 
     clearAttempts(email)
-    setLoggedInUser(user)
+    // RPC may not return must_change_password — fetch it explicitly
+    const { data: extraFields } = await supabase.from('users').select('must_change_password').eq('id', user.id).single()
+    setLoggedInUser({ ...user, must_change_password: extraFields?.must_change_password ?? false })
     loadWaitlist(email)
 
     // Yaklaşan randevular için hatırlatma bildirimi oluştur (2 gün içinde)
@@ -368,9 +391,10 @@ export function AppProvider({ children }) {
       city_name: formData.city_name,
       district: formData.district,
       is_approved: true,
-    }]).select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district').single()
+    }]).select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password').single()
     if (error) return { success: false, error: error.message }
     if (newUser) setUsers(prev => [...prev, newUser].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
+
     return { success: true }
   }
 
@@ -387,8 +411,9 @@ export function AppProvider({ children }) {
   const resetPassword = async (userId, _email, newPassword) => {
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-    const { error } = await supabase.from('users').update({ password_hash: hashed }).eq('id', userId)
+    const { error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', userId)
     if (error) return { success: false, error: error.message }
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, must_change_password: true } : u))
     const user = users.find(u => u.id === userId)
     if (user) logAudit('RESET_USER_PASSWORD', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
     return { success: true }
@@ -413,6 +438,8 @@ export function AppProvider({ children }) {
       p_new_password: newPassword,
     })
     if (error || !ok) return { success: false, error: 'err_current_password_wrong' }
+    await supabase.from('users').update({ must_change_password: false }).eq('id', userId)
+    setLoggedInUser(prev => prev ? { ...prev, must_change_password: false } : prev)
     return { success: true }
   }
 

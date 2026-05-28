@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, translations } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
@@ -21,6 +21,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [addUserForm, setAddUserForm] = useState({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
   const [addUserError, setAddUserError] = useState('')
   const [addUserSuccess, setAddUserSuccess] = useState('')
+  const addUserTimerRef = useRef(null)
   const [addUserLoading, setAddUserLoading] = useState(false)
 
   const [csvImporting, setCsvImporting] = useState(false)
@@ -71,6 +72,9 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [resetPwError, setResetPwError] = useState('')
   const [resetPwLoading, setResetPwLoading] = useState(false)
   const [resetPwSuccess, setResetPwSuccess] = useState('')
+  const resetPwTimerRef = useRef(null)
+
+  useEffect(() => () => { clearTimeout(resetPwTimerRef.current); clearTimeout(addUserTimerRef.current) }, [])
 
   const pendingUsers = useMemo(() => {
     let base = isGlobal ? users.filter(u => !u.is_approved) : users.filter(u => !u.is_approved && String(u.city_id) === String(adminCityId))
@@ -113,7 +117,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     setResetPwLoading(false)
     if (result.success) {
       setResetPwSuccess(t('reset_pw_success', language))
-      setTimeout(closeResetPw, 1500)
+      clearTimeout(resetPwTimerRef.current); resetPwTimerRef.current = setTimeout(closeResetPw, 1500)
     } else { setResetPwError(result.error || t('err_generic', language)) }
   }
 
@@ -135,7 +139,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       setShowAddUser(false)
       setAddUserForm({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
       setAddUserSuccess(language === 'TR' ? 'Üye eklendi.' : 'Member added.')
-      setTimeout(() => setAddUserSuccess(''), 3000)
+      clearTimeout(addUserTimerRef.current); addUserTimerRef.current = setTimeout(() => setAddUserSuccess(''), 3000)
     } else {
       const errKey = result.error
       setAddUserError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
@@ -29,9 +29,12 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
   const [form, setForm] = useState({ date: '', city_id: isGlobal ? '' : String(adminCityId || ''), reason: '' })
   const [adding, setAdding] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
+  const successTimerRef = useRef(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [processingId, setProcessingId] = useState(null)
   const [filterCity, setFilterCity] = useState('')
+
+  useEffect(() => () => clearTimeout(successTimerRef.current), [])
 
   const visibleDays = useMemo(() => {
     let list = isGlobal ? closedDays : closedDays.filter(d => !d.city_id || String(d.city_id) === String(adminCityId))
@@ -48,7 +51,7 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
     if (result.success) {
       setForm(p => ({ ...p, date: '', reason: '' }))
       setSuccessMsg(t('closed_day_added', language))
-      setTimeout(() => setSuccessMsg(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
     } else {
       setErrorMsg(result.error || 'Error')
     }
@@ -59,7 +62,7 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
     await removeClosedDay(id)
     setProcessingId(null)
     setSuccessMsg(t('closed_day_deleted', language))
-    setTimeout(() => setSuccessMsg(''), 2000)
+    clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 2000)
   }
 
   return (

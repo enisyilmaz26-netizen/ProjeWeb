@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, translations } from '../../lib/languages'
 import { INPUT_BASE } from "../../lib/ui"
@@ -18,6 +18,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
   const [editLabLoading, setEditLabLoading] = useState(false)
   const [labCityFilter, setLabCityFilter] = useState('')
   const [labSaveSuccess, setLabSaveSuccess] = useState('')
+  const successTimerRef = useRef(null)
   const [migrating, setMigrating] = useState(false)
   const [processingId, setProcessingId] = useState(null)
 
@@ -25,6 +26,8 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
     (l.name.includes('Gölbaşı BİLSEM ÖÖL') && !l.name.startsWith('Ankara ')) ||
     l.name.includes('Öğretim Tasarımı ve Senaryo Atölyesi')
   )
+
+  useEffect(() => () => clearTimeout(successTimerRef.current), [])
 
   const visibleLabs = useMemo(() => {
     let list = isGlobal ? labs : labs.filter(l => String(l.city_id) === String(adminCityId))
@@ -42,7 +45,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
       setShowAddLab(false)
       setLabForm({ name: '', description: '', capacity_per_slot: 1, location: '', branches: '', city_id: '' })
       setLabSaveSuccess(language === 'TR' ? 'Kayıt eklendi.' : 'Record added.')
-      setTimeout(() => setLabSaveSuccess(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setLabSaveSuccess(''), 3000)
     } else { setLabError(result.error || 'Error') }
   }
 
@@ -62,7 +65,7 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
     if (result.success) {
       setEditingLabId(null)
       setLabSaveSuccess(language === 'TR' ? 'Kayıt güncellendi.' : 'Record updated.')
-      setTimeout(() => setLabSaveSuccess(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setLabSaveSuccess(''), 3000)
     } else {
       const errKey = result.error
       setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))

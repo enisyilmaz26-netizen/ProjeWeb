@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../lib/languages'
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
@@ -19,6 +19,7 @@ export default function MyProfileScreen() {
   const [cancelReason, setCancelReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
+  const successTimerRef = useRef(null)
   const [showPast, setShowPast] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState('')
@@ -36,6 +37,8 @@ export default function MyProfileScreen() {
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' })
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState('')
+
+  useEffect(() => () => clearTimeout(successTimerRef.current), [])
 
   useEffect(() => {
     if (!showPwChange && !showCancelModal && !showReschedule) return
@@ -86,7 +89,7 @@ export default function MyProfileScreen() {
       setRescheduleDate('')
       setRescheduleSlot('')
       setSuccessMsg(language === 'TR' ? 'Randevu yeniden zamanlandı.' : 'Appointment rescheduled.')
-      setTimeout(() => setSuccessMsg(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
     } else {
       setRescheduleError(res.error)
     }
@@ -132,7 +135,7 @@ export default function MyProfileScreen() {
       setCancelTargetId(null)
       setCancelReason('')
       setSuccessMsg(t(cancelType === 'direct' ? 'appointment_cancelled' : 'cancellation_submitted', language))
-      setTimeout(() => setSuccessMsg(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
     }
   }
 
@@ -154,7 +157,7 @@ export default function MyProfileScreen() {
       setShowPwChange(false)
       setPwForm({ current: '', newPw: '', confirm: '' })
       setSuccessMsg(t('password_changed', language))
-      setTimeout(() => setSuccessMsg(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
     } else {
       const errKey = result.error
       setPwError(translations[errKey] ? t(errKey, language) : (errKey || t('err_generic', language)))
@@ -207,7 +210,7 @@ export default function MyProfileScreen() {
     if (result.success) {
       setEditMode(false)
       setSuccessMsg(t('profile_updated', language))
-      setTimeout(() => setSuccessMsg(''), 3000)
+      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
     } else {
       setEditError(result.error || t('err_generic', language))
     }

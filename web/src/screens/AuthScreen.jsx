@@ -8,7 +8,7 @@ import { passwordRequirements, isPasswordStrong } from '../lib/passwordUtils'
 import { Sun, Moon, Check, Circle, X } from 'lucide-react'
 
 export default function AuthScreen({ onBack }) {
-  const { loginUser, loginAdmin, registerUser, findUserForReset, resetPassword, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
+  const { loginUser, loginAdmin, registerUser, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
   const [activeTab, setActiveTab] = useState('login')
 
   // Login form
@@ -27,16 +27,6 @@ export default function AuthScreen({ onBack }) {
   const [regLoading, setRegLoading] = useState(false)
   const [showRegSuccessModal, setShowRegSuccessModal] = useState(false)
   const [showKvkkModal, setShowKvkkModal] = useState(false)
-
-  // Forgot password form
-  const [forgotStep, setForgotStep] = useState(1) // 1=lookup, 2=new password
-  const [forgotForm, setForgotForm] = useState({ email: '' })
-  const [forgotFoundUser, setForgotFoundUser] = useState(null)
-  const [forgotNewPassword, setForgotNewPassword] = useState('')
-  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('')
-  const [forgotError, setForgotError] = useState('')
-  const [forgotLoading, setForgotLoading] = useState(false)
-  const [forgotSuccess, setForgotSuccess] = useState(false)
 
   useEffect(() => {
     const anyModal = showRegSuccessModal || showKvkkModal
@@ -122,58 +112,6 @@ export default function AuthScreen({ onBack }) {
     setRegForm(prev => ({ ...prev, city_id: cityId, city_name: city ? city.name : '' }))
   }
 
-  const handleForgotLookup = async (e) => {
-    e.preventDefault()
-    setForgotError('')
-    setForgotLoading(true)
-    try {
-      const result = await findUserForReset(forgotForm.email)
-      if (result.success) {
-        setForgotFoundUser(result.data)
-        setForgotStep(2)
-      } else {
-        setForgotError(t(result.error, language))
-      }
-    } finally {
-      setForgotLoading(false)
-    }
-  }
-
-  const handleForgotReset = async (e) => {
-    e.preventDefault()
-    setForgotError('')
-    if (!isPasswordStrong(forgotNewPassword)) {
-      setForgotError(t('err_password_weak', language))
-      return
-    }
-    if (forgotNewPassword !== forgotConfirmPassword) {
-      setForgotError(t('err_password_mismatch', language))
-      return
-    }
-    setForgotLoading(true)
-    try {
-      const result = await resetPassword(forgotFoundUser.id, forgotFoundUser.email, forgotNewPassword)
-      if (result.success) {
-        setForgotSuccess(true)
-      } else {
-        setForgotError(result.error || t('err_generic', language))
-      }
-    } finally {
-      setForgotLoading(false)
-    }
-  }
-
-  const goBackToLogin = () => {
-    setActiveTab('login')
-    setForgotStep(1)
-    setForgotForm({ email: '' })
-    setForgotFoundUser(null)
-    setForgotNewPassword('')
-    setForgotConfirmPassword('')
-    setForgotError('')
-    setForgotSuccess(false)
-  }
-
   const inputClass = `w-full ${INPUT_BASE} placeholder-gray-400 dark:placeholder-gray-500`
   const labelClass = LABEL_CLASS
 
@@ -223,22 +161,20 @@ export default function AuthScreen({ onBack }) {
           </div>
 
           {/* Tab switcher */}
-          {activeTab !== 'forgot' && (
-            <div className="flex bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-6">
-              <button
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'login' ? 'bg-white dark:bg-[#1565C0] text-[#1565C0] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
-                onClick={() => setActiveTab('login')}
-              >
-                {t('btn_login', language)}
-              </button>
-              <button
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'register' ? 'bg-white dark:bg-[#1565C0] text-[#1565C0] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
-                onClick={() => setActiveTab('register')}
-              >
-                {t('btn_register', language)}
-              </button>
-            </div>
-          )}
+          <div className="flex bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-6">
+            <button
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'login' ? 'bg-white dark:bg-[#1565C0] text-[#1565C0] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
+              onClick={() => setActiveTab('login')}
+            >
+              {t('btn_login', language)}
+            </button>
+            <button
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'register' ? 'bg-white dark:bg-[#1565C0] text-[#1565C0] dark:text-white shadow' : 'text-gray-500 dark:text-gray-400'}`}
+              onClick={() => setActiveTab('register')}
+            >
+              {t('btn_register', language)}
+            </button>
+          </div>
 
           {/* Login Form */}
           {activeTab === 'login' && (
@@ -279,12 +215,11 @@ export default function AuthScreen({ onBack }) {
                 </button>
               </form>
               <div className="mt-3 text-center">
-                <button
-                  onClick={() => setActiveTab('forgot')}
-                  className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline"
-                >
-                  {t('forgot_password', language)}
-                </button>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {language === 'TR'
+                    ? 'Şifrenizi unuttuysanız yöneticinizle iletişime geçin.'
+                    : 'Forgot your password? Please contact your administrator.'}
+                </p>
               </div>
             </div>
           )}
@@ -464,104 +399,6 @@ export default function AuthScreen({ onBack }) {
                   {regLoading ? t('loading_registering', language) : t('btn_register', language)}
                 </button>
               </form>
-            </div>
-          )}
-          {/* Forgot Password Form */}
-          {activeTab === 'forgot' && (
-            <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow p-6">
-              <div className="mb-4">
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">{t('forgot_password', language)}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {forgotStep === 1 ? t('forgot_subtitle', language) : t('forgot_new_password_subtitle', language)}
-                </p>
-              </div>
-
-              {forgotSuccess ? (
-                <div className="space-y-4">
-                  <div className="flex flex-col items-center py-4">
-                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-3">
-                      <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 text-center">{t('forgot_success', language)}</p>
-                  </div>
-                  <button
-                    onClick={goBackToLogin}
-                    className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
-                  >
-                    {t('back_to_login', language)}
-                  </button>
-                </div>
-              ) : forgotStep === 1 ? (
-                <form onSubmit={handleForgotLookup} className="space-y-3">
-                  <div>
-                    <label className={labelClass}>{t('input_email', language)} *</label>
-                    <input
-                      type="email"
-                      className={inputClass}
-                      placeholder={t('placeholder_registered_email', language)}
-                      value={forgotForm.email}
-                      onChange={e => setForgotForm(p => ({ ...p, email: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  {forgotError && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
-                      {forgotError}
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={forgotLoading}
-                    className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
-                  >
-                    {forgotLoading ? t('loading_looking_up', language) : t('forgot_verify_btn', language)}
-                  </button>
-                  <button type="button" onClick={goBackToLogin} className="w-full text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline pt-1">
-                    ← {t('back_to_login', language)}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleForgotReset} className="space-y-3">
-                  <div className="bg-[#1565C0]/5 dark:bg-[#7DD4FC]/5 rounded-xl px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
-                    {forgotFoundUser?.name} {forgotFoundUser?.surname} — {forgotFoundUser?.email}
-                  </div>
-                  <div>
-                    <label className={labelClass}>{t('input_password', language)} *</label>
-                    <PasswordInput
-                      className={inputClass}
-                      value={forgotNewPassword}
-                      onChange={e => setForgotNewPassword(e.target.value)}
-                      required
-                      minLength={8}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClass}>{t('input_confirm_password', language)} *</label>
-                    <PasswordInput
-                      className={inputClass}
-                      value={forgotConfirmPassword}
-                      onChange={e => setForgotConfirmPassword(e.target.value)}
-                      required
-                      minLength={8}
-                    />
-                  </div>
-                  {forgotError && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
-                      {forgotError}
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={forgotLoading}
-                    className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
-                  >
-                    {forgotLoading ? t('loading_saving', language) : t('forgot_save_btn', language)}
-                  </button>
-                  <button type="button" onClick={() => { setForgotStep(1); setForgotError('') }} className="w-full text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline pt-1">
-                    ← {t('btn_back', language)}
-                  </button>
-                </form>
-              )}
             </div>
           )}
         </div>

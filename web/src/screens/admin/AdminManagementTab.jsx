@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, translations } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
@@ -18,6 +18,7 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
   const [adminForm, setAdminForm] = useState({ name: '', email: '', password: '', role: 'CITY', city_id: '', phone: '' })
   const [adminFormError, setAdminFormError] = useState('')
   const [adminFormSuccess, setAdminFormSuccess] = useState('')
+  const adminFormTimerRef = useRef(null)
   const [adminFormLoading, setAdminFormLoading] = useState(false)
 
   const [editAdminModal, setEditAdminModal] = useState(null)
@@ -29,6 +30,9 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
   const [resetAdminPwError, setResetAdminPwError] = useState('')
   const [resetAdminPwLoading, setResetAdminPwLoading] = useState(false)
   const [resetAdminPwSuccess, setResetAdminPwSuccess] = useState('')
+  const resetAdminPwTimerRef = useRef(null)
+
+  useEffect(() => () => { clearTimeout(adminFormTimerRef.current); clearTimeout(resetAdminPwTimerRef.current) }, [])
 
   const filteredAdmins = useMemo(() => {
     if (!adminSearch.trim()) return admins
@@ -48,7 +52,7 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
       setShowAddAdmin(false)
       setAdminForm({ name: '', email: '', password: '', role: 'CITY', city_id: '', phone: '' })
       setAdminFormSuccess(t('admin_added', language))
-      setTimeout(() => setAdminFormSuccess(''), 3000)
+      clearTimeout(adminFormTimerRef.current); adminFormTimerRef.current = setTimeout(() => setAdminFormSuccess(''), 3000)
     } else { setAdminFormError(result.error || t('err_generic', language)) }
   }
 
@@ -94,7 +98,7 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     setResetAdminPwLoading(false)
     if (result.success) {
       setResetAdminPwSuccess(t('reset_pw_success', language))
-      setTimeout(closeResetAdminPw, 1500)
+      clearTimeout(resetAdminPwTimerRef.current); resetAdminPwTimerRef.current = setTimeout(closeResetAdminPw, 1500)
     } else { setResetAdminPwError(result.error || t('err_generic', language)) }
   }
 
