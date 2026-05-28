@@ -1,176 +1,94 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Server-side password hashing (bcrypt via pgcrypto)
 -- Run this once in Supabase SQL Editor.
+--
+-- IMPORTANT: Tables use integer (not uuid) for id and city_id columns.
+-- Functions use LANGUAGE sql (not plpgsql) for PostgREST compatibility.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- Drop old versions to avoid return-type conflicts
+-- Drop old versions to avoid conflicts
 DROP FUNCTION IF EXISTS public.login_user(text, text);
 DROP FUNCTION IF EXISTS public.login_admin(text, text);
+DROP FUNCTION IF EXISTS public.hash_password_bcrypt(text);
 DROP FUNCTION IF EXISTS public.change_user_password(uuid, text, text, text);
 DROP FUNCTION IF EXISTS public.change_admin_password(uuid, text, text, text);
 DROP FUNCTION IF EXISTS public.change_user_password(integer, text, text, text);
 DROP FUNCTION IF EXISTS public.change_admin_password(integer, text, text, text);
-DROP FUNCTION IF EXISTS public.hash_password_bcrypt(text);
+
+-- ─── HASH PASSWORD (bcrypt) ───────────────────────────────────────────────────
+CREATE FUNCTION public.hash_password_bcrypt(p_password text)
+RETURNS text LANGUAGE sql SECURITY DEFINER AS $$
+  SELECT crypt(p_password, gen_salt('bf', 10));
+$$;
 
 -- ─── USER LOGIN ──────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.login_user(p_email TEXT, p_password TEXT)
+CREATE FUNCTION public.login_user(p_email text, p_password text)
 RETURNS TABLE(
-  id            integer,
-  name          text,
-  surname       text,
-  email         text,
-  is_approved   boolean,
-  city_id       integer,
-  city_name     text,
-  phone         text,
-  branch        text,
-  work_location text,
-  district      text
+  id integer, name text, surname text, email text,
+  is_approved boolean, city_id integer, city_name text,
+  phone text, branch text, work_location text, district text
 )
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE
-  v_id       integer;
-  v_name     text;
-  v_surname  text;
-  v_email    text;
-  v_hash     text;
-  v_approved boolean;
-  v_city_id  integer;
-  v_city_nm  text;
-  v_phone    text;
-  v_branch   text;
-  v_work_loc text;
-  v_district text;
-  v_new_hash text;
-BEGIN
-  SELECT u.id, u.name, u.surname, u.email, u.password_hash, u.is_approved,
+LANGUAGE sql SECURITY DEFINER AS $$
+  SELECT u.id, u.name, u.surname, u.email, u.is_approved,
          u.city_id, u.city_name, u.phone, u.branch, u.work_location, u.district
-  INTO   v_id, v_name, v_surname, v_email, v_hash, v_approved,
-         v_city_id, v_city_nm, v_phone, v_branch, v_work_loc, v_district
-  FROM   public.users u
-  WHERE  u.email = lower(trim(p_email))
-  LIMIT  1;
-
-  IF NOT FOUND THEN RETURN; END IF;
-
-  IF v_hash LIKE '$2%' THEN
-    IF crypt(p_password, v_hash) <> v_hash THEN RETURN; END IF;
-  ELSE
-    IF encode(digest(p_email || p_password || 'lab_rezervasyon_2024', 'sha256'), 'hex') <> v_hash THEN RETURN; END IF;
-    v_new_hash := crypt(p_password, gen_salt('bf', 10));
-    UPDATE public.users SET password_hash = v_new_hash WHERE users.id = v_id;
-  END IF;
-
-  RETURN QUERY
-    SELECT v_id, v_name, v_surname, v_email, v_approved,
-           v_city_id, v_city_nm, v_phone, v_branch, v_work_loc, v_district;
-END;
+  FROM public.users u
+  WHERE u.email = lower(trim(p_email))
+    AND u.password_hash LIKE '$2%'
+    AND crypt(p_password, u.password_hash) = u.password_hash
+  LIMIT 1;
 $$;
 
 -- ─── ADMIN LOGIN ─────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.login_admin(p_email TEXT, p_password TEXT)
+CREATE FUNCTION public.login_admin(p_email text, p_password text)
 RETURNS TABLE(
-  id      integer,
-  name    text,
-  email   text,
-  role    text,
-  city_id integer,
-  phone   text
+  id integer, name text, email text, role text, city_id integer, phone text
 )
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE
-  v_id      integer;
-  v_name    text;
-  v_email   text;
-  v_hash    text;
-  v_role    text;
-  v_city_id integer;
-  v_phone   text;
-  v_new_hash text;
-BEGIN
-  SELECT a.id, a.name, a.email, a.password_hash, a.role, a.city_id, a.phone
-  INTO   v_id, v_name, v_email, v_hash, v_role, v_city_id, v_phone
-  FROM   public.admins a
-  WHERE  a.email = lower(trim(p_email))
-  LIMIT  1;
-
-  IF NOT FOUND THEN RETURN; END IF;
-
-  IF v_hash LIKE '$2%' THEN
-    IF crypt(p_password, v_hash) <> v_hash THEN RETURN; END IF;
-  ELSE
-    IF encode(digest(p_email || p_password || 'lab_rezervasyon_2024', 'sha256'), 'hex') <> v_hash THEN RETURN; END IF;
-    v_new_hash := crypt(p_password, gen_salt('bf', 10));
-    UPDATE public.admins SET password_hash = v_new_hash WHERE admins.id = v_id;
-  END IF;
-
-  RETURN QUERY SELECT v_id, v_name, v_email, v_role, v_city_id, v_phone;
-END;
-$$;
-
--- ─── HASH PASSWORD (bcrypt) ───────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.hash_password_bcrypt(p_password TEXT)
-RETURNS TEXT LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  RETURN crypt(p_password, gen_salt('bf', 10));
-END;
+LANGUAGE sql SECURITY DEFINER AS $$
+  SELECT a.id, a.name, a.email, a.role, a.city_id, a.phone
+  FROM public.admins a
+  WHERE a.email = lower(trim(p_email))
+    AND a.password_hash LIKE '$2%'
+    AND crypt(p_password, a.password_hash) = a.password_hash
+  LIMIT 1;
 $$;
 
 -- ─── CHANGE USER PASSWORD ────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.change_user_password(
-  p_user_id          integer,
-  p_email            text,
-  p_current_password text,
-  p_new_password     text
+CREATE FUNCTION public.change_user_password(
+  p_user_id integer, p_email text, p_current_password text, p_new_password text
 )
-RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE
-  v_hash text;
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE v_hash text;
 BEGIN
   SELECT password_hash INTO v_hash FROM public.users WHERE id = p_user_id;
   IF NOT FOUND THEN RETURN FALSE; END IF;
-
-  IF v_hash LIKE '$2%' THEN
-    IF crypt(p_current_password, v_hash) <> v_hash THEN RETURN FALSE; END IF;
-  ELSE
-    IF encode(digest(p_email || p_current_password || 'lab_rezervasyon_2024', 'sha256'), 'hex') <> v_hash THEN RETURN FALSE; END IF;
-  END IF;
-
+  IF NOT (v_hash LIKE '$2%' AND crypt(p_current_password, v_hash) = v_hash) THEN RETURN FALSE; END IF;
   UPDATE public.users SET password_hash = crypt(p_new_password, gen_salt('bf', 10)) WHERE id = p_user_id;
   RETURN TRUE;
 END;
 $$;
 
 -- ─── CHANGE ADMIN PASSWORD ───────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.change_admin_password(
-  p_admin_id         integer,
-  p_email            text,
-  p_current_password text,
-  p_new_password     text
+CREATE FUNCTION public.change_admin_password(
+  p_admin_id integer, p_email text, p_current_password text, p_new_password text
 )
-RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE
-  v_hash text;
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE v_hash text;
 BEGIN
   SELECT password_hash INTO v_hash FROM public.admins WHERE id = p_admin_id;
   IF NOT FOUND THEN RETURN FALSE; END IF;
-
-  IF v_hash LIKE '$2%' THEN
-    IF crypt(p_current_password, v_hash) <> v_hash THEN RETURN FALSE; END IF;
-  ELSE
-    IF encode(digest(p_email || p_current_password || 'lab_rezervasyon_2024', 'sha256'), 'hex') <> v_hash THEN RETURN FALSE; END IF;
-  END IF;
-
+  IF NOT (v_hash LIKE '$2%' AND crypt(p_current_password, v_hash) = v_hash) THEN RETURN FALSE; END IF;
   UPDATE public.admins SET password_hash = crypt(p_new_password, gen_salt('bf', 10)) WHERE id = p_admin_id;
   RETURN TRUE;
 END;
 $$;
 
 -- ─── GRANT ANON ACCESS ───────────────────────────────────────────────────────
+GRANT EXECUTE ON FUNCTION public.hash_password_bcrypt(text)                           TO anon;
 GRANT EXECUTE ON FUNCTION public.login_user(text, text)                               TO anon;
 GRANT EXECUTE ON FUNCTION public.login_admin(text, text)                              TO anon;
-GRANT EXECUTE ON FUNCTION public.hash_password_bcrypt(text)                           TO anon;
 GRANT EXECUTE ON FUNCTION public.change_user_password(integer, text, text, text)      TO anon;
 GRANT EXECUTE ON FUNCTION public.change_admin_password(integer, text, text, text)     TO anon;
+
+NOTIFY pgrst, 'reload schema';
