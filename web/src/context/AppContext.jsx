@@ -585,7 +585,7 @@ export function AppProvider({ children }) {
 
   const markAppointmentCompleted = async (id) => {
     const appt = appointments.find(a => a.id === id)
-    const { error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id)
+    const { error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id).eq('status', 'APPROVED')
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'COMPLETED' } : a))
     if (appt) logAudit('COMPLETE_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
