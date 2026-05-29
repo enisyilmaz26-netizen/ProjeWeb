@@ -618,7 +618,7 @@ export function AppProvider({ children }) {
       if (cityName) {
         const notifData = {
           title: `[${cityName}] Randevu Onaylandı`,
-          message: `${appt.user_name || appt.user_email || ''} adlı öğretmenin ${appt.lab_name || ''} için ${appt.date} tarihli randevusu onaylandı.`,
+          message: `${appt.user_name || appt.user_email || ''} adlı öğretmenin ${appt.lab_name || ''} için ${finalDate} tarihli randevusu onaylandı.`,
           type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
         }
         const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
@@ -828,7 +828,7 @@ export function AppProvider({ children }) {
     const user = users.find(u => u.id === userId)
     // Cancel active appointments before deleting user so records remain consistent
     const activeStatuses = ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED']
-    const activeAppts = appointments.filter(a => String(a.user_id) === String(userId) && activeStatuses.includes(a.status))
+    const activeAppts = appointments.filter(a => a.user_email === user?.email && activeStatuses.includes(a.status))
     if (activeAppts.length > 0) {
       await supabase.from('appointments').update({ status: 'CANCELLED' }).in('id', activeAppts.map(a => a.id))
       setAppointments(prev => prev.map(a => activeAppts.some(aa => aa.id === a.id) ? { ...a, status: 'CANCELLED' } : a))
@@ -870,7 +870,7 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     if (cityName) {
       setNotifications(prev => prev.filter(n =>
-        !(n.title || '').includes(cityName) && !(n.message || '').includes(cityName)
+        !(n.title || '').toLowerCase().includes(cityName.toLowerCase()) && !(n.message || '').toLowerCase().includes(cityName.toLowerCase())
       ))
     } else {
       setNotifications([])
