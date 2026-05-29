@@ -5,7 +5,7 @@ import { INPUT_BASE } from '../../lib/ui'
 import ResetPasswordModal from '../../components/admin/ResetPasswordModal'
 import PasswordInput from '../../components/PasswordInput'
 import { isPasswordStrong } from '../../lib/passwordUtils'
-import { Pencil } from 'lucide-react'
+import { Pencil, Download } from 'lucide-react'
 
 export default function AdminManagementTab({ language, loggedInAdmin, onRequestConfirm }) {
   const { cities, admins, addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal } = useApp()
@@ -102,13 +102,36 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     } else { setResetAdminPwError(result.error || t('err_generic', language)) }
   }
 
+  const handleCsvExport = () => {
+    const escField = (v) => { const s = String(v ?? ''); return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s }
+    const header = language === 'TR'
+      ? ['Ad', 'E-posta', 'Rol', 'İl', 'Telefon']
+      : ['Name', 'Email', 'Role', 'Province', 'Phone']
+    const rows = filteredAdmins.map(a => {
+      const city = cities.find(c => String(c.id) === String(a.city_id))
+      const role = a.role === 'GLOBAL' ? t('admin_type_global', language) : t('admin_type_city', language)
+      return [a.name, a.email, role, city?.name || '', a.phone || ''].map(escField).join(',')
+    })
+    const csv = '﻿' + [header.join(','), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `yoneticiler_${new Date().toISOString().split('T')[0]}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{t('tab_admins', language)}</h3>
-        <button onClick={() => { setShowAddAdmin(true); setAdminFormError(''); setAdminFormSuccess('') }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
-          {t('admin_add', language)}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleCsvExport} disabled={filteredAdmins.length === 0} className="py-2 px-3 border border-[#1565C0]/40 dark:border-[#7DD4FC]/40 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1 disabled:opacity-40">
+            <Download className="w-3.5 h-3.5" />{language === 'TR' ? 'CSV İndir' : 'Export CSV'}
+          </button>
+          <button onClick={() => { setShowAddAdmin(true); setAdminFormError(''); setAdminFormSuccess('') }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
+            {t('admin_add', language)}
+          </button>
+        </div>
       </div>
 
       {adminFormSuccess && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{adminFormSuccess}</div>}
