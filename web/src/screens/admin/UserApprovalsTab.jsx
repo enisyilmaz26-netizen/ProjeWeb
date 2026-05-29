@@ -224,7 +224,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
           </div>
           {csvResult.errors.length > 0 && (
             <ul className="mt-2 space-y-0.5 text-xs">
-              {csvResult.errors.slice(0, 5).map((e, i) => <li key={i}>• {e}</li>)}
+              {csvResult.errors.slice(0, 5).map((e, i) => <li key={`err-${i}-${e}`}>• {e}</li>)}
               {csvResult.errors.length > 5 && <li>... ve {csvResult.errors.length - 5} daha</li>}
             </ul>
           )}

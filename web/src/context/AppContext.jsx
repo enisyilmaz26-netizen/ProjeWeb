@@ -783,7 +783,7 @@ export function AppProvider({ children }) {
       target_type: targetType || null,
       target_id: targetId || null,
       details: details || null,
-    }]).then().catch(err => console.error('[logAudit] failed:', err))
+    }]).catch(err => console.error('[logAudit] failed:', err))
   }
 
   // USER APPROVAL ACTIONS
