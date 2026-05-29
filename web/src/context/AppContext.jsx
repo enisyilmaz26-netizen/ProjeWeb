@@ -1219,8 +1219,9 @@ export function AppProvider({ children }) {
     if (count >= maxCap) return { success: false, error: language === 'TR' ? 'Bu slot dolu.' : 'This slot is full.' }
     const updates = { date: newDate, time_slot: newTimeSlot }
     if (appt.status === 'APPROVED') updates.status = 'PENDING'
-    const { error } = await supabase.from('appointments').update(updates).eq('id', appointmentId)
+    const { data: updated, error } = await supabase.from('appointments').update(updates).eq('id', appointmentId).select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, ...updates } : a))
     if (appt.status === 'APPROVED') {
       const msg = `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${newDate} ${newTimeSlot}`
@@ -1297,8 +1298,9 @@ export function AppProvider({ children }) {
     const target = admins.find(a => a.id === adminId)
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-    const { error } = await supabase.from('admins').update({ password_hash: hashed }).eq('id', adminId)
+    const { data: updated, error } = await supabase.from('admins').update({ password_hash: hashed }).eq('id', adminId).select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     if (target) logAudit('RESET_ADMIN_PASSWORD', 'admin', adminId, `${target.name} (${target.email})`)
     if (target?.email) {
       sendAutoEmail(
@@ -1460,8 +1462,9 @@ export function AppProvider({ children }) {
       const tempPw = raw.split('').sort(() => Math.random() - 0.5).join('')
       const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: tempPw })
       if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-      const { error } = await supabase.from('admins').update({ password_hash: hashed, must_change_password: true }).eq('id', admin.id)
+      const { data: updatedAdmin, error } = await supabase.from('admins').update({ password_hash: hashed, must_change_password: true }).eq('id', admin.id).select('id')
       if (error) return { success: false, error: error.message }
+      if (!updatedAdmin || updatedAdmin.length === 0) return { success: false, error: 'err_generic' }
       const fullName = `${admin.name || ''} ${admin.surname || ''}`.trim()
       sendAutoEmail(
         admin.email, fullName,
@@ -1493,8 +1496,9 @@ export function AppProvider({ children }) {
     const tempPw = raw.split('').sort(() => Math.random() - 0.5).join('')
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: tempPw })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-    const { error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', user.id)
+    const { data: updatedUser, error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', user.id).select('id')
     if (error) return { success: false, error: error.message }
+    if (!updatedUser || updatedUser.length === 0) return { success: false, error: 'err_generic' }
     const fullName = `${user.name || ''} ${user.surname || ''}`.trim()
     sendAutoEmail(
       user.email, fullName,
