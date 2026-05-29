@@ -256,10 +256,19 @@ export default function MyProfileScreen() {
               <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" disabled={avatarUploading} onChange={async (e) => {
                 const file = e.target.files[0]; if (!file) return; e.target.value = ''
                 setAvatarError(''); setAvatarUploading(true)
-                const res = await uploadAvatar(file, 'users', loggedInUser.id)
-                if (res.success) { await updateUserProfile(loggedInUser.id, { avatar_url: res.url }) }
-                else setAvatarError(res.error)
-                setAvatarUploading(false)
+                try {
+                  const res = await uploadAvatar(file, 'users', loggedInUser.id)
+                  if (res.success) {
+                    const profileRes = await updateUserProfile(loggedInUser.id, { avatar_url: res.url })
+                    if (!profileRes.success) setAvatarError(t('err_generic', language))
+                  } else {
+                    setAvatarError(res.error || t('err_generic', language))
+                  }
+                } catch {
+                  setAvatarError(t('err_generic', language))
+                } finally {
+                  setAvatarUploading(false)
+                }
               }} />
             </label>
           </div>
@@ -789,7 +798,10 @@ export default function MyProfileScreen() {
             </p>
             <div className="flex gap-3">
               <button
-                onClick={async () => { await removeFromWaitlist(showWaitlistRemoveConfirm); setShowWaitlistRemoveConfirm(null) }}
+                onClick={async () => {
+                  const res = await removeFromWaitlist(showWaitlistRemoveConfirm)
+                  if (res.success !== false) setShowWaitlistRemoveConfirm(null)
+                }}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition"
               >
                 {language === 'TR' ? 'Evet, Çıkar' : 'Yes, Remove'}

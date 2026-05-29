@@ -46,14 +46,19 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     if (!adminForm.name.trim() || !adminForm.email.trim() || !adminForm.password.trim()) { setAdminFormError(t('err_admin_required_fields', language)); return }
     if (adminForm.role === 'CITY' && !adminForm.city_id) { setAdminFormError(t('err_city_required', language)); return }
     setAdminFormLoading(true)
-    const result = await addAdmin(adminForm)
-    setAdminFormLoading(false)
-    if (result.success) {
-      setShowAddAdmin(false)
-      setAdminForm({ name: '', email: '', password: '', role: 'CITY', city_id: '', phone: '' })
-      setAdminFormSuccess(t('admin_added', language))
-      clearTimeout(adminFormTimerRef.current); adminFormTimerRef.current = setTimeout(() => setAdminFormSuccess(''), 3000)
-    } else { setAdminFormError(result.error || t('err_generic', language)) }
+    try {
+      const result = await addAdmin(adminForm)
+      if (result.success) {
+        setShowAddAdmin(false)
+        setAdminForm({ name: '', email: '', password: '', role: 'CITY', city_id: '', phone: '' })
+        setAdminFormSuccess(t('admin_added', language))
+        clearTimeout(adminFormTimerRef.current); adminFormTimerRef.current = setTimeout(() => setAdminFormSuccess(''), 3000)
+      } else { setAdminFormError(result.error || t('err_generic', language)) }
+    } catch {
+      setAdminFormError(t('err_generic', language))
+    } finally {
+      setAdminFormLoading(false)
+    }
   }
 
   const handleEditAdmin = async (e) => {
@@ -62,13 +67,18 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     setEditAdminError('')
     if (editAdminModal.role === 'CITY' && !editAdminModal.city_id) { setEditAdminError(language === 'TR' ? 'İl yöneticisi için il seçimi zorunludur.' : 'Province is required for city admin.'); return }
     setEditAdminLoading(true)
-    const updates = { role: editAdminModal.role, city_id: editAdminModal.role === 'GLOBAL' ? null : editAdminModal.city_id, email: editAdminModal.email.trim(), phone: editAdminModal.phone.trim() }
-    const result = await updateAdmin(editAdminModal.adminId, updates)
-    setEditAdminLoading(false)
-    if (result.success) { setEditAdminModal(null) }
-    else {
-      const errKey = result.error
-      setEditAdminError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+    try {
+      const updates = { role: editAdminModal.role, city_id: editAdminModal.role === 'GLOBAL' ? null : editAdminModal.city_id, email: editAdminModal.email.trim(), phone: editAdminModal.phone.trim() }
+      const result = await updateAdmin(editAdminModal.adminId, updates)
+      if (result.success) { setEditAdminModal(null) }
+      else {
+        const errKey = result.error
+        setEditAdminError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+      }
+    } catch {
+      setEditAdminError(t('err_generic', language))
+    } finally {
+      setEditAdminLoading(false)
     }
   }
 
@@ -81,8 +91,11 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     }
     onRequestConfirm(t('admin_delete_confirm', language), async () => {
       setProcessingId(adminId)
-      await deleteAdmin(adminId)
-      setProcessingId(null)
+      try {
+        await deleteAdmin(adminId)
+      } finally {
+        setProcessingId(null)
+      }
     })
   }
 
@@ -94,12 +107,17 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     setResetAdminPwError('')
     if (!isPasswordStrong(resetAdminPwValue)) { setResetAdminPwError(t('err_password_weak', language)); return }
     setResetAdminPwLoading(true)
-    const result = await resetAdminPasswordByGlobal(resetAdminPwModal.adminId, resetAdminPwModal.email, resetAdminPwValue)
-    setResetAdminPwLoading(false)
-    if (result.success) {
-      setResetAdminPwSuccess(t('reset_pw_success', language))
-      clearTimeout(resetAdminPwTimerRef.current); resetAdminPwTimerRef.current = setTimeout(closeResetAdminPw, 1500)
-    } else { setResetAdminPwError(result.error || t('err_generic', language)) }
+    try {
+      const result = await resetAdminPasswordByGlobal(resetAdminPwModal.adminId, resetAdminPwModal.email, resetAdminPwValue)
+      if (result.success) {
+        setResetAdminPwSuccess(t('reset_pw_success', language))
+        clearTimeout(resetAdminPwTimerRef.current); resetAdminPwTimerRef.current = setTimeout(closeResetAdminPw, 1500)
+      } else { setResetAdminPwError(result.error || t('err_generic', language)) }
+    } catch {
+      setResetAdminPwError(t('err_generic', language))
+    } finally {
+      setResetAdminPwLoading(false)
+    }
   }
 
   const handleCsvExport = () => {
