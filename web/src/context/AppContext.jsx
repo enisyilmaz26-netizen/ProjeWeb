@@ -435,6 +435,24 @@ export function AppProvider({ children }) {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, must_change_password: true } : u))
     const user = users.find(u => u.id === userId)
     if (user) logAudit('RESET_USER_PASSWORD', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
+    if (user?.email) {
+      const fullName = `${user.name || ''} ${user.surname || ''}`.trim()
+      sendAutoEmail(
+        user.email, fullName,
+        language === 'TR' ? 'Şifreniz Güncellendi – MEB ÖGEDEP' : 'Password Updated – MEB ÖGEDEP',
+        language === 'TR'
+          ? `<p>Sayın <strong>${fullName}</strong>,</p>
+             <p>Yönetici tarafından şifreniz sıfırlanmıştır. Yeni geçici şifreniz aşağıda yer almaktadır:</p>
+             <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
+             <p>Sisteme giriş yaptığınızda yeni bir şifre belirlemeniz istenecektir.</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
+          : `<p>Dear <strong>${fullName}</strong>,</p>
+             <p>Your password has been reset by an administrator. Your new temporary password is:</p>
+             <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
+             <p>You will be prompted to set a new password upon logging in.</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+      )
+    }
     return { success: true }
   }
 
@@ -706,6 +724,22 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_approved: true } : u))
     if (user) logAudit('APPROVE_USER', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
+    if (user?.email) {
+      const fullName = `${user.name || ''} ${user.surname || ''}`.trim()
+      sendAutoEmail(
+        user.email, fullName,
+        language === 'TR' ? 'Üyeliğiniz Onaylandı – MEB ÖGEDEP' : 'Membership Approved – MEB ÖGEDEP',
+        language === 'TR'
+          ? `<p>Sayın <strong>${fullName}</strong>,</p>
+             <p>MEB ÖGEDEP Öğretmen Öğrenme Laboratuvarları sistemine üyeliğiniz onaylanmıştır.</p>
+             <p>Artık sisteme giriş yaparak randevu alabilir ve atölye programlarına kayıt olabilirsiniz.</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
+          : `<p>Dear <strong>${fullName}</strong>,</p>
+             <p>Your membership to the MEB ÖGEDEP Teacher Learning Labs system has been approved.</p>
+             <p>You can now log in to book appointments and register for workshop programs.</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+      )
+    }
     if (user) {
       const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name
       if (cityName) {
@@ -1006,17 +1040,50 @@ export function AppProvider({ children }) {
       return { success: false, error: 'err_generic' }
     }
     if (data) setWorkshopRegistrations(prev => [...prev, data])
+    if (loggedInUser?.email && ws) {
+      const fullName = `${loggedInUser.name || ''} ${loggedInUser.surname || ''}`.trim()
+      const wsDate = ws.date ? new Date(ws.date + 'T12:00:00').toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+      sendAutoEmail(
+        loggedInUser.email, fullName,
+        language === 'TR' ? `Atölye Kaydınız Oluşturuldu – ${ws.name}` : `Workshop Registration Confirmed – ${ws.name}`,
+        language === 'TR'
+          ? `<p>Sayın <strong>${fullName}</strong>,</p>
+             <p><strong>"${ws.name}"</strong> atölyesine kaydınız başarıyla oluşturulmuştur.</p>
+             ${wsDate ? `<p>📅 Tarih: <strong>${wsDate}</strong></p>` : ''}
+             ${ws.location ? `<p>📍 Konum: <strong>${ws.location}</strong></p>` : ''}
+             <p>Atölye programı hakkında daha fazla bilgi için sistemi ziyaret edebilirsiniz.</p>`
+          : `<p>Dear <strong>${fullName}</strong>,</p>
+             <p>Your registration for <strong>"${ws.name}"</strong> has been confirmed.</p>
+             ${wsDate ? `<p>📅 Date: <strong>${wsDate}</strong></p>` : ''}
+             ${ws.location ? `<p>📍 Location: <strong>${ws.location}</strong></p>` : ''}`
+      )
+    }
     return { success: true }
   }
 
   const unregisterFromWorkshop = async (workshopId) => {
     if (!loggedInUser) return { success: false, error: 'err_generic' }
+    const ws = workshops.find(w => w.id === workshopId)
     const { error } = await supabase.from('workshop_registrations')
       .delete()
       .eq('workshop_id', workshopId)
       .eq('user_id', loggedInUser.id)
     if (error) return { success: false, error: error.message }
     setWorkshopRegistrations(prev => prev.filter(r => !(String(r.workshop_id) === String(workshopId) && String(r.user_id) === String(loggedInUser.id))))
+    if (loggedInUser?.email && ws) {
+      const fullName = `${loggedInUser.name || ''} ${loggedInUser.surname || ''}`.trim()
+      sendAutoEmail(
+        loggedInUser.email, fullName,
+        language === 'TR' ? `Atölye Kaydınız İptal Edildi – ${ws.name}` : `Workshop Registration Cancelled – ${ws.name}`,
+        language === 'TR'
+          ? `<p>Sayın <strong>${fullName}</strong>,</p>
+             <p><strong>"${ws.name}"</strong> atölyesine ait kaydınız iptal edilmiştir.</p>
+             <p>Başka bir atölye programına kayıt olmak için sistemi ziyaret edebilirsiniz.</p>`
+          : `<p>Dear <strong>${fullName}</strong>,</p>
+             <p>Your registration for <strong>"${ws.name}"</strong> has been cancelled.</p>
+             <p>You can register for other workshops by visiting the system.</p>`
+      )
+    }
     return { success: true }
   }
 
@@ -1098,6 +1165,21 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('admins').update({ password_hash: hashed }).eq('id', adminId)
     if (error) return { success: false, error: error.message }
     if (target) logAudit('RESET_ADMIN_PASSWORD', 'admin', adminId, `${target.name} (${target.email})`)
+    if (target?.email) {
+      sendAutoEmail(
+        target.email, target.name,
+        language === 'TR' ? 'Şifreniz Güncellendi – MEB ÖGEDEP' : 'Password Updated – MEB ÖGEDEP',
+        language === 'TR'
+          ? `<p>Sayın <strong>${target.name}</strong>,</p>
+             <p>Genel yönetici tarafından hesabınızın şifresi sıfırlanmıştır. Yeni şifreniz:</p>
+             <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
+          : `<p>Dear <strong>${target.name}</strong>,</p>
+             <p>Your account password has been reset by a global admin. Your new password is:</p>
+             <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+      )
+    }
     if (target) {
       const cityObj = target.city_id ? cities.find(c => String(c.id) === String(target.city_id)) : null
       const prefix = cityObj ? `[${cityObj.name}] ` : ''
@@ -1222,6 +1304,19 @@ export function AppProvider({ children }) {
     } catch (err) {
       return { success: false, error: err.message }
     }
+  }
+
+  function sendAutoEmail(toEmail, toName, subject, bodyHtml) {
+    const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;font-size:14px;color:#1a1a1a;padding:32px;max-width:600px;margin:0 auto">
+      <div style="border-top:4px solid #1565C0;padding-top:20px;margin-bottom:24px">
+        <p style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:0.1em;margin:0">MEB ÖGEDEP</p>
+      </div>
+      ${bodyHtml}
+      <div style="border-top:1px solid #e5e7eb;margin-top:32px;padding-top:16px">
+        <p style="font-size:11px;color:#9ca3af;margin:0">Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.</p>
+      </div>
+    </body></html>`
+    sendEmail({ recipients: [{ email: toEmail, name: toName }], subject, html }).catch(() => {})
   }
 
   const value = {
