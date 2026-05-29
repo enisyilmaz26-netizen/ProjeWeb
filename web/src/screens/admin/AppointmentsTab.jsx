@@ -134,55 +134,75 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
 
   const execApprove = async (id, newDate, newTimeSlot) => {
     setProcessingId(id)
-    await approveAppointment(id, newDate || null, newTimeSlot || null)
-    const appt = appointments.find(a => a.id === id)
-    if (appt) {
-      const finalDate = newDate || appt.date
-      const finalSlot = newTimeSlot || appt.time_slot
-      const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
-      await createNotification({ title: `${prefix}${t('notif_appt_approved', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${finalDate} ${finalSlot}`, type: 'SYSTEM' })
+    try {
+      await approveAppointment(id, newDate || null, newTimeSlot || null)
+      const appt = appointments.find(a => a.id === id)
+      if (appt) {
+        const finalDate = newDate || appt.date
+        const finalSlot = newTimeSlot || appt.time_slot
+        const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
+        await createNotification({ title: `${prefix}${t('notif_appt_approved', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${finalDate} ${finalSlot}`, type: 'SYSTEM' })
+      }
+      setEditingApptId(null); setEditDate(''); setEditTimeSlot('')
+      showSuccess(t('action_success_approved', language))
+    } finally {
+      setProcessingId(null)
     }
-    setProcessingId(null)
-    setEditingApptId(null); setEditDate(''); setEditTimeSlot('')
-    showSuccess(t('action_success_approved', language))
   }
 
   const execCancel = async (id) => {
     setProcessingId(id)
-    await cancelAppointment(id)
-    const appt = appointments.find(a => a.id === id)
-    if (appt) {
-      const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
-      await createNotification({ title: `${prefix}${t('notif_appt_cancelled', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'ALERT' })
+    try {
+      await cancelAppointment(id)
+      const appt = appointments.find(a => a.id === id)
+      if (appt) {
+        const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
+        await createNotification({ title: `${prefix}${t('notif_appt_cancelled', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'ALERT' })
+      }
+      showSuccess(t('action_success_cancelled', language))
+    } finally {
+      setProcessingId(null)
     }
-    setProcessingId(null)
-    showSuccess(t('action_success_cancelled', language))
   }
 
   const execApproveCancellation = async (id) => {
     setProcessingId(id)
-    await cancelAppointment(id)
-    const appt = appointments.find(a => a.id === id)
-    if (appt) {
-      const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
-      await createNotification({ title: `${prefix}${t('notif_appt_cancelled', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'ALERT' })
+    try {
+      await cancelAppointment(id)
+      const appt = appointments.find(a => a.id === id)
+      if (appt) {
+        const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
+        await createNotification({ title: `${prefix}${t('notif_appt_cancelled', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'ALERT' })
+      }
+      showSuccess(t('action_success_cancellation_approved', language))
+    } finally {
+      setProcessingId(null)
     }
-    setProcessingId(null)
-    showSuccess(t('action_success_cancellation_approved', language))
   }
 
   const execDenyCancellation = async (id) => {
     setProcessingId(id)
-    await denyCancellationRequest(id)
-    setProcessingId(null)
-    showSuccess(t('action_success_cancellation_denied', language))
+    try {
+      await denyCancellationRequest(id)
+      showSuccess(t('action_success_cancellation_denied', language))
+    } finally {
+      setProcessingId(null)
+    }
   }
 
   const handleApprove = (id, newDate, newTimeSlot) => onRequestConfirm(t('confirm_approve_appt', language), () => execApprove(id, newDate, newTimeSlot))
   const handleCancel = (id) => onRequestConfirm(t('confirm_cancel_appt', language), () => execCancel(id))
   const handleApproveCancellation = (id) => onRequestConfirm(t('confirm_approve_cancellation', language), () => execApproveCancellation(id))
   const handleDenyCancellation = (id) => onRequestConfirm(t('confirm_deny_cancellation', language), () => execDenyCancellation(id))
-  const handleMarkCompleted = (id) => onRequestConfirm(t('confirm_complete_appt', language), async () => { setProcessingId(id); await markAppointmentCompleted(id); setProcessingId(null); showSuccess(t('action_success_completed', language)) })
+  const handleMarkCompleted = (id) => onRequestConfirm(t('confirm_complete_appt', language), async () => {
+    setProcessingId(id)
+    try {
+      await markAppointmentCompleted(id)
+      showSuccess(t('action_success_completed', language))
+    } finally {
+      setProcessingId(null)
+    }
+  })
 
   return (
     <div>

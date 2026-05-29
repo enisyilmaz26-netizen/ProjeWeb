@@ -159,16 +159,21 @@ export default function MyProfileScreen() {
       return
     }
     setPwLoading(true)
-    const result = await changePassword(loggedInUser.id, loggedInUser.email, pwForm.current, pwForm.newPw)
-    setPwLoading(false)
-    if (result.success) {
-      setShowPwChange(false)
-      setPwForm({ current: '', newPw: '', confirm: '' })
-      setSuccessMsg(t('password_changed', language))
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
-    } else {
-      const errKey = result.error
-      setPwError(translations[errKey] ? t(errKey, language) : (errKey || t('err_generic', language)))
+    try {
+      const result = await changePassword(loggedInUser.id, loggedInUser.email, pwForm.current, pwForm.newPw)
+      if (result.success) {
+        setShowPwChange(false)
+        setPwForm({ current: '', newPw: '', confirm: '' })
+        setSuccessMsg(t('password_changed', language))
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
+      } else {
+        const errKey = result.error
+        setPwError(translations[errKey] ? t(errKey, language) : (errKey || t('err_generic', language)))
+      }
+    } catch {
+      setPwError(t('err_generic', language))
+    } finally {
+      setPwLoading(false)
     }
   }
 
@@ -203,24 +208,29 @@ export default function MyProfileScreen() {
     }
     setShowCityChangeWarning(false)
     setEditLoading(true)
-    const cityObj = cities.find(c => String(c.id) === String(editForm.city_id))
-    const result = await updateUserProfile(loggedInUser.id, {
-      name: editForm.name.trim(),
-      surname: editForm.surname.trim(),
-      branch: editForm.branch.trim(),
-      work_location: editForm.work_location.trim(),
-      phone: editForm.phone.trim(),
-      district: editForm.district.trim(),
-      city_id: editForm.city_id || loggedInUser.city_id,
-      city_name: cityObj?.name || loggedInUser.city_name,
-    })
-    setEditLoading(false)
-    if (result.success) {
-      setEditMode(false)
-      setSuccessMsg(t('profile_updated', language))
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
-    } else {
-      setEditError(result.error || t('err_generic', language))
+    try {
+      const cityObj = cities.find(c => String(c.id) === String(editForm.city_id))
+      const result = await updateUserProfile(loggedInUser.id, {
+        name: editForm.name.trim(),
+        surname: editForm.surname.trim(),
+        branch: editForm.branch.trim(),
+        work_location: editForm.work_location.trim(),
+        phone: editForm.phone.trim(),
+        district: editForm.district.trim(),
+        city_id: editForm.city_id || loggedInUser.city_id,
+        city_name: cityObj?.name || loggedInUser.city_name,
+      })
+      if (result.success) {
+        setEditMode(false)
+        setSuccessMsg(t('profile_updated', language))
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
+      } else {
+        setEditError(result.error || t('err_generic', language))
+      }
+    } catch {
+      setEditError(t('err_generic', language))
+    } finally {
+      setEditLoading(false)
     }
   }
 

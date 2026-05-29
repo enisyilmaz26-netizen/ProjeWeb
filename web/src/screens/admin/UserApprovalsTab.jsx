@@ -138,12 +138,17 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     setResetPwError('')
     if (!isPasswordStrong(resetPwValue)) { setResetPwError(t('err_password_weak', language)); return }
     setResetPwLoading(true)
-    const result = await resetPassword(resetPwModal.userId, resetPwModal.email, resetPwValue)
-    setResetPwLoading(false)
-    if (result.success) {
-      setResetPwSuccess(t('reset_pw_success', language))
-      clearTimeout(resetPwTimerRef.current); resetPwTimerRef.current = setTimeout(closeResetPw, 1500)
-    } else { setResetPwError(result.error || t('err_generic', language)) }
+    try {
+      const result = await resetPassword(resetPwModal.userId, resetPwModal.email, resetPwValue)
+      if (result.success) {
+        setResetPwSuccess(t('reset_pw_success', language))
+        clearTimeout(resetPwTimerRef.current); resetPwTimerRef.current = setTimeout(closeResetPw, 1500)
+      } else { setResetPwError(result.error || t('err_generic', language)) }
+    } catch {
+      setResetPwError(t('err_generic', language))
+    } finally {
+      setResetPwLoading(false)
+    }
   }
 
   const handleAddUserByAdmin = async (e) => {
@@ -157,17 +162,22 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     if (!isPasswordStrong(addUserForm.password)) { setAddUserError(t('err_password_weak', language)); return }
     if (addUserForm.password !== addUserForm.confirmPassword) { setAddUserError(t('err_password_mismatch', language)); return }
     setAddUserLoading(true)
-    const cityObj = cities.find(c => String(c.id) === String(cityId))
-    const result = await addUserByAdmin({ ...addUserForm, email: addUserForm.email.trim().toLowerCase(), city_id: cityId, city_name: cityObj?.name || '' })
-    setAddUserLoading(false)
-    if (result.success) {
-      setShowAddUser(false)
-      setAddUserForm({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
-      setAddUserSuccess(language === 'TR' ? 'Üye eklendi.' : 'Member added.')
-      clearTimeout(addUserTimerRef.current); addUserTimerRef.current = setTimeout(() => setAddUserSuccess(''), 3000)
-    } else {
-      const errKey = result.error
-      setAddUserError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+    try {
+      const cityObj = cities.find(c => String(c.id) === String(cityId))
+      const result = await addUserByAdmin({ ...addUserForm, email: addUserForm.email.trim().toLowerCase(), city_id: cityId, city_name: cityObj?.name || '' })
+      if (result.success) {
+        setShowAddUser(false)
+        setAddUserForm({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
+        setAddUserSuccess(language === 'TR' ? 'Üye eklendi.' : 'Member added.')
+        clearTimeout(addUserTimerRef.current); addUserTimerRef.current = setTimeout(() => setAddUserSuccess(''), 3000)
+      } else {
+        const errKey = result.error
+        setAddUserError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+      }
+    } catch {
+      setAddUserError(t('err_generic', language))
+    } finally {
+      setAddUserLoading(false)
     }
   }
 

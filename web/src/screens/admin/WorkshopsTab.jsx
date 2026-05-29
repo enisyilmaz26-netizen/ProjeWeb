@@ -52,13 +52,17 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       return
     }
     if (Number(workshopForm.capacity) < 1) { setWorkshopError(language === 'TR' ? 'Kapasite en az 1 olmalıdır.' : 'Capacity must be at least 1.'); return }
-    const result = await addWorkshop({ name: workshopForm.name, description: workshopForm.description, date: workshopForm.date || null, time: workshopForm.time || null, capacity: Number(workshopForm.capacity) || 1, location: workshopForm.location, city_id: cityId, city_name: cityObj?.name || '' })
-    if (result.success) {
-      setShowAddWorkshop(false)
-      setWorkshopForm({ name: '', description: '', date: '', time: '', capacity: 1, location: '', city_id: '' })
-      setWorkshopSuccess(t('workshop_added', language))
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setWorkshopSuccess(''), 3000)
-    } else { setWorkshopError(result.error || t('err_generic', language)) }
+    try {
+      const result = await addWorkshop({ name: workshopForm.name, description: workshopForm.description, date: workshopForm.date || null, time: workshopForm.time || null, capacity: Number(workshopForm.capacity) || 1, location: workshopForm.location, city_id: cityId, city_name: cityObj?.name || '' })
+      if (result.success) {
+        setShowAddWorkshop(false)
+        setWorkshopForm({ name: '', description: '', date: '', time: '', capacity: 1, location: '', city_id: '' })
+        setWorkshopSuccess(t('workshop_added', language))
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setWorkshopSuccess(''), 3000)
+      } else { setWorkshopError(result.error || t('err_generic', language)) }
+    } catch {
+      setWorkshopError(t('err_generic', language))
+    }
   }
 
   const startEditWorkshop = (ws) => {
@@ -77,14 +81,19 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     }
     if (Number(editWorkshopForm.capacity) < 1) { setWorkshopError(language === 'TR' ? 'Kapasite en az 1 olmalıdır.' : 'Capacity must be at least 1.'); return }
     setEditWorkshopLoading(true)
-    const result = await updateWorkshop(editingWorkshopId, { name: editWorkshopForm.name, description: editWorkshopForm.description, date: editWorkshopForm.date || null, time: editWorkshopForm.time || null, capacity: Number(editWorkshopForm.capacity) || 1, location: editWorkshopForm.location })
-    setEditWorkshopLoading(false)
-    if (result.success) {
-      setEditingWorkshopId(null)
-      setWorkshopError('')
-      setWorkshopSuccess(language === 'TR' ? 'Kayıt güncellendi' : 'Record updated')
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setWorkshopSuccess(''), 3000)
-    } else { setWorkshopError(result.error || t('err_generic', language)) }
+    try {
+      const result = await updateWorkshop(editingWorkshopId, { name: editWorkshopForm.name, description: editWorkshopForm.description, date: editWorkshopForm.date || null, time: editWorkshopForm.time || null, capacity: Number(editWorkshopForm.capacity) || 1, location: editWorkshopForm.location })
+      if (result.success) {
+        setEditingWorkshopId(null)
+        setWorkshopError('')
+        setWorkshopSuccess(language === 'TR' ? 'Kayıt güncellendi' : 'Record updated')
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setWorkshopSuccess(''), 3000)
+      } else { setWorkshopError(result.error || t('err_generic', language)) }
+    } catch {
+      setWorkshopError(t('err_generic', language))
+    } finally {
+      setEditWorkshopLoading(false)
+    }
   }
 
   const handleDeleteWorkshop = (id) => {
@@ -95,8 +104,11 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       : base
     onRequestConfirm(label, async () => {
       setProcessingId(id)
-      await deleteWorkshop(id)
-      setProcessingId(null)
+      try {
+        await deleteWorkshop(id)
+      } finally {
+        setProcessingId(null)
+      }
     })
   }
 

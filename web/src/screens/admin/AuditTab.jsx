@@ -62,13 +62,18 @@ export default function AuditTab({ language }) {
 
   const load = async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1000)
-    if (data) setLogs(data)
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1000)
+      if (data) setLogs(data)
+    } catch {
+      // loading will reset in finally
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [])

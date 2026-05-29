@@ -66,26 +66,36 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
     setLabError('')
     if (!editLabForm.name.trim()) { setLabError(t('studio_name_required', language)); return }
     setEditLabLoading(true)
-    const result = await updateLab(editingLabId, { name: editLabForm.name, description: editLabForm.description, capacity_per_slot: Number(editLabForm.capacity_per_slot) || 1, location: editLabForm.location, branches: editLabForm.branches })
-    setEditLabLoading(false)
-    if (result.success) {
-      setEditingLabId(null)
-      setLabSaveSuccess(language === 'TR' ? 'Kayıt güncellendi.' : 'Record updated.')
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setLabSaveSuccess(''), 3000)
-    } else {
-      const errKey = result.error
-      setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+    try {
+      const result = await updateLab(editingLabId, { name: editLabForm.name, description: editLabForm.description, capacity_per_slot: Number(editLabForm.capacity_per_slot) || 1, location: editLabForm.location, branches: editLabForm.branches })
+      if (result.success) {
+        setEditingLabId(null)
+        setLabSaveSuccess(language === 'TR' ? 'Kayıt güncellendi.' : 'Record updated.')
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setLabSaveSuccess(''), 3000)
+      } else {
+        const errKey = result.error
+        setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+      }
+    } catch {
+      setLabError(t('err_generic', language))
+    } finally {
+      setEditLabLoading(false)
     }
   }
 
   const handleDeleteLab = (id) => {
     onRequestConfirm(t('delete_lab_confirm', language), async () => {
       setProcessingId(id)
-      const result = await deleteLab(id)
-      setProcessingId(null)
-      if (!result.success) {
-        const errKey = result.error
-        setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+      try {
+        const result = await deleteLab(id)
+        if (!result.success) {
+          const errKey = result.error
+          setLabError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
+        }
+      } catch {
+        setLabError(t('err_generic', language))
+      } finally {
+        setProcessingId(null)
       }
     })
   }

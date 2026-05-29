@@ -25,12 +25,17 @@ export default function ForcePasswordChange() {
       return
     }
     setLoading(true)
-    const result = isAdmin
-      ? await changeAdminPassword(account.id, account.email, form.current, form.newPw)
-      : await changePassword(account.id, account.email, form.current, form.newPw)
-    setLoading(false)
-    if (!result.success) {
-      setError(t(result.error, language) || t('err_generic', language))
+    try {
+      const result = isAdmin
+        ? await changeAdminPassword(account.id, account.email, form.current, form.newPw)
+        : await changePassword(account.id, account.email, form.current, form.newPw)
+      if (!result.success) {
+        setError(t(result.error, language) || t('err_generic', language))
+      }
+    } catch {
+      setError(t('err_generic', language))
+    } finally {
+      setLoading(false)
     }
     // On success: must_change_password becomes false → this component unmounts automatically
   }
