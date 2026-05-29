@@ -482,7 +482,8 @@ export function AppProvider({ children }) {
       p_new_password: newPassword,
     })
     if (error || !ok) return { success: false, error: 'err_current_password_wrong' }
-    await supabase.from('admins').update({ must_change_password: false }).eq('id', adminId)
+    const { error: updateErr } = await supabase.from('admins').update({ must_change_password: false }).eq('id', adminId)
+    if (updateErr) return { success: false, error: 'err_generic' }
     setLoggedInAdmin(prev => prev ? { ...prev, must_change_password: false } : prev)
     return { success: true }
   }
@@ -495,7 +496,8 @@ export function AppProvider({ children }) {
       p_new_password: newPassword,
     })
     if (error || !ok) return { success: false, error: 'err_current_password_wrong' }
-    await supabase.from('users').update({ must_change_password: false }).eq('id', userId)
+    const { error: updateErr } = await supabase.from('users').update({ must_change_password: false }).eq('id', userId)
+    if (updateErr) return { success: false, error: 'err_generic' }
     setLoggedInUser(prev => prev ? { ...prev, must_change_password: false } : prev)
     return { success: true }
   }
