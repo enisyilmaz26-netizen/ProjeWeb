@@ -408,7 +408,8 @@ export function AppProvider({ children }) {
       must_change_password: true,
     }]).select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password').single()
     if (error) return { success: false, error: error.message }
-    if (newUser) setUsers(prev => [...prev, newUser].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
+    if (!newUser) return { success: false, error: 'err_generic' }
+    setUsers(prev => [...prev, newUser].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
 
     if (email) {
       const fullName = `${formData.name || ''} ${formData.surname || ''}`.trim()
