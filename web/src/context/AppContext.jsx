@@ -66,7 +66,7 @@ export function AppProvider({ children }) {
   const [workshopRegistrations, setWorkshopRegistrations] = useState([])
   const [workshopRegistrationsAvailable, setWorkshopRegistrationsAvailable] = useState(false)
   const [conversations, setConversations] = useState([])
-  const [messagesAvailable, setMessagesAvailable] = useState(false)
+  const [messagesAvailable, setMessagesAvailable] = useState(true)
   const [closedDays, setClosedDays] = useState([])
   const [idleWarning, setIdleWarning] = useState(false)
   const [loading, setLoading] = useState(false)
