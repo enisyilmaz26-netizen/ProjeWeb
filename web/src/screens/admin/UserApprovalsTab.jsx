@@ -9,6 +9,26 @@ import ResetPasswordModal from '../../components/admin/ResetPasswordModal'
 import PasswordInput from '../../components/PasswordInput'
 import { isPasswordStrong, generateTempPassword } from '../../lib/passwordUtils'
 
+function parseCSVLine(line) {
+  const result = []
+  let current = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++ }
+      else inQuotes = !inQuotes
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current.trim())
+      current = ''
+    } else {
+      current += ch
+    }
+  }
+  result.push(current.trim())
+  return result
+}
+
 export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { cities, users, appointments, approveUser, revokeUser, resetPassword, addUserByAdmin } = useApp()
   const inputClass = INPUT_BASE
@@ -52,7 +72,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       const cityIdx = idxOf(['il', 'city', 'şehir', 'sehir', 'il_id', 'city_id'])
       let ok = 0, fail = 0, errors = []
       for (let i = 1; i < lines.length; i++) {
-        const parts = lines[i].replace(/\r/g, '').split(',').map(p => p.trim().replace(/^"|"$/g, ''))
+        const parts = parseCSVLine(lines[i].replace(/\r/g, ''))
         const email = emailIdx >= 0 ? parts[emailIdx]?.trim().toLowerCase() : ''
         const name = nameIdx >= 0 ? parts[nameIdx] : ''
         const surname = surnameIdx >= 0 ? parts[surnameIdx] : ''

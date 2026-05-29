@@ -93,6 +93,10 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
 
   const handleSave = async () => {
     setSaveError('')
+    if (!form.title?.trim() || !form.institution?.trim() || !form.body_text?.trim()) {
+      setSaveError(language === 'TR' ? 'Başlık, kurum ve metin zorunludur.' : 'Title, institution, and body text are required.')
+      return
+    }
     setSaving(true)
     const payload = {
       ...form,
