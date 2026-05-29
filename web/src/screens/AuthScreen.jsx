@@ -100,7 +100,7 @@ export default function AuthScreen({ onBack }) {
         })
       } else {
         const errKey = result.error
-        setRegError(errKey?.startsWith('err_') ? t(errKey, language) : (errKey || t('err_registration_failed', language)))
+        setRegError(typeof errKey === 'string' ? (errKey.startsWith('err_') ? t(errKey, language) : errKey) : t('err_registration_failed', language))
       }
     } finally {
       setRegLoading(false)

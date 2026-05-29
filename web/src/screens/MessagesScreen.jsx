@@ -17,6 +17,7 @@ export default function MessagesScreen() {
   const [msgInput, setMsgInput] = useState('')
   const [loadingMsgs, setLoadingMsgs] = useState(false)
   const [sending, setSending] = useState(false)
+  const [convError, setConvError] = useState('')
   const messagesEndRef = useRef(null)
 
   const userConvs = conversations.filter(c => String(c.sender_id) === String(loggedInUser?.id))
@@ -27,6 +28,7 @@ export default function MessagesScreen() {
   }, [messages])
 
   const openOrCreateConv = async (recipientType) => {
+    setConvError('')
     let conv = userConvs.find(c => c.recipient_type === recipientType)
     if (!conv) {
       const result = await getOrCreateConversation(
@@ -37,7 +39,10 @@ export default function MessagesScreen() {
         loggedInUser.city_id,
         recipientType
       )
-      if (!result.success) return
+      if (!result.success) {
+        setConvError(language === 'TR' ? 'Konuşma başlatılamadı. Lütfen tekrar deneyin.' : 'Could not start conversation. Please try again.')
+        return
+      }
       conv = result.data
     }
     setSelectedConvId(conv.id)
@@ -70,6 +75,11 @@ export default function MessagesScreen() {
     return (
       <div className="px-4 py-4">
         <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-4">{t('tab_messages', language)}</h2>
+        {convError && (
+          <div className="mb-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm">
+            {convError}
+          </div>
+        )}
         <div className="space-y-3">
           {threads.map(({ type, label, icon }) => {
             const conv = userConvs.find(c => c.recipient_type === type)

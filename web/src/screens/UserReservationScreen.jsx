@@ -377,21 +377,25 @@ export default function UserReservationScreen() {
                       <button
                         onClick={async () => {
                           setWaitlistMsg('')
-                          if (onWaitlist) {
-                            const entry = waitlist.find(w => String(w.lab_id) === String(selectedLab?.id) && w.date === selectedDate && w.time_slot === slot.time_range)
-                            if (entry) { await removeFromWaitlist(entry.id); setWaitlistMsg(language === 'TR' ? 'Bekleme listesinden çıkarıldınız.' : 'Removed from waitlist.') }
-                          } else {
-                            const res = await addToWaitlist({
-                              lab_id: selectedLab.id, lab_name: selectedLab.name,
-                              city_id: selectedCity.id, city_name: selectedCity.name,
-                              date: selectedDate, time_slot: slot.time_range,
-                              user_id: loggedInUser.id, user_email: loggedInUser.email,
-                              user_name: loggedInUser.name, user_surname: loggedInUser.surname,
-                              user_phone: loggedInUser.phone || '', user_branch: loggedInUser.branch || '',
-                              user_work_location: loggedInUser.work_location || '',
-                              user_city: loggedInUser.city_name || '', user_district: loggedInUser.district || '',
-                            })
-                            setWaitlistMsg(res.success ? (language === 'TR' ? 'Bekleme listesine eklendiniz. Yer açıldığında bildirim alacaksınız.' : 'Added to waitlist. You will be notified when a slot opens.') : (res.error || ''))
+                          try {
+                            if (onWaitlist) {
+                              const entry = waitlist.find(w => String(w.lab_id) === String(selectedLab?.id) && w.date === selectedDate && w.time_slot === slot.time_range)
+                              if (entry) { await removeFromWaitlist(entry.id); setWaitlistMsg(language === 'TR' ? 'Bekleme listesinden çıkarıldınız.' : 'Removed from waitlist.') }
+                            } else {
+                              const res = await addToWaitlist({
+                                lab_id: selectedLab.id, lab_name: selectedLab.name,
+                                city_id: selectedCity.id, city_name: selectedCity.name,
+                                date: selectedDate, time_slot: slot.time_range,
+                                user_id: loggedInUser.id, user_email: loggedInUser.email,
+                                user_name: loggedInUser.name, user_surname: loggedInUser.surname,
+                                user_phone: loggedInUser.phone || '', user_branch: loggedInUser.branch || '',
+                                user_work_location: loggedInUser.work_location || '',
+                                user_city: loggedInUser.city_name || '', user_district: loggedInUser.district || '',
+                              })
+                              setWaitlistMsg(res.success ? (language === 'TR' ? 'Bekleme listesine eklendiniz. Yer açıldığında bildirim alacaksınız.' : 'Added to waitlist. You will be notified when a slot opens.') : (res.error || ''))
+                            }
+                          } catch {
+                            setWaitlistMsg(language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.')
                           }
                         }}
                         className={`w-full py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1 ${onWaitlist ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200' : 'border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}

@@ -9,6 +9,7 @@ export default function WorkshopsScreen() {
   const { workshops, loggedInUser, cities, language, workshopRegistrations, workshopRegistrationsAvailable, registerForWorkshop, unregisterFromWorkshop, certificateTemplates } = useApp()
   const [registering, setRegistering] = useState(null)
   const [regMsg, setRegMsg] = useState('')
+  const [regIsError, setRegIsError] = useState(false)
   const regTimerRef = useRef(null)
   useEffect(() => () => clearTimeout(regTimerRef.current), [])
   const [certModal, setCertModal] = useState(null) // { ws, template }
@@ -35,11 +36,13 @@ export default function WorkshopsScreen() {
     const result = await registerForWorkshop(wsId)
     setRegistering(null)
     if (result.success) {
+      setRegIsError(false)
       setRegMsg(t('workshop_register_success', language))
       clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 3000)
     } else {
       const knownKeys = ['err_workshop_full', 'err_already_registered', 'err_generic']
       const key = knownKeys.includes(result.error) ? result.error : 'err_generic'
+      setRegIsError(true)
       setRegMsg(t(key, language))
       clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 4000)
     }
@@ -50,6 +53,7 @@ export default function WorkshopsScreen() {
     const result = await unregisterFromWorkshop(wsId)
     setRegistering(null)
     if (result.success) {
+      setRegIsError(false)
       setRegMsg(t('workshop_unregister_success', language))
       clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 3000)
     }
@@ -180,7 +184,7 @@ export default function WorkshopsScreen() {
       </div>
 
       {regMsg && (
-        <div className="px-4 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 text-sm">
+        <div className={`px-4 py-3 rounded-xl text-sm border ${regIsError ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'}`}>
           {regMsg}
         </div>
       )}
