@@ -350,8 +350,8 @@ export function AppProvider({ children }) {
 
     clearAttempts(email)
     const admin = data[0]
-    const { data: adminExtra } = await supabase.from('admins').select('avatar_url').eq('id', admin.id).single()
-    setLoggedInAdmin({ ...admin, avatar_url: adminExtra?.avatar_url ?? admin.avatar_url ?? '' })
+    const { data: adminExtra } = await supabase.from('admins').select('avatar_url,must_change_password').eq('id', admin.id).single()
+    setLoggedInAdmin({ ...admin, avatar_url: adminExtra?.avatar_url ?? admin.avatar_url ?? '', must_change_password: adminExtra?.must_change_password ?? false })
     return { success: true }
   }
 
@@ -486,6 +486,8 @@ export function AppProvider({ children }) {
       p_new_password: newPassword,
     })
     if (error || !ok) return { success: false, error: 'err_current_password_wrong' }
+    await supabase.from('admins').update({ must_change_password: false }).eq('id', adminId)
+    setLoggedInAdmin(prev => prev ? { ...prev, must_change_password: false } : prev)
     return { success: true }
   }
 
@@ -1118,6 +1120,7 @@ export function AppProvider({ children }) {
       return { success: false, error: 'err_generic' }
     }
     if (data) setWorkshopRegistrations(prev => [...prev, data])
+    logAudit('REGISTER_WORKSHOP', 'workshop', workshopId, `${loggedInUser.name} ${loggedInUser.surname} (${loggedInUser.email}) — ${ws.name}`)
     if (loggedInUser?.email && ws) {
       const fullName = `${loggedInUser.name || ''} ${loggedInUser.surname || ''}`.trim()
       const wsDate = ws.date ? new Date(ws.date + 'T12:00:00').toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
@@ -1148,6 +1151,7 @@ export function AppProvider({ children }) {
       .eq('user_id', loggedInUser.id)
     if (error) return { success: false, error: error.message }
     setWorkshopRegistrations(prev => prev.filter(r => !(String(r.workshop_id) === String(workshopId) && String(r.user_id) === String(loggedInUser.id))))
+    if (ws) logAudit('UNREGISTER_WORKSHOP', 'workshop', workshopId, `${loggedInUser.name} ${loggedInUser.surname} (${loggedInUser.email}) — ${ws.name}`)
     if (loggedInUser?.email && ws) {
       const fullName = `${loggedInUser.name || ''} ${loggedInUser.surname || ''}`.trim()
       sendAutoEmail(

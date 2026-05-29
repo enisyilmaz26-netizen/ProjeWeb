@@ -18,6 +18,8 @@ const ACTION_LABELS = {
   USER_CANCEL_APPOINTMENT: { TR: 'Kullanıcı Randevu İptal',   EN: 'User Cancelled Appointment' },
   USER_REQUEST_CANCELLATION: { TR: 'Kullanıcı İptal Talebi',  EN: 'User Requested Cancellation' },
   CLEAR_NOTIFICATIONS:       { TR: 'Bildirimler Temizlendi',  EN: 'Notifications Cleared' },
+  REGISTER_WORKSHOP:         { TR: 'Atölye Kaydı Oluşturuldu', EN: 'Workshop Registered' },
+  UNREGISTER_WORKSHOP:       { TR: 'Atölye Kaydı İptal Edildi', EN: 'Workshop Unregistered' },
 }
 
 const ACTION_COLORS = {
@@ -34,6 +36,8 @@ const ACTION_COLORS = {
   USER_CANCEL_APPOINTMENT: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
   USER_REQUEST_CANCELLATION: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
   CLEAR_NOTIFICATIONS:       'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400',
+  REGISTER_WORKSHOP:         'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+  UNREGISTER_WORKSHOP:       'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
 }
 
 function formatDateTime(iso, language) {

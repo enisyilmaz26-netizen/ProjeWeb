@@ -6,7 +6,9 @@ import { isPasswordStrong, passwordRequirements } from '../lib/passwordUtils'
 import { ShieldAlert, Check, Circle } from 'lucide-react'
 
 export default function ForcePasswordChange() {
-  const { loggedInUser, changePassword, logout, language } = useApp()
+  const { loggedInUser, loggedInAdmin, changePassword, changeAdminPassword, logout, language } = useApp()
+  const isAdmin = !!loggedInAdmin?.must_change_password
+  const account = isAdmin ? loggedInAdmin : loggedInUser
   const [form, setForm] = useState({ current: '', newPw: '', confirm: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -23,7 +25,9 @@ export default function ForcePasswordChange() {
       return
     }
     setLoading(true)
-    const result = await changePassword(loggedInUser.id, loggedInUser.email, form.current, form.newPw)
+    const result = isAdmin
+      ? await changeAdminPassword(account.id, account.email, form.current, form.newPw)
+      : await changePassword(account.id, account.email, form.current, form.newPw)
     setLoading(false)
     if (!result.success) {
       setError(t(result.error, language) || t('err_generic', language))

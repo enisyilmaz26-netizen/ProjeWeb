@@ -538,6 +538,40 @@ export default function MyProfileScreen() {
         </div>
       )}
 
+      {/* Upcoming Workshop Registrations */}
+      {(() => {
+        const upcomingRegs = workshopRegistrations.filter(r => {
+          if (String(r.user_id) !== String(loggedInUser.id)) return false
+          if (r.attended) return false
+          const ws = workshops.find(w => String(w.id) === String(r.workshop_id))
+          return ws && (!ws.date || ws.date >= todayStr)
+        })
+        if (upcomingRegs.length === 0) return null
+        return (
+          <div className="mb-4">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-2 flex items-center gap-1.5">
+              <ChevronRight className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
+              {language === 'TR' ? `Atölye Kayıtlarım (${upcomingRegs.length})` : `My Workshop Registrations (${upcomingRegs.length})`}
+            </h3>
+            <div className="space-y-2">
+              {upcomingRegs.map(reg => {
+                const ws = workshops.find(w => String(w.id) === String(reg.workshop_id))
+                if (!ws) return null
+                return (
+                  <div key={reg.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow px-4 py-3">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{ws.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {ws.date ? formatDate(ws.date) : (language === 'TR' ? 'Tarih belirlenmedi' : 'Date TBD')}
+                      {ws.location ? ` · ${ws.location}` : ''}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Attended Workshops / Certificates */}
       {(() => {
         const attendedRegs = workshopRegistrations.filter(r =>

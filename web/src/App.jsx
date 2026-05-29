@@ -11,7 +11,7 @@ export default function App() {
 
   const isLoggedIn = loggedInUser !== null || loggedInAdmin !== null
 
-  if (isLoggedIn && loggedInUser?.must_change_password) return <ForcePasswordChange />
+  if (isLoggedIn && (loggedInUser?.must_change_password || loggedInAdmin?.must_change_password)) return <ForcePasswordChange />
   if (isLoggedIn) return <MainAppContainer />
   if (showAuth) return <AuthScreen onBack={() => setShowAuth(false)} />
   return <LandingPage onLoginClick={() => setShowAuth(true)} />
