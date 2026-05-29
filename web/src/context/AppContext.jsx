@@ -1009,16 +1009,12 @@ export function AppProvider({ children }) {
   }
 
   const updateWorkshop = async (id, updates) => {
-    const { error } = await supabase.from('workshops').update(updates).eq('id', id)
+    const { data: rows, error } = await supabase.from('workshops').update(updates).eq('id', id).select('id')
     if (error) return { success: false, error: error.message }
+    if (!rows || rows.length === 0) return { success: false, error: 'err_update_failed' }
     const { data: all } = await supabase.from('workshops').select('*')
-    if (all) {
-      const updated = all.find(w => w.id === id)
-      if (!updated || updated.name !== updates.name) return { success: false, error: 'err_update_failed' }
-      setWorkshops(all)
-    } else {
-      setWorkshops(prev => prev.map(w => w.id === id ? { ...w, ...updates } : w))
-    }
+    if (all) setWorkshops(all)
+    else setWorkshops(prev => prev.map(w => w.id === id ? { ...w, ...updates } : w))
     return { success: true }
   }
 
@@ -1101,16 +1097,20 @@ export function AppProvider({ children }) {
     const conv = conversations.find(c => c.id === conversationId)
     const unreadField = authoredBy === 'sender' ? 'unread_for_recipient' : 'unread_for_sender'
     const newUnread = (conv ? conv[unreadField] : 0) + 1
-    await supabase.from('conversations').update({
+    const { error: convErr } = await supabase.from('conversations').update({
       last_message_at: new Date().toISOString(),
       [unreadField]: newUnread,
     }).eq('id', conversationId)
+    if (!convErr) {
+      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, last_message_at: new Date().toISOString(), [unreadField]: newUnread } : c))
+    }
     return { success: true, data }
   }
 
   const markConversationRead = async (conversationId, side) => {
     const field = side === 'sender' ? 'unread_for_sender' : 'unread_for_recipient'
-    await supabase.from('conversations').update({ [field]: 0 }).eq('id', conversationId)
+    const { error } = await supabase.from('conversations').update({ [field]: 0 }).eq('id', conversationId)
+    if (error) return
     setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, [field]: 0 } : c))
   }
 
@@ -1391,13 +1391,16 @@ export function AppProvider({ children }) {
     if (!next) return
     const { error: wErr } = await supabase.from('waitlist').update({ status: 'NOTIFIED' }).eq('id', next.id)
     if (wErr) return
-    await supabase.from('notifications').insert([{
+    const { error: nErr } = await supabase.from('notifications').insert([{
       title: language === 'TR' ? 'Bekleme Listesi: Slot Açıldı' : 'Waitlist: Slot Available',
       message: language === 'TR'
         ? `[${next.id}] ${next.lab_name} - ${next.date} ${next.time_slot} için bir yer açıldı. Lütfen randevu alın.`
         : `[${next.id}] A slot opened at ${next.lab_name} on ${next.date} ${next.time_slot}. Please book now.`,
       type: 'REMINDER', timestamp: Date.now(), is_read: false,
     }])
+    if (nErr) {
+      await supabase.from('waitlist').update({ status: 'WAITING' }).eq('id', next.id)
+    }
   }
 
   const saveCertificateTemplate = async (data) => {

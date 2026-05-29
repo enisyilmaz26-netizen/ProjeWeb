@@ -62,12 +62,17 @@ export default function MessagesScreen() {
   const handleSend = async () => {
     if (!msgInput.trim() || !selectedConvId || sending || !loggedInUser) return
     setSending(true)
-    const result = await sendMessage(selectedConvId, msgInput, 'sender', `${loggedInUser.name} ${loggedInUser.surname}`)
-    if (result.success) {
-      setMessages(prev => [...prev, result.data])
-      setMsgInput('')
+    try {
+      const result = await sendMessage(selectedConvId, msgInput, 'sender', `${loggedInUser.name} ${loggedInUser.surname}`)
+      if (result.success) {
+        setMessages(prev => [...prev, result.data])
+        setMsgInput('')
+      } else {
+        setConvError(language === 'TR' ? 'Mesaj gönderilemedi.' : 'Failed to send message.')
+      }
+    } finally {
+      setSending(false)
     }
-    setSending(false)
   }
 
   if (!loggedInUser) return null

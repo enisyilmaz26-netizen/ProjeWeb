@@ -135,8 +135,16 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     if (selectedIds.size === 0 || bulkApproving) return
     setBulkApproving(true)
     try {
-      await Promise.all([...selectedIds].map(id => approveUser(id)))
+      const ids = [...selectedIds]
+      let failCount = 0
+      for (const id of ids) {
+        const result = await approveUser(id)
+        if (!result?.success) failCount++
+      }
       setSelectedIds(new Set())
+      if (failCount > 0) {
+        setAddUserError(language === 'TR' ? `${failCount} üye onaylanamadı.` : `${failCount} users could not be approved.`)
+      }
     } finally {
       setBulkApproving(false)
     }
