@@ -20,6 +20,8 @@ const ACTION_LABELS = {
   CLEAR_NOTIFICATIONS:       { TR: 'Bildirimler Temizlendi',  EN: 'Notifications Cleared' },
   REGISTER_WORKSHOP:         { TR: 'Atölye Kaydı Oluşturuldu', EN: 'Workshop Registered' },
   UNREGISTER_WORKSHOP:       { TR: 'Atölye Kaydı İptal Edildi', EN: 'Workshop Unregistered' },
+  REMOVE_WORKSHOP_REG:       { TR: 'Atölye Kaydı Silindi (Admin)', EN: 'Workshop Reg Removed (Admin)' },
+  DELETE_LAB:                { TR: 'Lab Silindi', EN: 'Lab Deleted' },
 }
 
 const ACTION_COLORS = {
@@ -38,6 +40,8 @@ const ACTION_COLORS = {
   CLEAR_NOTIFICATIONS:       'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400',
   REGISTER_WORKSHOP:         'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   UNREGISTER_WORKSHOP:       'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+  REMOVE_WORKSHOP_REG:       'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+  DELETE_LAB:                'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
 }
 
 function formatDateTime(iso, language) {

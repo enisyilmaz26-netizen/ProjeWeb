@@ -972,11 +972,13 @@ export function AppProvider({ children }) {
   }
 
   const forceDeleteLab = async (id) => {
+    const lab = labs.find(l => l.id === id)
     const { error } = await supabase.from('laboratories').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('laboratories').select('*')
     if (all) setLabs(all)
     else setLabs(prev => prev.filter(l => l.id !== id))
+    if (lab) logAudit('DELETE_LAB', 'laboratory', id, `${lab.name} (zorla silindi / force deleted)`)
     return { success: true }
   }
 
@@ -1165,6 +1167,18 @@ export function AppProvider({ children }) {
              <p>Your registration for <strong>"${ws.name}"</strong> has been cancelled.</p>
              <p>You can register for other workshops by visiting the system.</p>`
       )
+    }
+    return { success: true }
+  }
+
+  const removeWorkshopRegistration = async (regId) => {
+    const reg = workshopRegistrations.find(r => r.id === regId)
+    const { error } = await supabase.from('workshop_registrations').delete().eq('id', regId)
+    if (error) return { success: false, error: error.message }
+    setWorkshopRegistrations(prev => prev.filter(r => r.id !== regId))
+    if (reg) {
+      const ws = workshops.find(w => String(w.id) === String(reg.workshop_id))
+      logAudit('REMOVE_WORKSHOP_REG', 'workshop', reg.workshop_id, `${reg.user_name} ${reg.user_surname} (${reg.user_email})${ws ? ` — ${ws.name}` : ''}`)
     }
     return { success: true }
   }
@@ -1502,7 +1516,7 @@ export function AppProvider({ children }) {
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab, forceDeleteLab,
     addWorkshop, updateWorkshop, deleteWorkshop,
-    registerForWorkshop, unregisterFromWorkshop, toggleWorkshopAttendance,
+    registerForWorkshop, unregisterFromWorkshop, toggleWorkshopAttendance, removeWorkshopRegistration,
     rescheduleAppointment,
     addClosedDay, removeClosedDay, isDateClosed,
     getOrCreateConversation, loadConversationMessages, sendMessage, markConversationRead,

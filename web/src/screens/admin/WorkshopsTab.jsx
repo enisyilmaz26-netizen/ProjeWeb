@@ -6,7 +6,7 @@ import { X, Calendar, Clock, Users, Pencil, Trash2, ChevronDown, ChevronRight, D
 import { getLabIcon } from '../../lib/icons'
 
 export default function WorkshopsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
-  const { cities, workshops, addWorkshop, updateWorkshop, deleteWorkshop, workshopRegistrations, toggleWorkshopAttendance } = useApp()
+  const { cities, workshops, addWorkshop, updateWorkshop, deleteWorkshop, workshopRegistrations, toggleWorkshopAttendance, removeWorkshopRegistration } = useApp()
   const [expandedRegistrants, setExpandedRegistrants] = useState(null)
   const inputClass = INPUT_BASE
 
@@ -294,14 +294,23 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                                     <span className="font-medium">{r.user_name} {r.user_surname}</span>
                                     <span className="text-gray-400"> · {r.user_email}</span>
                                   </div>
-                                  <button
-                                    onClick={() => toggleWorkshopAttendance(r.id, !r.attended)}
-                                    className={`flex-shrink-0 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition ${r.attended ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-400'}`}
-                                  >
-                                    {r.attended
-                                      ? <><CheckCircle2 className="w-3 h-3" />{language === 'TR' ? 'Katıldı' : 'Attended'}</>
-                                      : <><Circle className="w-3 h-3" />{language === 'TR' ? 'Katılmadı' : 'Not yet'}</>}
-                                  </button>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    <button
+                                      onClick={() => toggleWorkshopAttendance(r.id, !r.attended)}
+                                      className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition ${r.attended ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-400'}`}
+                                    >
+                                      {r.attended
+                                        ? <><CheckCircle2 className="w-3 h-3" />{language === 'TR' ? 'Katıldı' : 'Attended'}</>
+                                        : <><Circle className="w-3 h-3" />{language === 'TR' ? 'Katılmadı' : 'Not yet'}</>}
+                                    </button>
+                                    <button
+                                      onClick={() => removeWorkshopRegistration(r.id)}
+                                      className="p-0.5 text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition"
+                                      title={language === 'TR' ? 'Kaydı Sil' : 'Remove Registration'}
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
                                 </div>
                               ))}
                             </div>
