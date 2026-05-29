@@ -75,15 +75,19 @@ export default function AdminPanelScreen() {
       return
     }
     setAdminProfileLoading(true)
-    const result = await updateAdmin(loggedInAdmin.id, { name: adminProfileForm.name.trim(), phone: adminProfileForm.phone.trim(), email: emailTrim })
-    setAdminProfileLoading(false)
-    if (result.success) {
-      setShowAdminProfileEdit(false)
-      setAdminProfileSuccess(language === 'TR' ? 'Profil güncellendi.' : 'Profile updated.')
-      clearTimeout(profileSuccessTimer.current)
-      profileSuccessTimer.current = setTimeout(() => setAdminProfileSuccess(''), 3000)
+    try {
+      const result = await updateAdmin(loggedInAdmin.id, { name: adminProfileForm.name.trim(), phone: adminProfileForm.phone.trim(), email: emailTrim })
+      if (result.success) {
+        setShowAdminProfileEdit(false)
+        setAdminProfileSuccess(language === 'TR' ? 'Profil güncellendi.' : 'Profile updated.')
+        clearTimeout(profileSuccessTimer.current)
+        profileSuccessTimer.current = setTimeout(() => setAdminProfileSuccess(''), 3000)
+      } else {
+        setAdminProfileError(result.error || t('err_generic', language))
+      }
+    } finally {
+      setAdminProfileLoading(false)
     }
-    else setAdminProfileError(result.error || t('err_generic', language))
   }
 
   useEffect(() => {
@@ -112,16 +116,19 @@ export default function AdminPanelScreen() {
     if (!isPasswordStrong(adminPwForm.newPw)) { setAdminPwError(t('err_password_weak', language)); return }
     if (adminPwForm.newPw !== adminPwForm.confirm) { setAdminPwError(t('err_password_mismatch', language)); return }
     setAdminPwLoading(true)
-    const result = await changeAdminPassword(loggedInAdmin.id, loggedInAdmin.email, adminPwForm.current, adminPwForm.newPw)
-    setAdminPwLoading(false)
-    if (result.success) {
-      setAdminPwForm({ current: '', newPw: '', confirm: '' })
-      setShowAdminPwChange(false)
-      setAdminPwSuccess(t('password_changed', language))
-      clearTimeout(pwSuccessTimer.current)
-      pwSuccessTimer.current = setTimeout(() => setAdminPwSuccess(''), 3000)
-    } else {
-      setAdminPwError(result.error || t('err_generic', language))
+    try {
+      const result = await changeAdminPassword(loggedInAdmin.id, loggedInAdmin.email, adminPwForm.current, adminPwForm.newPw)
+      if (result.success) {
+        setAdminPwForm({ current: '', newPw: '', confirm: '' })
+        setShowAdminPwChange(false)
+        setAdminPwSuccess(t('password_changed', language))
+        clearTimeout(pwSuccessTimer.current)
+        pwSuccessTimer.current = setTimeout(() => setAdminPwSuccess(''), 3000)
+      } else {
+        setAdminPwError(result.error || t('err_generic', language))
+      }
+    } finally {
+      setAdminPwLoading(false)
     }
   }
 
@@ -174,10 +181,13 @@ export default function AdminPanelScreen() {
               <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" disabled={avatarUploading} onChange={async (e) => {
                 const file = e.target.files[0]; if (!file) return; e.target.value = ''
                 setAvatarError(''); setAvatarUploading(true)
-                const res = await uploadAvatar(file, 'admins', loggedInAdmin.id)
-                if (res.success) await updateAdmin(loggedInAdmin.id, { avatar_url: res.url })
-                else setAvatarError(res.error)
-                setAvatarUploading(false)
+                try {
+                  const res = await uploadAvatar(file, 'admins', loggedInAdmin.id)
+                  if (res.success) await updateAdmin(loggedInAdmin.id, { avatar_url: res.url })
+                  else setAvatarError(res.error)
+                } finally {
+                  setAvatarUploading(false)
+                }
               }} />
             </label>
           </div>
