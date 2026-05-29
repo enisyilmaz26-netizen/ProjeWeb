@@ -92,7 +92,8 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     onRequestConfirm(t('admin_delete_confirm', language), async () => {
       setProcessingId(adminId)
       try {
-        await deleteAdmin(adminId)
+        const result = await deleteAdmin(adminId)
+        if (!result.success) setAdminFormError(result.error || t('err_generic', language))
       } finally {
         setProcessingId(null)
       }

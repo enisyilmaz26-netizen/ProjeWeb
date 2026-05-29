@@ -130,7 +130,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     })
   }, [pendingUsers])
 
-  const handleApproveUser = (id) => onRequestConfirm(t('confirm_approve_user', language), async () => { setProcessingId(id); try { await approveUser(id) } finally { setProcessingId(null) } })
+  const handleApproveUser = (id) => onRequestConfirm(t('confirm_approve_user', language), async () => { setProcessingId(id); try { const result = await approveUser(id); if (!result.success) setAddUserError(result.error || t('err_generic', language)) } finally { setProcessingId(null) } })
   const handleBulkApprove = async () => {
     if (selectedIds.size === 0 || bulkApproving) return
     setBulkApproving(true)
@@ -158,7 +158,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     if (activeAppts > 0) {
       label += ` — ${activeAppts} ${language === 'TR' ? 'aktif randevu iptal edilecek' : 'active appointment(s) will be cancelled'}`
     }
-    onRequestConfirm(label, async () => { setProcessingId(id); try { await revokeUser(id) } finally { setProcessingId(null) } })
+    onRequestConfirm(label, async () => { setProcessingId(id); try { const result = await revokeUser(id); if (!result.success) setAddUserError(result.error || t('err_generic', language)) } finally { setProcessingId(null) } })
   }
 
   const openResetPw = (user) => { setResetPwModal({ userId: user.id, email: user.email, userName: `${user.name} ${user.surname}` }); setResetPwValue(''); setResetPwError(''); setResetPwSuccess('') }
