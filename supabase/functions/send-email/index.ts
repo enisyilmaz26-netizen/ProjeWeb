@@ -1,7 +1,8 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
-const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'onboarding@resend.dev'
+const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY') ?? ''
+const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? ''
+const FROM_NAME = 'MEB OGEDEP'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,9 +18,9 @@ serve(async (req) => {
     return new Response('Method not allowed', { status: 405, headers: corsHeaders })
   }
 
-  if (!RESEND_API_KEY) {
+  if (!BREVO_API_KEY) {
     return new Response(
-      JSON.stringify({ error: 'RESEND_API_KEY is not configured' }),
+      JSON.stringify({ error: 'BREVO_API_KEY is not configured' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
@@ -47,17 +48,18 @@ serve(async (req) => {
 
   for (const recipient of recipients) {
     try {
-      const res = await fetch('https://api.resend.com/emails', {
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'api-key': BREVO_API_KEY,
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          from: `MEB OGEDEP <${FROM_EMAIL}>`,
-          to: recipient.email,
+          sender: { name: FROM_NAME, email: FROM_EMAIL },
+          to: [{ email: recipient.email, name: recipient.name || recipient.email }],
           subject,
-          html,
+          htmlContent: html,
         }),
       })
 
@@ -65,7 +67,7 @@ serve(async (req) => {
         sent++
       } else {
         const err = await res.json().catch(() => ({}))
-        console.error('Resend error for', recipient.email, ':', JSON.stringify(err))
+        console.error('Brevo error for', recipient.email, ':', JSON.stringify(err))
         failed++
       }
     } catch (e) {
