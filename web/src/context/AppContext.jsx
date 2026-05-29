@@ -1098,6 +1098,7 @@ export function AppProvider({ children }) {
       body: body.trim(),
     }]).select().single()
     if (error) return { success: false, error: error.message }
+    if (!data) return { success: false, error: 'err_generic' }
     const conv = conversations.find(c => c.id === conversationId)
     const unreadField = authoredBy === 'sender' ? 'unread_for_recipient' : 'unread_for_sender'
     const newUnread = (conv ? conv[unreadField] : 0) + 1
