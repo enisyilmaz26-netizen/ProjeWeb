@@ -585,8 +585,9 @@ export function AppProvider({ children }) {
 
   const markAppointmentCompleted = async (id) => {
     const appt = appointments.find(a => a.id === id)
-    const { error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id).eq('status', 'APPROVED')
+    const { data: updated, error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id).eq('status', 'APPROVED').select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'COMPLETED' } : a))
     if (appt) logAudit('COMPLETE_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     if (appt) {
@@ -741,8 +742,9 @@ export function AppProvider({ children }) {
 
   const denyCancellationRequest = async (id) => {
     const appt = appointments.find(a => a.id === id)
-    const { error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id).eq('status', 'CANCELLATION_REQUESTED')
+    const { data: updated, error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id).eq('status', 'CANCELLATION_REQUESTED').select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'APPROVED' } : a))
     if (appt) {
       logAudit('DENY_CANCELLATION', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
