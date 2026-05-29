@@ -85,17 +85,20 @@ export default function MyProfileScreen() {
     if (!rescheduleDate || !rescheduleSlot) return
     setRescheduleError('')
     setRescheduleLoading(true)
-    const res = await rescheduleAppointment(rescheduleTarget.id, rescheduleDate, rescheduleSlot)
-    setRescheduleLoading(false)
-    if (res.success) {
-      setShowReschedule(false)
-      setRescheduleTarget(null)
-      setRescheduleDate('')
-      setRescheduleSlot('')
-      setSuccessMsg(language === 'TR' ? 'Randevu yeniden zamanlandı.' : 'Appointment rescheduled.')
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
-    } else {
-      setRescheduleError(res.error)
+    try {
+      const res = await rescheduleAppointment(rescheduleTarget.id, rescheduleDate, rescheduleSlot)
+      if (res.success) {
+        setShowReschedule(false)
+        setRescheduleTarget(null)
+        setRescheduleDate('')
+        setRescheduleSlot('')
+        setSuccessMsg(language === 'TR' ? 'Randevu yeniden zamanlandı.' : 'Appointment rescheduled.')
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
+      } else {
+        setRescheduleError(res.error)
+      }
+    } finally {
+      setRescheduleLoading(false)
     }
   }
 
