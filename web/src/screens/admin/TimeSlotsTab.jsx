@@ -80,7 +80,7 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
               {newSlotCityId && (
                 <input
                   type="text"
-                  placeholder={language === 'TR' ? 'Konum (isteğe bağlı) — örn: Gölbaşı BİLSEM' : 'Location (optional) — e.g.: Gölbaşı BİLSEM'}
+                  placeholder={language === 'TR' ? 'Konum (isteğe bağlı), örn: Gölbaşı BİLSEM' : 'Location (optional), e.g.: Gölbaşı BİLSEM'}
                   className={`${inputClass} w-full`}
                   value={newSlotLocation}
                   onChange={e => setNewSlotLocation(e.target.value)}

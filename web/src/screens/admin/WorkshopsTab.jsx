@@ -137,7 +137,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
           ) : (
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_province', language)}</label>
-              <p className={`${inputClass} w-full bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400`}>{cities.find(c => String(c.id) === String(adminCityId))?.name || '—'}</p>
+              <p className={`${inputClass} w-full bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400`}>{cities.find(c => String(c.id) === String(adminCityId))?.name || '-'}</p>
             </div>
           )}
           <div>
@@ -292,7 +292,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                                 <div key={r.id} className="flex items-center justify-between gap-2">
                                   <div className="text-xs text-gray-700 dark:text-gray-300 min-w-0">
                                     <span className="font-medium">{r.user_name} {r.user_surname}</span>
-                                    <span className="text-gray-400"> — {r.user_email}</span>
+                                    <span className="text-gray-400"> · {r.user_email}</span>
                                   </div>
                                   <button
                                     onClick={() => toggleWorkshopAttendance(r.id, !r.attended)}

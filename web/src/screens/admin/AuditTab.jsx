@@ -37,7 +37,7 @@ const ACTION_COLORS = {
 }
 
 function formatDateTime(iso, language) {
-  if (!iso) return '—'
+  if (!iso) return '-'
   const d = new Date(iso)
   const locale = language === 'TR' ? 'tr-TR' : 'en-GB'
   return d.toLocaleString(locale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })

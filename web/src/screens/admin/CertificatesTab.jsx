@@ -120,7 +120,7 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
           <Award className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
             {language === 'TR' ? 'Sertifika Şablonu' : 'Certificate Template'}
-            {cityName ? ` — ${cityName}` : ''}
+            {cityName ? ` · ${cityName}` : ''}
           </h3>
         </div>
         <button
@@ -135,8 +135,8 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
 
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-4 text-xs text-blue-700 dark:text-blue-300">
         {language === 'TR'
-          ? 'Değişkenler: {{katilimci}} — katılımcı adı, {{atolye}} — atölye adı, {{tarih}} — tarih, {{konum}} — yer'
-          : 'Variables: {{katilimci}} — participant name, {{atolye}} — workshop name, {{tarih}} — date, {{konum}} — location'}
+          ? 'Değişkenler: {{katilimci}} · katılımcı adı, {{atolye}} · atölye adı, {{tarih}} · tarih, {{konum}} · yer'
+          : 'Variables: {{katilimci}} · participant name, {{atolye}} · workshop name, {{tarih}} · date, {{konum}} · location'}
       </div>
 
       {saveSuccess && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{saveSuccess}</div>}

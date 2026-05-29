@@ -228,7 +228,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               {csvResult.errors.length > 5 && <li>... ve {csvResult.errors.length - 5} daha</li>}
             </ul>
           )}
-          <p className="text-xs mt-1 opacity-70">{language === 'TR' ? 'Varsayılan şifre: Gecici2024! — Kullanıcılar ilk girişte şifre değiştirmek zorunda kalacak.' : 'Default password: Gecici2024! — Users will be forced to change their password on first login.'}</p>
+          <p className="text-xs mt-1 opacity-70">{language === 'TR' ? 'Varsayılan şifre: Gecici2024! · Kullanıcılar ilk girişte şifre değiştirmek zorunda kalacak.' : 'Default password: Gecici2024! · Users will be forced to change their password on first login.'}</p>
         </div>
       )}
 

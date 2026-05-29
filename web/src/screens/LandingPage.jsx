@@ -482,7 +482,7 @@ export default function LandingPage({ onLoginClick }) {
               {lang === 'TR' ? 'Hemen Başla' : 'Get Started'}
             </button>
             <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
-              {lang === 'TR' ? 'Ücretsiz kayıt — yalnızca MEB bünyesindeki öğretmenler için' : 'Free registration — exclusively for MEB teachers'}
+              {lang === 'TR' ? 'Ücretsiz kayıt · yalnızca MEB bünyesindeki öğretmenler için' : 'Free registration · exclusively for MEB teachers'}
             </p>
           </div>
         </div>

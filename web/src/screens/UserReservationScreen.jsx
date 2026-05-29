@@ -550,7 +550,7 @@ function InfoField({ label, value }) {
     <div>
       <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</label>
       <div className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#0E1A30] text-gray-800 dark:text-gray-200 text-sm min-h-[38px] flex items-center">
-        {value || '—'}
+        {value || '-'}
       </div>
     </div>
   )

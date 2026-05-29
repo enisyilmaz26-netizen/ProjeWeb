@@ -178,7 +178,7 @@ export default function AdminPanelScreen() {
               {isGlobal ? t('admin_type_global', language) : t('admin_type_city', language)}
               {!isGlobal && loggedInAdmin?.city_id && (() => {
                 const c = cities.find(x => String(x.id) === String(loggedInAdmin.city_id))
-                return c ? ` — ${c.name}` : ''
+                return c ? ` · ${c.name}` : ''
               })()}
             </p>
           </div>
