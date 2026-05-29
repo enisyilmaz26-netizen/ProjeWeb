@@ -98,7 +98,6 @@ export function CertificateCanvas({ template, fullName, workshopName, dateStr, l
           overflow: 'hidden',
         }}>
 
-          {/* TEST-MARKER-XYZ */}
           {/* Header: logo top, institution below */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: ai, paddingBottom: 16, borderBottom: '1px solid rgba(21,101,192,0.15)', flexShrink: 0 }}>
             {logoUrl && (
