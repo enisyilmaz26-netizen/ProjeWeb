@@ -8,28 +8,8 @@ import { passwordRequirements, isPasswordStrong } from '../lib/passwordUtils'
 import { Sun, Moon, Check, Circle, X } from 'lucide-react'
 
 export default function AuthScreen({ onBack }) {
-  const { loginUser, loginAdmin, registerUser, requestPasswordReset, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
+  const { loginUser, loginAdmin, registerUser, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
   const [activeTab, setActiveTab] = useState('login')
-
-  // Forgot password
-  const [showForgot, setShowForgot] = useState(false)
-  const [forgotEmail, setForgotEmail] = useState('')
-  const [forgotLoading, setForgotLoading] = useState(false)
-  const [forgotMsg, setForgotMsg] = useState(null)
-
-  const handleForgot = async (e) => {
-    e.preventDefault()
-    setForgotLoading(true)
-    setForgotMsg(null)
-    const result = await requestPasswordReset(forgotEmail)
-    setForgotLoading(false)
-    if (result.success) {
-      setForgotMsg({ ok: true })
-      setForgotEmail('')
-    } else {
-      setForgotMsg({ ok: false })
-    }
-  }
 
   // Login form
   const [loginEmail, setLoginEmail] = useState('')
@@ -234,50 +214,13 @@ export default function AuthScreen({ onBack }) {
                   {loginLoading ? t('loading_signin', language) : t('btn_login', language)}
                 </button>
               </form>
-              <div className="mt-3 text-center">
-                <button
-                  type="button"
-                  onClick={() => { setShowForgot(p => !p); setForgotMsg(null); setForgotEmail('') }}
-                  className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline"
-                >
-                  {language === 'TR' ? 'Şifremi unuttum' : 'Forgot password?'}
-                </button>
+              <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3 text-center">
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {language === 'TR'
+                    ? 'Şifrenizi unuttuysanız sistem yöneticinizle iletişime geçin.'
+                    : 'If you forgot your password, please contact your system administrator.'}
+                </p>
               </div>
-
-              {showForgot && (
-                <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                  {forgotMsg?.ok ? (
-                    <p className="text-xs text-green-600 dark:text-green-400 text-center">
-                      {language === 'TR'
-                        ? 'Geçici şifreniz e-posta adresinize gönderildi. Giriş yaptıktan sonra yeni şifre belirlemeniz istenecek.'
-                        : 'A temporary password has been sent to your email. You will be prompted to set a new password after logging in.'}
-                    </p>
-                  ) : (
-                    <form onSubmit={handleForgot} className="flex gap-2">
-                      <input
-                        type="email"
-                        value={forgotEmail}
-                        onChange={e => setForgotEmail(e.target.value)}
-                        placeholder={language === 'TR' ? 'E-posta adresiniz' : 'Your email address'}
-                        required
-                        className={inputClass + ' flex-1 text-xs py-1.5'}
-                      />
-                      <button
-                        type="submit"
-                        disabled={forgotLoading}
-                        className="px-3 py-1.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60 hover:opacity-90 transition whitespace-nowrap"
-                      >
-                        {forgotLoading ? '...' : (language === 'TR' ? 'Gönder' : 'Send')}
-                      </button>
-                    </form>
-                  )}
-                  {forgotMsg?.ok === false && (
-                    <p className="text-xs text-red-500 dark:text-red-400 mt-1 text-center">
-                      {language === 'TR' ? 'Bu e-posta adresiyle kayıtlı kullanıcı bulunamadı.' : 'No user found with this email address.'}
-                    </p>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
