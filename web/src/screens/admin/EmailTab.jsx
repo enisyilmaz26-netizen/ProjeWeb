@@ -182,10 +182,13 @@ export default function EmailTab({ language }) {
     if (type === 'users') setSendingUsers(true)
     else setSendingAdmins(true)
 
-    const result = await sendEmail({ recipients, subject, html: buildHtml() })
-
-    if (type === 'users') setSendingUsers(false)
-    else setSendingAdmins(false)
+    let result
+    try {
+      result = await sendEmail({ recipients, subject, html: buildHtml() })
+    } finally {
+      if (type === 'users') setSendingUsers(false)
+      else setSendingAdmins(false)
+    }
 
     if (!result.success) {
       setMsg(type, { ok: false, text: t('email_err_send', language) })

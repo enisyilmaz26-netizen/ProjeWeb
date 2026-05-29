@@ -33,33 +33,39 @@ export default function WorkshopsScreen() {
 
   const handleRegister = async (wsId) => {
     setRegistering(wsId)
-    const result = await registerForWorkshop(wsId)
-    setRegistering(null)
-    if (result.success) {
-      setRegIsError(false)
-      setRegMsg(t('workshop_register_success', language))
-      clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 3000)
-    } else {
-      const knownKeys = ['err_workshop_full', 'err_already_registered', 'err_generic']
-      const key = knownKeys.includes(result.error) ? result.error : 'err_generic'
-      setRegIsError(true)
-      setRegMsg(t(key, language))
-      clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 4000)
+    try {
+      const result = await registerForWorkshop(wsId)
+      if (result.success) {
+        setRegIsError(false)
+        setRegMsg(t('workshop_register_success', language))
+        clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 3000)
+      } else {
+        const knownKeys = ['err_workshop_full', 'err_already_registered', 'err_generic']
+        const key = knownKeys.includes(result.error) ? result.error : 'err_generic'
+        setRegIsError(true)
+        setRegMsg(t(key, language))
+        clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 4000)
+      }
+    } finally {
+      setRegistering(null)
     }
   }
 
   const handleUnregister = async (wsId) => {
     setRegistering(wsId)
-    const result = await unregisterFromWorkshop(wsId)
-    setRegistering(null)
-    if (result.success) {
-      setRegIsError(false)
-      setRegMsg(t('workshop_unregister_success', language))
-      clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 3000)
-    } else {
-      setRegIsError(true)
-      setRegMsg(t('err_generic', language))
-      clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 4000)
+    try {
+      const result = await unregisterFromWorkshop(wsId)
+      if (result.success) {
+        setRegIsError(false)
+        setRegMsg(t('workshop_unregister_success', language))
+        clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 3000)
+      } else {
+        setRegIsError(true)
+        setRegMsg(t('err_generic', language))
+        clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 4000)
+      }
+    } finally {
+      setRegistering(null)
     }
   }
 

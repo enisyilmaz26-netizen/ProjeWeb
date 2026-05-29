@@ -137,36 +137,39 @@ export default function UserReservationScreen() {
     setShowConfirm(false)
     setSubmitting(true)
     setErrorMsg('')
-    const result = await submitAppointment({
-      lab_id: selectedLab.id,
-      lab_name: selectedLab.name,
-      city_id: selectedCity.id,
-      city_name: selectedCity.name,
-      date: selectedDate,
-      time_slot: selectedSlot.time_range,
-      user_name: loggedInUser.name,
-      user_surname: loggedInUser.surname,
-      user_branch: loggedInUser.branch,
-      user_work_location: loggedInUser.work_location,
-      user_phone: loggedInUser.phone,
-      user_email: loggedInUser.email,
-      user_city: loggedInUser.city_name || selectedCity.name,
-      user_district: loggedInUser.district,
-      note: note,
-    })
-    setSubmitting(false)
-    if (result.success) {
-      setSuccessMsg(t('appointment_success', language))
-      setStep(1)
-      setSelectedCity(null)
-      setSelectedLab(null)
-      setSelectedDate('')
-      setSelectedSlot(null)
-      setNote('')
-    } else {
-      const errKey = result.error
-      const errMsg = (errKey && translations[errKey]) ? t(errKey, language) : (errKey || t('err_generic', language))
-      setErrorMsg(errMsg)
+    try {
+      const result = await submitAppointment({
+        lab_id: selectedLab.id,
+        lab_name: selectedLab.name,
+        city_id: selectedCity.id,
+        city_name: selectedCity.name,
+        date: selectedDate,
+        time_slot: selectedSlot.time_range,
+        user_name: loggedInUser.name,
+        user_surname: loggedInUser.surname,
+        user_branch: loggedInUser.branch,
+        user_work_location: loggedInUser.work_location,
+        user_phone: loggedInUser.phone,
+        user_email: loggedInUser.email,
+        user_city: loggedInUser.city_name || selectedCity.name,
+        user_district: loggedInUser.district,
+        note: note,
+      })
+      if (result.success) {
+        setSuccessMsg(t('appointment_success', language))
+        setStep(1)
+        setSelectedCity(null)
+        setSelectedLab(null)
+        setSelectedDate('')
+        setSelectedSlot(null)
+        setNote('')
+      } else {
+        const errKey = result.error
+        const errMsg = (errKey && translations[errKey]) ? t(errKey, language) : (errKey || t('err_generic', language))
+        setErrorMsg(errMsg)
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
