@@ -15,13 +15,14 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const successTimer = useRef(null)
+  const errorTimer = useRef(null)
 
   useEffect(() => {
     const timer = setTimeout(() => setSearch(searchInput), 300)
     return () => clearTimeout(timer)
   }, [searchInput])
 
-  useEffect(() => () => clearTimeout(successTimer.current), [])
+  useEffect(() => () => { clearTimeout(successTimer.current); clearTimeout(errorTimer.current) }, [])
   const [filterCity, setFilterCity] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterLocation, setFilterLocation] = useState('')
@@ -31,7 +32,6 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const [processingId, setProcessingId] = useState(null)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const errorTimer = useRef(null)
   const [editingApptId, setEditingApptId] = useState(null)
   const [editDate, setEditDate] = useState('')
   const [editTimeSlot, setEditTimeSlot] = useState('')
