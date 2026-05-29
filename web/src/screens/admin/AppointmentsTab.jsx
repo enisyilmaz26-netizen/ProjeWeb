@@ -30,6 +30,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [processingId, setProcessingId] = useState(null)
   const [successMsg, setSuccessMsg] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
+  const errorTimer = useRef(null)
   const [editingApptId, setEditingApptId] = useState(null)
   const [editDate, setEditDate] = useState('')
   const [editTimeSlot, setEditTimeSlot] = useState('')
@@ -131,11 +133,17 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     clearTimeout(successTimer.current)
     successTimer.current = setTimeout(() => setSuccessMsg(''), 3000)
   }
+  const showError = (msg) => {
+    setErrorMsg(msg)
+    clearTimeout(errorTimer.current)
+    errorTimer.current = setTimeout(() => setErrorMsg(''), 3000)
+  }
 
   const execApprove = async (id, newDate, newTimeSlot) => {
     setProcessingId(id)
     try {
-      await approveAppointment(id, newDate || null, newTimeSlot || null)
+      const result = await approveAppointment(id, newDate || null, newTimeSlot || null)
+      if (!result.success) { showError(t('err_generic', language)); return }
       const appt = appointments.find(a => a.id === id)
       if (appt) {
         const finalDate = newDate || appt.date
@@ -153,7 +161,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const execCancel = async (id) => {
     setProcessingId(id)
     try {
-      await cancelAppointment(id)
+      const result = await cancelAppointment(id)
+      if (!result.success) { showError(t('err_generic', language)); return }
       const appt = appointments.find(a => a.id === id)
       if (appt) {
         const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
@@ -168,7 +177,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const execApproveCancellation = async (id) => {
     setProcessingId(id)
     try {
-      await cancelAppointment(id)
+      const result = await cancelAppointment(id)
+      if (!result.success) { showError(t('err_generic', language)); return }
       const appt = appointments.find(a => a.id === id)
       if (appt) {
         const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
@@ -275,6 +285,11 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
       {successMsg && (
         <div className="mb-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 text-xs font-medium">
           {successMsg}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="mb-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs font-medium">
+          {errorMsg}
         </div>
       )}
 

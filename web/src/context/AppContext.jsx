@@ -610,8 +610,9 @@ export function AppProvider({ children }) {
     const updates = { status: 'APPROVED' }
     if (newDate) updates.date = newDate
     if (newTimeSlot) updates.time_slot = newTimeSlot
-    const { error } = await supabase.from('appointments').update(updates).eq('id', id)
+    const { data: updated, error } = await supabase.from('appointments').update(updates).eq('id', id).in('status', ['PENDING', 'CANCELLATION_REQUESTED']).select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a))
     const finalDate = newDate || appt?.date
     const finalSlot = newTimeSlot || appt?.time_slot
@@ -652,8 +653,9 @@ export function AppProvider({ children }) {
 
   const cancelAppointment = async (id) => {
     const appt = appointments.find(a => a.id === id)
-    const { error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id).in('status', ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED'])
+    const { data: updated, error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id).in('status', ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED']).select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
     if (appt) logAudit('CANCEL_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     if (appt) {
@@ -693,13 +695,15 @@ export function AppProvider({ children }) {
       return { success: false, error: 'err_generic' }
     }
     // DB-side guard: only updates if user_email and PENDING status both match
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from('appointments')
       .update({ status: 'CANCELLED' })
       .eq('id', id)
       .eq('user_email', loggedInUser.email)
       .eq('status', 'PENDING')
+      .select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
     logAudit('USER_CANCEL_APPOINTMENT', 'appointment', id, `${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
@@ -716,12 +720,14 @@ export function AppProvider({ children }) {
 
   const submitCancellationRequest = async (id, note) => {
     const appt = appointments.find(a => a.id === id)
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from('appointments')
       .update({ status: 'CANCELLATION_REQUESTED', note: note || '' })
       .eq('id', id)
       .eq('status', 'APPROVED')
+      .select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a =>
       a.id === id ? { ...a, status: 'CANCELLATION_REQUESTED', note: note || '' } : a
     ))
