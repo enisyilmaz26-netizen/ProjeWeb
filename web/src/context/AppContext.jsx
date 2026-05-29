@@ -1075,6 +1075,7 @@ export function AppProvider({ children }) {
       unread_for_recipient: 0,
     }]).select().single()
     if (error) return { success: false, error: error.message }
+    if (!data) return { success: false, error: 'err_generic' }
     setConversations(prev => [data, ...prev])
     return { success: true, data }
   }
