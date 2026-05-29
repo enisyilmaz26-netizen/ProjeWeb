@@ -147,9 +147,9 @@ export function AppProvider({ children }) {
         supabase.from('appointments').select('*').order('created_timestamp', { ascending: false }),
         supabase.from('notifications').select('*').order('timestamp', { ascending: false }),
         supabase.from('city_time_slots').select('*').order('id'),
-        supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password').order('name'),
+        supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password,avatar_url').order('name'),
         supabase.from('workshops').select('*').order('date', { ascending: false }),
-        supabase.from('admins').select('id,name,email,role,city_id,phone').order('name'),
+        supabase.from('admins').select('id,name,email,role,city_id,phone,avatar_url').order('name'),
         supabase.from('workshop_registrations').select('*'),
         supabase.from('conversations').select('*').order('last_message_at', { ascending: false }),
         supabase.from('closed_days').select('*').order('date'),
@@ -295,9 +295,9 @@ export function AppProvider({ children }) {
     if (!user.is_approved) return { success: false, error: 'err_not_approved' }
 
     clearAttempts(email)
-    // RPC may not return must_change_password — fetch it explicitly
-    const { data: extraFields } = await supabase.from('users').select('must_change_password').eq('id', user.id).single()
-    setLoggedInUser({ ...user, must_change_password: extraFields?.must_change_password ?? false })
+    // RPC may not return all columns — fetch extras explicitly
+    const { data: extraFields } = await supabase.from('users').select('must_change_password,avatar_url').eq('id', user.id).single()
+    setLoggedInUser({ ...user, must_change_password: extraFields?.must_change_password ?? false, avatar_url: extraFields?.avatar_url ?? user.avatar_url ?? '' })
     loadWaitlist(email)
 
     // Yaklaşan randevular için hatırlatma bildirimi oluştur (2 gün içinde)
@@ -349,7 +349,9 @@ export function AppProvider({ children }) {
     }
 
     clearAttempts(email)
-    setLoggedInAdmin(data[0])
+    const admin = data[0]
+    const { data: adminExtra } = await supabase.from('admins').select('avatar_url').eq('id', admin.id).single()
+    setLoggedInAdmin({ ...admin, avatar_url: adminExtra?.avatar_url ?? admin.avatar_url ?? '' })
     return { success: true }
   }
 
