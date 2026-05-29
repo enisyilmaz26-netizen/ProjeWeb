@@ -414,6 +414,28 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     if (newUser) setUsers(prev => [...prev, newUser].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
 
+    if (email) {
+      const fullName = `${formData.name || ''} ${formData.surname || ''}`.trim()
+      sendAutoEmail(
+        email, fullName,
+        language === 'TR' ? 'Hesabınız Oluşturuldu – MEB ÖGEDEP' : 'Account Created – MEB ÖGEDEP',
+        language === 'TR'
+          ? `<p>Sayın <strong>${fullName}</strong>,</p>
+             <p>MEB ÖGEDEP sistemine yönetici tarafından hesabınız oluşturulmuştur.</p>
+             <p>Giriş bilgileriniz:</p>
+             <p>📧 E-posta: <strong>${email}</strong></p>
+             <p>🔑 Şifre: <strong>${formData.password}</strong></p>
+             <p>Sisteme giriş yaptığınızda yeni bir şifre belirlemeniz istenecektir.</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
+          : `<p>Dear <strong>${fullName}</strong>,</p>
+             <p>An account has been created for you in the MEB ÖGEDEP system by an administrator.</p>
+             <p>Your login credentials:</p>
+             <p>📧 Email: <strong>${email}</strong></p>
+             <p>🔑 Password: <strong>${formData.password}</strong></p>
+             <p>You will be prompted to set a new password upon first login.</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+      )
+    }
     return { success: true }
   }
 
@@ -1176,6 +1198,23 @@ export function AppProvider({ children }) {
     }
     setAdmins(prev => [...prev, data].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
     logAudit('ADD_ADMIN', 'admin', data.id, `${name} (${normalizedEmail}) — ${role || 'CITY'}`)
+    sendAutoEmail(
+      normalizedEmail, name,
+      language === 'TR' ? 'Yönetici Hesabınız Oluşturuldu – MEB ÖGEDEP' : 'Admin Account Created – MEB ÖGEDEP',
+      language === 'TR'
+        ? `<p>Sayın <strong>${name}</strong>,</p>
+           <p>MEB ÖGEDEP sistemine <strong>${role === 'GLOBAL' ? 'Genel Yönetici' : 'İl Yöneticisi'}</strong> olarak hesabınız oluşturulmuştur.</p>
+           <p>Giriş bilgileriniz:</p>
+           <p>📧 E-posta: <strong>${normalizedEmail}</strong></p>
+           <p>🔑 Şifre: <strong>${password}</strong></p>
+           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
+        : `<p>Dear <strong>${name}</strong>,</p>
+           <p>An admin account has been created for you in the MEB ÖGEDEP system as <strong>${role === 'GLOBAL' ? 'Global Admin' : 'Province Admin'}</strong>.</p>
+           <p>Your login credentials:</p>
+           <p>📧 Email: <strong>${normalizedEmail}</strong></p>
+           <p>🔑 Password: <strong>${password}</strong></p>
+           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+    )
     const cityObj = city_id ? cities.find(c => String(c.id) === String(city_id)) : null
     const prefix = cityObj ? `[${cityObj.name}] ` : ''
     await supabase.from('notifications').insert([{
