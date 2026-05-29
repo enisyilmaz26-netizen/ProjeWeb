@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { X, Printer, Award } from 'lucide-react'
+import { X, Printer } from 'lucide-react'
 
 function fmtDate(dateStr, language) {
   if (!dateStr) return ''
@@ -7,7 +7,10 @@ function fmtDate(dateStr, language) {
   return d.toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-const logoHeightMap = { sm: 32, md: 48, lg: 64, xl: 80 }
+const TITLE_FS  = { lg: '1.4vw', xl: '1.7vw', '2xl': '2.1vw', '3xl': '2.6vw' }
+const BODY_FS   = { xs: '0.8vw', sm: '0.9vw', md: '1.05vw' }
+const NAME_FS   = { lg: '1.6vw', xl: '1.9vw', '2xl': '2.3vw', '3xl': '2.8vw' }
+const LOGO_H    = { sm: '5vw', md: '7vw', lg: '9vw', xl: '11vw' }
 
 export default function CertificateModal({ ws, template, user, language, onClose }) {
   useEffect(() => {
@@ -44,20 +47,13 @@ export default function CertificateModal({ ws, template, user, language, onClose
   const logoUrl        = template?.logo_url        || ''
   const logoSize       = template?.logo_size       || 'md'
 
-  // Font sizes relative to container width (container ≈ 896px at max)
-  // Using inline style with em/% so they scale with the container
-  const titleFontSize = { lg: '1.6cqw', xl: '2cqw', '2xl': '2.6cqw', '3xl': '3.2cqw' }[titleSize] || '2.6cqw'
-  const bodyFontSize  = { xs: '1cqw',   sm: '1.2cqw', md: '1.4cqw' }[bodySize] || '1.2cqw'
-  const nameFontSize  = { lg: '1.8cqw', xl: '2.2cqw', '2xl': '2.8cqw', '3xl': '3.4cqw' }[titleSize] || '2.8cqw'
-  const nameStyle     = {
-    fontSize: nameFontSize,
-    fontFamily: nameFont === 'serif' ? 'Georgia, serif' : 'inherit',
-  }
-
   const isCentered = bodyAlign !== 'left'
   const ac = isCentered ? 'text-center' : 'text-left'
-  const ai = isCentered ? 'items-center' : 'items-start'
-  const jc = isCentered ? 'justify-center' : 'justify-start'
+
+  const titleStyle  = { fontSize: TITLE_FS[titleSize]  || '2.1vw', letterSpacing: '0.12em' }
+  const nameStyle   = { fontSize: NAME_FS[titleSize]   || '2.3vw', fontFamily: nameFont === 'serif' ? 'Georgia, serif' : 'inherit' }
+  const bodyStyle   = { fontSize: BODY_FS[bodySize]    || '0.9vw' }
+  const logoStyle   = { height: LOGO_H[logoSize] || '7vw', maxHeight: '100%', objectFit: 'contain' }
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -77,52 +73,46 @@ export default function CertificateModal({ ws, template, user, language, onClose
           </button>
         </div>
 
-        {/* A4 Landscape wrapper */}
-        <div style={{ aspectRatio: '297/210', containerType: 'size' }} className="w-full">
-          <div id="certificate-print"
-            className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            style={{ containerType: 'inline-size' }}>
+        {/* A4 Landscape (297:210) */}
+        <div style={{ aspectRatio: '297 / 210' }} className="w-full">
+          <div id="certificate-print" className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
 
             {/* Top border */}
-            <div className="flex-shrink-0 bg-gradient-to-r from-[#1565C0] via-[#1976D2] to-[#0D47A1]" style={{ height: '1.5cqh' }} />
+            <div className="flex-shrink-0 bg-gradient-to-r from-[#1565C0] via-[#1976D2] to-[#0D47A1]"
+              style={{ height: '1.2%' }} />
 
-            {/* Content */}
-            <div className={`flex-1 flex flex-col justify-between overflow-hidden ${ai}`}
-              style={{ padding: '3cqh 5cqw' }}>
+            {/* Main */}
+            <div className="flex-1 flex flex-col" style={{ padding: '3% 6%' }}>
 
-              {/* ── Header: logo + institution (stacked) ── */}
-              <div className={`flex flex-col ${ai} gap-[0.8cqh]`}>
-                {logoUrl ? (
-                  <img src={logoUrl} alt="logo"
-                    style={{ height: `${(logoHeightMap[logoSize] || 48) / 8}cqh`, maxHeight: '12cqh' }}
-                    className="object-contain" />
-                ) : (
-                  <div className="rounded-full bg-[#1565C0]/10 flex items-center justify-center"
-                    style={{ width: '6cqh', height: '6cqh' }}>
-                    <Award className="text-[#1565C0]" style={{ width: '3.5cqh', height: '3.5cqh' }} />
-                  </div>
+              {/* ── Header: logo left, institution right ── */}
+              <div className="flex items-center gap-4 pb-3"
+                style={{ borderBottom: '1px solid rgba(21,101,192,0.15)' }}>
+                {logoUrl && (
+                  <img src={logoUrl} alt="logo" style={logoStyle} className="flex-shrink-0" />
                 )}
-                <p className={`font-semibold text-[#1565C0] uppercase whitespace-pre-line leading-snug ${ac}`}
-                  style={{ fontSize: '1.1cqw', letterSpacing: '0.15em' }}>
+                <p className="font-bold text-[#1565C0] uppercase whitespace-pre-line leading-snug"
+                  style={{ fontSize: '0.85vw', letterSpacing: '0.12em' }}>
                   {institution}
                 </p>
               </div>
 
-              {/* ── Middle: title + name + body ── */}
-              <div className={`flex flex-col ${ai} w-full`} style={{ gap: '1.2cqh' }}>
+              {/* ── Center block ── */}
+              <div className={`flex-1 flex flex-col justify-center ${isCentered ? 'items-center' : 'items-start'} gap-3`}>
+
                 <h1 className={`font-black text-gray-900 uppercase whitespace-pre-line leading-tight ${ac}`}
-                  style={{ fontSize: titleFontSize, letterSpacing: '0.12em' }}>
+                  style={titleStyle}>
                   {title}
                 </h1>
 
-                <div className="flex items-center w-full" style={{ gap: '1cqw' }}>
-                  <div className="flex-1 bg-[#1565C0]/20" style={{ height: '1px' }} />
-                  <div className="rounded-full bg-[#1565C0]" style={{ width: '0.6cqh', height: '0.6cqh' }} />
-                  <div className="flex-1 bg-[#1565C0]/20" style={{ height: '1px' }} />
+                {/* Divider */}
+                <div className="flex items-center w-full gap-3" style={{ opacity: 0.5 }}>
+                  <div className="flex-1" style={{ height: '1px', background: '#1565C0' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#1565C0' }} />
+                  <div className="flex-1" style={{ height: '1px', background: '#1565C0' }} />
                 </div>
 
-                <p className={`text-gray-400 uppercase ${ac}`}
-                  style={{ fontSize: '0.9cqw', letterSpacing: '0.2em' }}>
+                <p className={`text-gray-400 uppercase tracking-widest ${ac}`}
+                  style={{ fontSize: '0.7vw' }}>
                   {language === 'TR' ? 'Sayın' : 'This certifies that'}
                 </p>
 
@@ -131,18 +121,18 @@ export default function CertificateModal({ ws, template, user, language, onClose
                 </p>
 
                 <p className={`text-gray-700 leading-relaxed ${ac}`}
-                  style={{ fontSize: bodyFontSize, maxWidth: '65cqw' }}>
+                  style={{ ...bodyStyle, maxWidth: '60%' }}>
                   {bodyText}
                 </p>
 
-                <div className={`flex flex-wrap ${jc}`} style={{ gap: '0.8cqw' }}>
+                <div className={`flex flex-wrap gap-2 ${isCentered ? 'justify-center' : ''}`}>
                   <span className="bg-[#1565C0]/10 text-[#1565C0] font-semibold rounded-full"
-                    style={{ fontSize: '0.95cqw', padding: '0.4cqh 1.2cqw' }}>
+                    style={{ fontSize: '0.75vw', padding: '0.3% 1.2%' }}>
                     {workshopName}
                   </span>
                   {ws?.date && (
                     <span className="bg-gray-100 text-gray-600 font-semibold rounded-full"
-                      style={{ fontSize: '0.95cqw', padding: '0.4cqh 1.2cqw' }}>
+                      style={{ fontSize: '0.75vw', padding: '0.3% 1.2%' }}>
                       {dateStr}
                     </span>
                   )}
@@ -150,20 +140,19 @@ export default function CertificateModal({ ws, template, user, language, onClose
               </div>
 
               {/* ── Footer: signature ── */}
-              <div className={`flex flex-col ${ai} w-full`} style={{ gap: '0.5cqh' }}>
-                <div className="flex items-center w-full" style={{ gap: '1cqw', marginBottom: '0.8cqh' }}>
-                  <div className="flex-1 bg-[#1565C0]/20" style={{ height: '1px' }} />
-                  <div className="rounded-full bg-[#1565C0]" style={{ width: '0.6cqh', height: '0.6cqh' }} />
-                  <div className="flex-1 bg-[#1565C0]/20" style={{ height: '1px' }} />
+              {(signatureName || signatureTitle || footerText) && (
+                <div className={`flex flex-col ${isCentered ? 'items-center' : 'items-start'} pt-3`}
+                  style={{ borderTop: '1px solid rgba(21,101,192,0.15)' }}>
+                  {signatureName  && <p className={`font-bold text-gray-900 ${ac}`} style={{ fontSize: '0.85vw' }}>{signatureName}</p>}
+                  {signatureTitle && <p className={`text-gray-500 ${ac}`}         style={{ fontSize: '0.8vw' }}>{signatureTitle}</p>}
+                  {footerText     && <p className={`text-gray-400 ${ac}`}         style={{ fontSize: '0.75vw' }}>{footerText}</p>}
                 </div>
-                {signatureName  && <p className={`font-bold text-gray-900 ${ac}`} style={{ fontSize: '1.1cqw' }}>{signatureName}</p>}
-                {signatureTitle && <p className={`text-gray-500 ${ac}`} style={{ fontSize: '1cqw' }}>{signatureTitle}</p>}
-                {footerText     && <p className={`text-gray-400 ${ac}`} style={{ fontSize: '0.9cqw' }}>{footerText}</p>}
-              </div>
+              )}
             </div>
 
             {/* Bottom border */}
-            <div className="flex-shrink-0 bg-gradient-to-r from-[#0D47A1] via-[#1976D2] to-[#1565C0]" style={{ height: '1.5cqh' }} />
+            <div className="flex-shrink-0 bg-gradient-to-r from-[#0D47A1] via-[#1976D2] to-[#1565C0]"
+              style={{ height: '1.2%' }} />
           </div>
         </div>
       </div>
