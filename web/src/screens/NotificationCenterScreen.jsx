@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatTimestamp } from '../lib/languages'
-import { AlertTriangle, Clock, Lightbulb, Bell, Calendar, Search } from 'lucide-react'
+import { AlertTriangle, Clock, Lightbulb, Bell, Calendar, Search, Trash2 } from 'lucide-react'
 
 export default function NotificationCenterScreen() {
-  const { notifications, loggedInAdmin, loggedInUser, clearNotifications, markNotificationsRead, language, cities } = useApp()
+  const { notifications, loggedInAdmin, loggedInUser, clearNotifications, markNotificationsRead, deleteNotification, language, cities } = useApp()
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
   const [notifSearch, setNotifSearch] = useState('')
   const [notifType, setNotifType] = useState('')
 
@@ -32,6 +33,12 @@ export default function NotificationCenterScreen() {
   const handleClearAll = async () => {
     await clearNotifications(cityName)
     setShowClearConfirm(false)
+  }
+
+  const handleDelete = async (id) => {
+    setDeletingId(id)
+    await deleteNotification(id)
+    setDeletingId(null)
   }
 
   useEffect(() => {
@@ -114,7 +121,17 @@ export default function NotificationCenterScreen() {
                     <p className={`font-semibold text-sm ${notif.type === 'ALERT' ? 'text-red-700 dark:text-red-300' : 'text-gray-900 dark:text-gray-100'}`}>
                       {(notif.title || '').replace(/^\[[^\]]+\]\s*/, '')}
                     </p>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{formatTimestamp(notif.timestamp)}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs text-gray-400 dark:text-gray-500">{formatTimestamp(notif.timestamp)}</span>
+                      <button
+                        onClick={() => handleDelete(notif.id)}
+                        disabled={deletingId === notif.id}
+                        className="text-gray-400 hover:text-red-500 transition disabled:opacity-50"
+                        title={language === 'TR' ? 'Sil' : 'Delete'}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <p className={`text-xs mt-1 ${notif.type === 'ALERT' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
                     {notif.message}
