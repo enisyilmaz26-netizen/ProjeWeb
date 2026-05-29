@@ -109,12 +109,18 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
 
   const execBulkCancel = async () => {
     setBulkProcessing(true)
-    for (const id of selectedIds) {
-      await cancelAppointment(id)
+    const ids = [...selectedIds]
+    let failCount = 0
+    for (const id of ids) {
+      const result = await cancelAppointment(id)
+      if (result?.success === false) failCount++
     }
     setSelectedIds(new Set())
     setBulkProcessing(false)
-    showSuccess(t('action_success_cancelled', language))
+    const successCount = ids.length - failCount
+    showSuccess(failCount > 0
+      ? `${t('action_success_cancelled', language)} (${successCount}/${ids.length})`
+      : t('action_success_cancelled', language))
   }
 
   const handleBulkApprove = () => onRequestConfirm(t('bulk_approve', language), execBulkApprove)

@@ -99,13 +99,18 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
       city_id: isGlobal ? null : adminCityId,
       ...(existingTemplate ? { id: existingTemplate.id } : {}),
     }
-    const result = await saveCertificateTemplate(payload)
-    setSaving(false)
-    if (result.success) {
-      setSaveSuccess(language === 'TR' ? 'Şablon kaydedildi.' : 'Template saved.')
-      clearTimeout(saveTimerRef.current); saveTimerRef.current = setTimeout(() => setSaveSuccess(''), 3000)
-    } else {
-      setSaveError(result.error || 'Hata')
+    try {
+      const result = await saveCertificateTemplate(payload)
+      if (result.success) {
+        setSaveSuccess(language === 'TR' ? 'Şablon kaydedildi.' : 'Template saved.')
+        clearTimeout(saveTimerRef.current); saveTimerRef.current = setTimeout(() => setSaveSuccess(''), 3000)
+      } else {
+        setSaveError(t('err_generic', language))
+      }
+    } catch {
+      setSaveError(t('err_generic', language))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -154,9 +159,14 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
         <p style="font-size:11px;color:#9ca3af;margin:0">Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.</p>
       </div>
     </body></html>`
-    const result = await sendEmail({ recipients, subject, html })
-    setEmailSending(false)
-    setEmailResult(result)
+    try {
+      const result = await sendEmail({ recipients, subject, html })
+      setEmailResult(result)
+    } catch {
+      setEmailResult({ success: false })
+    } finally {
+      setEmailSending(false)
+    }
   }
 
   const cityName = isGlobal ? '' : cities.find(c => String(c.id) === String(adminCityId))?.name || ''
