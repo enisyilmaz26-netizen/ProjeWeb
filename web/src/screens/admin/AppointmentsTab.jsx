@@ -439,7 +439,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                       </button>
                       <button
                         onClick={() => handleApprove(appt.id, editingApptId === appt.id ? editDate : null, editingApptId === appt.id ? editTimeSlot : null)}
-                        disabled={processingId === appt.id}
+                        disabled={processingId === appt.id || (editingApptId === appt.id && !!editDate && !editTimeSlot)}
                         className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60"
                       >
                         {processingId === appt.id ? '...' : t('action_approve', language)}

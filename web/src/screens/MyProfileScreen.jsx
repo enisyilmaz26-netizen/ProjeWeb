@@ -206,7 +206,6 @@ export default function MyProfileScreen() {
       setShowCityChangeWarning(true)
       return
     }
-    setShowCityChangeWarning(false)
     setEditLoading(true)
     try {
       const cityObj = cities.find(c => String(c.id) === String(editForm.city_id))
@@ -221,6 +220,7 @@ export default function MyProfileScreen() {
         city_name: cityObj?.name || loggedInUser.city_name,
       })
       if (result.success) {
+        setShowCityChangeWarning(false)
         setEditMode(false)
         setSuccessMsg(t('profile_updated', language))
         clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)

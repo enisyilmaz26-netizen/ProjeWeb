@@ -1201,6 +1201,10 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('appointments').update(updates).eq('id', appointmentId)
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, ...updates } : a))
+    if (appt.status === 'APPROVED') {
+      const msg = `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${newDate} ${newTimeSlot}`
+      createNotification({ title: language === 'TR' ? 'Randevu Yeniden Planlandı' : 'Appointment Rescheduled', message: msg, type: 'SYSTEM' })
+    }
     return { success: true }
   }
 
