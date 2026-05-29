@@ -3,9 +3,10 @@ import { useApp } from '../../context/AppContext'
 import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { Award, Eye, Save, Upload, X } from 'lucide-react'
+import { CertificateCanvas } from '../../components/CertificateModal'
 
-const DEFAULT_BODY_TR = '{{tarih}} tarihinde "{{atolye}}" atölyesine katıldığınız için bu belgeyi almaya hak kazandınız.'
-const DEFAULT_BODY_EN = 'This certificate is awarded for attending the "{{atolye}}" workshop on {{tarih}}.'
+const DEFAULT_BODY_TR = '{{tarih}} tarihinde {{konum}} adresinde gerçekleştirilen "{{atolye}}" atölyesine katıldığınız için bu belgeyi almaya hak kazandınız.'
+const DEFAULT_BODY_EN = 'This certificate is awarded for attending the "{{atolye}}" workshop held at {{konum}} on {{tarih}}.'
 
 const TITLE_SIZES  = [
   { value: 'lg',  labelTR: 'Küçük',     labelEN: 'Small' },
@@ -27,9 +28,6 @@ const ALIGNS = [
   { value: 'left',   labelTR: 'Sola Hizalı', labelEN: 'Left' },
 ]
 
-const titleSizeClass = { lg: 'text-lg', xl: 'text-xl', '2xl': 'text-2xl', '3xl': 'text-3xl' }
-const bodySizeClass  = { xs: 'text-xs', sm: 'text-sm', md: 'text-base' }
-const nameFontStyle  = { serif: { fontFamily: 'Georgia, serif' }, sans: { fontFamily: 'inherit' } }
 
 export default function CertificatesTab({ language, isGlobal, adminCityId }) {
   const { certificateTemplates, saveCertificateTemplate, cities } = useApp()
@@ -110,12 +108,8 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
   const cityName = isGlobal ? '' : cities.find(c => String(c.id) === String(adminCityId))?.name || ''
   const sampleName = language === 'TR' ? 'Ahmet Yılmaz' : 'John Doe'
   const sampleWorkshop = language === 'TR' ? 'Örnek Atölye Adı' : 'Sample Workshop'
-  const sampleDate = language === 'TR' ? '1 Haziran 2025' : '1 June 2025'
-
-  const previewBody = form.body_text
-    .replace(/{{katilimci}}/g, sampleName)
-    .replace(/{{atolye}}/g, sampleWorkshop)
-    .replace(/{{tarih}}/g, sampleDate)
+  const sampleDate     = language === 'TR' ? '1 Haziran 2025' : '1 June 2025'
+  const sampleLocation = language === 'TR' ? 'İstanbul' : 'Istanbul'
 
   const selectClass = `${inputClass} w-full`
 
@@ -141,49 +135,23 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
 
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-4 text-xs text-blue-700 dark:text-blue-300">
         {language === 'TR'
-          ? 'Değişkenler: {{katilimci}} — katılımcı adı, {{atolye}} — atölye adı, {{tarih}} — tarih'
-          : 'Variables: {{katilimci}} — participant name, {{atolye}} — workshop name, {{tarih}} — date'}
+          ? 'Değişkenler: {{katilimci}} — katılımcı adı, {{atolye}} — atölye adı, {{tarih}} — tarih, {{konum}} — yer'
+          : 'Variables: {{katilimci}} — participant name, {{atolye}} — workshop name, {{tarih}} — date, {{konum}} — location'}
       </div>
 
       {saveSuccess && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{saveSuccess}</div>}
       {saveError  && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-3">{saveError}</div>}
 
       {showPreview ? (
-        /* ── Preview ── */
-        <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-[#1565C0] via-[#1976D2] to-[#0D47A1]" />
-          <div className="px-8 py-6 text-center">
-            {form.logo_url && (
-              <div className="flex justify-center mb-3">
-                <img src={form.logo_url} alt="logo"
-                  className={`object-contain ${{ sm: 'h-8', md: 'h-12', lg: 'h-16', xl: 'h-20' }[form.logo_size] || 'h-12'}`}
-                  onError={e => { e.target.style.display='none' }} />
-              </div>
-            )}
-            <p className="text-[10px] font-semibold text-[#1565C0] uppercase tracking-widest mb-2 whitespace-pre-line">{form.institution}</p>
-            {!form.logo_url && (
-              <div className="flex justify-center my-3">
-                <div className="w-10 h-10 rounded-full bg-[#1565C0]/10 flex items-center justify-center">
-                  <Award className="w-5 h-5 text-[#1565C0]" />
-                </div>
-              </div>
-            )}
-            <h2 className={`font-black text-gray-900 tracking-widest uppercase mb-4 whitespace-pre-wrap ${titleSizeClass[form.title_size] || 'text-2xl'}`}>{form.title}</h2>
-            <div className="flex items-center gap-2 mb-4"><div className="flex-1 h-px bg-[#1565C0]/20" /><div className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" /><div className="flex-1 h-px bg-[#1565C0]/20" /></div>
-            <p className="text-[11px] text-gray-500 uppercase tracking-widest mb-1">{language === 'TR' ? 'Sayın' : 'This certifies that'}</p>
-            <p className={`font-bold text-[#1565C0] mb-4 text-2xl`} style={nameFontStyle[form.name_font]}>{sampleName}</p>
-            <p className={`text-gray-700 leading-relaxed max-w-sm mx-auto mb-4 ${bodySizeClass[form.body_size] || 'text-sm'} ${form.body_align === 'left' ? 'text-left' : 'text-center'}`}>{previewBody}</p>
-            <div className="flex flex-wrap justify-center gap-2 mb-4">
-              <span className="text-xs bg-[#1565C0]/10 text-[#1565C0] font-semibold px-3 py-1 rounded-full">{sampleWorkshop}</span>
-              <span className="text-xs bg-gray-100 text-gray-600 font-semibold px-3 py-1 rounded-full">{sampleDate}</span>
-            </div>
-            <div className="flex items-center gap-2 mb-4"><div className="flex-1 h-px bg-[#1565C0]/20" /><div className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" /><div className="flex-1 h-px bg-[#1565C0]/20" /></div>
-            {form.signature_name  && <p className="font-bold text-gray-900 text-sm">{form.signature_name}</p>}
-            {form.signature_title && <p className="text-xs text-gray-500">{form.signature_title}</p>}
-            {form.footer_text     && <p className="text-[10px] text-gray-400 mt-3">{form.footer_text}</p>}
-          </div>
-          <div className="h-1.5 bg-gradient-to-r from-[#0D47A1] via-[#1976D2] to-[#1565C0]" />
-        </div>
+        /* ── Preview — same component as user-facing certificate ── */
+        <CertificateCanvas
+          template={form}
+          fullName={sampleName}
+          workshopName={sampleWorkshop}
+          dateStr={sampleDate}
+          locationStr={sampleLocation}
+          language={language}
+        />
       ) : (
         /* ── Form ── */
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 space-y-3">

@@ -137,6 +137,10 @@ export function AppProvider({ children }) {
         { data: usersData },
         { data: workshopsData },
         { data: adminsData },
+        wsRegResult,
+        convResult,
+        closedResult,
+        certResult,
       ] = await Promise.all([
         supabase.from('cities').select('*').order('name'),
         supabase.from('laboratories').select('*').order('name'),
@@ -146,6 +150,10 @@ export function AppProvider({ children }) {
         supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password').order('name'),
         supabase.from('workshops').select('*').order('date', { ascending: false }),
         supabase.from('admins').select('id,name,email,role,city_id,phone').order('name'),
+        supabase.from('workshop_registrations').select('*'),
+        supabase.from('conversations').select('*').order('last_message_at', { ascending: false }),
+        supabase.from('closed_days').select('*').order('date'),
+        supabase.from('certificate_templates').select('*'),
       ])
       if (citiesData) setCities(citiesData)
       if (labsData) setLabs(labsData)
@@ -155,13 +163,6 @@ export function AppProvider({ children }) {
       if (usersData) setUsers(usersData)
       if (workshopsData) setWorkshops(workshopsData)
       if (adminsData) setAdmins(adminsData)
-      // Tables that may not exist yet — load in parallel but separately to avoid failing the whole load
-      const [wsRegResult, convResult, closedResult, certResult] = await Promise.all([
-        supabase.from('workshop_registrations').select('*'),
-        supabase.from('conversations').select('*').order('last_message_at', { ascending: false }),
-        supabase.from('closed_days').select('*').order('date'),
-        supabase.from('certificate_templates').select('*'),
-      ])
       if (wsRegResult.data) { setWorkshopRegistrations(wsRegResult.data); setWorkshopRegistrationsAvailable(true) }
       if (convResult.data) { setConversations(convResult.data); setMessagesAvailable(true) }
       if (closedResult.data) setClosedDays(closedResult.data)
