@@ -36,38 +36,44 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     e.target.value = ''
     setCsvResult(null)
     setCsvImporting(true)
-    const text = await file.text()
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
-    const header = lines[0].toLowerCase().replace(/\r/g, '')
-    const cols = header.split(',').map(c => c.trim().replace(/^"|"$/g, ''))
-    const idxOf = (names) => { for (const n of names) { const i = cols.indexOf(n); if (i !== -1) return i } return -1 }
-    const nameIdx = idxOf(['ad', 'name', 'isim'])
-    const surnameIdx = idxOf(['soyad', 'surname', 'soyadı'])
-    const emailIdx = idxOf(['eposta', 'e-posta', 'email', 'e_posta'])
-    const phoneIdx = idxOf(['telefon', 'phone', 'tel'])
-    const branchIdx = idxOf(['branş', 'brans', 'branch'])
-    const workLocIdx = idxOf(['kurum', 'work_location', 'okul', 'school'])
-    const districtIdx = idxOf(['ilçe', 'district', 'ilce'])
-    const cityIdx = idxOf(['il', 'city', 'şehir', 'sehir', 'il_id', 'city_id'])
-    let ok = 0, fail = 0, errors = []
-    for (let i = 1; i < lines.length; i++) {
-      const parts = lines[i].replace(/\r/g, '').split(',').map(p => p.trim().replace(/^"|"$/g, ''))
-      const email = emailIdx >= 0 ? parts[emailIdx]?.trim().toLowerCase() : ''
-      const name = nameIdx >= 0 ? parts[nameIdx] : ''
-      const surname = surnameIdx >= 0 ? parts[surnameIdx] : ''
-      if (!email || !name || !surname) { fail++; errors.push(`Satır ${i + 1}: eksik alan`); continue }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail++; errors.push(`Satır ${i + 1}: geçersiz e-posta (${email})`); continue }
-      const cityVal = cityIdx >= 0 ? parts[cityIdx] : ''
-      const cityObj = cities.find(c => String(c.id) === cityVal || c.name.toLowerCase() === cityVal.toLowerCase())
-      const cityId = cityObj?.id || (!isGlobal ? adminCityId : null)
-      if (!cityId) { fail++; errors.push(`Satır ${i + 1}: il bulunamadı (${cityVal})`); continue }
-      const password = generateTempPassword()
-      const result = await addUserByAdmin({ name, surname, email, password, phone: phoneIdx >= 0 ? parts[phoneIdx] || '' : '', branch: branchIdx >= 0 ? parts[branchIdx] || '' : '', work_location: workLocIdx >= 0 ? parts[workLocIdx] || '' : '', district: districtIdx >= 0 ? parts[districtIdx] || '' : '', city_id: cityId, city_name: cityObj?.name || '' })
-      if (result.success) ok++
-      else { fail++; errors.push(`Satır ${i + 1} (${email}): ${result.error}`) }
+    try {
+      const text = await file.text()
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+      const header = lines[0].toLowerCase().replace(/\r/g, '')
+      const cols = header.split(',').map(c => c.trim().replace(/^"|"$/g, ''))
+      const idxOf = (names) => { for (const n of names) { const i = cols.indexOf(n); if (i !== -1) return i } return -1 }
+      const nameIdx = idxOf(['ad', 'name', 'isim'])
+      const surnameIdx = idxOf(['soyad', 'surname', 'soyadı'])
+      const emailIdx = idxOf(['eposta', 'e-posta', 'email', 'e_posta'])
+      const phoneIdx = idxOf(['telefon', 'phone', 'tel'])
+      const branchIdx = idxOf(['branş', 'brans', 'branch'])
+      const workLocIdx = idxOf(['kurum', 'work_location', 'okul', 'school'])
+      const districtIdx = idxOf(['ilçe', 'district', 'ilce'])
+      const cityIdx = idxOf(['il', 'city', 'şehir', 'sehir', 'il_id', 'city_id'])
+      let ok = 0, fail = 0, errors = []
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].replace(/\r/g, '').split(',').map(p => p.trim().replace(/^"|"$/g, ''))
+        const email = emailIdx >= 0 ? parts[emailIdx]?.trim().toLowerCase() : ''
+        const name = nameIdx >= 0 ? parts[nameIdx] : ''
+        const surname = surnameIdx >= 0 ? parts[surnameIdx] : ''
+        if (!email || !name || !surname) { fail++; errors.push(`Satır ${i + 1}: eksik alan`); continue }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail++; errors.push(`Satır ${i + 1}: geçersiz e-posta (${email})`); continue }
+        const cityVal = cityIdx >= 0 ? parts[cityIdx] : ''
+        const cityObj = cities.find(c => String(c.id) === cityVal || c.name.toLowerCase() === cityVal.toLowerCase())
+        const cityId = cityObj?.id || (!isGlobal ? adminCityId : null)
+        if (!cityId) { fail++; errors.push(`Satır ${i + 1}: il bulunamadı (${cityVal})`); continue }
+        const password = generateTempPassword()
+        const result = await addUserByAdmin({ name, surname, email, password, phone: phoneIdx >= 0 ? parts[phoneIdx] || '' : '', branch: branchIdx >= 0 ? parts[branchIdx] || '' : '', work_location: workLocIdx >= 0 ? parts[workLocIdx] || '' : '', district: districtIdx >= 0 ? parts[districtIdx] || '' : '', city_id: cityId, city_name: cityObj?.name || '' })
+        if (result.success) ok++
+        else { fail++; errors.push(`Satır ${i + 1} (${email}): ${result.error}`) }
+      }
+      setCsvResult({ ok, fail, errors })
+    } catch (err) {
+      console.error('[csvImport]', err)
+      setCsvResult({ ok: 0, fail: 0, errors: [err.message || 'Dosya okunamadı.'] })
+    } finally {
+      setCsvImporting(false)
     }
-    setCsvImporting(false)
-    setCsvResult({ ok, fail, errors })
   }
 
   const [resetPwModal, setResetPwModal] = useState(null)
