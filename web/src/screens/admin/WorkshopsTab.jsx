@@ -80,6 +80,13 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       return
     }
     if (Number(editWorkshopForm.capacity) < 1) { setWorkshopError(language === 'TR' ? 'Kapasite en az 1 olmalıdır.' : 'Capacity must be at least 1.'); return }
+    const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(editingWorkshopId)).length
+    if (Number(editWorkshopForm.capacity) < regCount) {
+      setWorkshopError(language === 'TR'
+        ? `Kapasite en az ${regCount} olmalıdır (${regCount} kayıtlı katılımcı var).`
+        : `Capacity must be at least ${regCount} (${regCount} already registered).`)
+      return
+    }
     setEditWorkshopLoading(true)
     try {
       const result = await updateWorkshop(editingWorkshopId, { name: editWorkshopForm.name, description: editWorkshopForm.description, date: editWorkshopForm.date || null, time: editWorkshopForm.time || null, capacity: Number(editWorkshopForm.capacity) || 1, location: editWorkshopForm.location })
