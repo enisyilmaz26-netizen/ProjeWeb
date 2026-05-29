@@ -23,12 +23,12 @@ export default function IdleWarningModal({ onContinue, onLogout, language }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] px-4">
-      <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-2xl p-6 max-w-sm w-full">
+      <div role="dialog" aria-modal="true" aria-labelledby="idle-warning-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-2xl p-6 max-w-sm w-full">
         <div className="text-center mb-5">
           <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
             <Timer className="w-6 h-6 text-orange-500" />
           </div>
-          <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
+          <h3 id="idle-warning-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
             {t('session_timeout_title', language)}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">{msg}</p>

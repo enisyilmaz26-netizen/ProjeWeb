@@ -101,7 +101,7 @@ export function CertificateCanvas({ template, fullName, workshopName, dateStr, l
           {/* Header: logo top, institution below */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: ai, paddingBottom: 16, borderBottom: '1px solid rgba(21,101,192,0.15)', flexShrink: 0 }}>
             {logoUrl && (
-              <img src={logoUrl} alt="logo"
+              <img src={logoUrl} alt="Kurum logosu"
                 style={{ height: logoPx, objectFit: 'contain', marginBottom: 8 }} />
             )}
             <p style={{
@@ -205,7 +205,7 @@ export default function CertificateModal({ ws, template, user, language, onClose
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-4xl my-auto">
+      <div role="dialog" aria-modal="true" aria-label={language === 'TR' ? 'Sertifika' : 'Certificate'} className="relative z-10 w-full max-w-4xl my-auto">
         {/* Action bar */}
         <div className="flex justify-between items-center mb-3">
           <button onClick={handlePrint}

@@ -228,7 +228,7 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
             <p className="text-[11px] text-gray-400 mt-1">{language === 'TR' ? 'Maks. 2 MB · URL veya dosya yükle' : 'Max 2 MB · Enter URL or upload file'}</p>
             {form.logo_url && (
               <div className="mt-1.5 flex items-center gap-2">
-                <img src={form.logo_url} alt="logo" className="h-8 object-contain rounded border border-gray-200" onError={e => { e.target.style.display='none' }} />
+                <img src={form.logo_url} alt="Sertifika logosu" className="h-8 object-contain rounded border border-gray-200" onError={e => { e.target.style.display='none' }} />
                 <button type="button" onClick={() => { set('logo_url', ''); if (fileInputRef.current) fileInputRef.current.value = '' }}
                   className="text-gray-400 hover:text-red-500 transition">
                   <X className="w-3.5 h-3.5" />

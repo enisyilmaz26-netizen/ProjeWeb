@@ -157,7 +157,7 @@ export default function AdminPanelScreen() {
           <div className="relative flex-shrink-0">
             <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center overflow-hidden">
               {loggedInAdmin?.avatar_url
-                ? <img src={loggedInAdmin.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                ? <img src={loggedInAdmin.avatar_url} alt={`${loggedInAdmin.name} profil fotoğrafı`} className="w-full h-full object-cover" />
                 : <Settings className="w-5 h-5 text-[#1565C0] dark:text-[#7DD4FC]" />}
             </div>
             <label className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#1565C0] dark:bg-[#7DD4FC] rounded-full flex items-center justify-center cursor-pointer shadow hover:opacity-90 transition">

@@ -408,9 +408,9 @@ export default function AuthScreen({ onBack }) {
       {/* KVKK Modal */}
       {showKvkkModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{maxHeight: '80vh'}}>
+          <div role="dialog" aria-modal="true" aria-labelledby="kvkk-title" className="bg-white dark:bg-[#070E1E] rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{maxHeight: '80vh'}}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-              <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+              <h3 id="kvkk-title" className="font-bold text-gray-900 dark:text-gray-100 text-base">
                 {t('kvkk_title', language)}
               </h3>
               <button
@@ -575,11 +575,11 @@ export default function AuthScreen({ onBack }) {
 
       {showRegSuccessModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#070E1E] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
+          <div role="dialog" aria-modal="true" aria-labelledby="reg-success-title" className="bg-white dark:bg-[#070E1E] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
             <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">
+            <h3 id="reg-success-title" className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">
               {t('reg_success_title', language)}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">

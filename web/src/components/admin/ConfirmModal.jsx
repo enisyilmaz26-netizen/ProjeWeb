@@ -6,7 +6,7 @@ export default function ConfirmModal({ confirmModal, onClose, language }) {
   if (!confirmModal) return null
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-      <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+      <div role="dialog" aria-modal="true" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
         <p className="text-sm text-gray-800 dark:text-gray-100 font-medium mb-5">
           {loading ? t('processing_please_wait', language) : confirmModal.label}
         </p>

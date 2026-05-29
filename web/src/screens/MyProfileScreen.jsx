@@ -248,7 +248,7 @@ export default function MyProfileScreen() {
           <div className="relative flex-shrink-0">
             <div className="w-16 h-16 rounded-2xl bg-[#1565C0] dark:bg-[#7DD4FC] flex items-center justify-center overflow-hidden">
               {loggedInUser.avatar_url
-                ? <img src={loggedInUser.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                ? <img src={loggedInUser.avatar_url} alt={`${loggedInUser.name} profil fotoğrafı`} className="w-full h-full object-cover" />
                 : <span className="text-white dark:text-[#060E26] text-xl font-bold">{initials}</span>}
             </div>
             <label className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#1565C0] dark:bg-[#7DD4FC] rounded-full flex items-center justify-center cursor-pointer shadow hover:opacity-90 transition" title={language === 'TR' ? 'JPEG, PNG, WebP veya GIF · Maks. 1 MB' : 'JPEG, PNG, WebP or GIF · Max 1 MB'}>
@@ -630,9 +630,9 @@ export default function MyProfileScreen() {
         const maxDate = (() => { const d = new Date(); d.setDate(d.getDate() + 60); return d.toISOString().split('T')[0] })()
         return (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-            <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
+            <div role="dialog" aria-modal="true" aria-labelledby="reschedule-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-1">
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base flex items-center gap-1.5">
+                <h3 id="reschedule-title" className="font-bold text-gray-900 dark:text-gray-100 text-base flex items-center gap-1.5">
                   <RefreshCw className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
                   {language === 'TR' ? 'Yeniden Zamanla' : 'Reschedule'}
                 </h3>
@@ -704,8 +704,8 @@ export default function MyProfileScreen() {
       {/* Cancel Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
-            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">
+          <div role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 id="cancel-modal-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">
               {cancelType === 'direct' ? t('action_cancel', language) : t('cancel_modal_title', language)}
             </h3>
             <p className="text-gray-500 dark:text-gray-400 text-xs mb-4">
@@ -750,8 +750,8 @@ export default function MyProfileScreen() {
       {/* Şehir değişikliği uyarı modali */}
       {showCityChangeWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
-            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
+          <div role="dialog" aria-modal="true" aria-labelledby="city-change-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 id="city-change-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
               {language === 'TR' ? 'Şehir Değişikliği' : 'City Change'}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
@@ -780,8 +780,8 @@ export default function MyProfileScreen() {
       {/* Bekleme listesi çıkış onay modali */}
       {showWaitlistRemoveConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
-            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
+          <div role="dialog" aria-modal="true" aria-labelledby="waitlist-remove-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 id="waitlist-remove-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
               {language === 'TR' ? 'Bekleme Listesinden Çıkar' : 'Remove from Waitlist'}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">

@@ -230,8 +230,8 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
       {/* Edit Admin Modal */}
       {editAdminModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
-            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">{language === 'TR' ? 'Yönetici Düzenle' : 'Edit Admin'}</h3>
+          <div role="dialog" aria-modal="true" aria-labelledby="edit-admin-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 id="edit-admin-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">{language === 'TR' ? 'Yönetici Düzenle' : 'Edit Admin'}</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 truncate">{editAdminModal.name}</p>
             <form onSubmit={handleEditAdmin} className="space-y-3">
               <div>

@@ -483,8 +483,8 @@ export default function UserReservationScreen() {
       {/* Randevu onay modali */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
-            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base mb-3">
+          <div role="dialog" aria-modal="true" aria-labelledby="confirm-appt-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 id="confirm-appt-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-3">
               {language === 'TR' ? 'Randevuyu Onayla' : 'Confirm Appointment'}
             </h3>
             <div className="bg-gray-50 dark:bg-[#0E1A30] rounded-xl px-4 py-3 mb-4 space-y-1 text-sm">
