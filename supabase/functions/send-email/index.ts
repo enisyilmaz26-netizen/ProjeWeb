@@ -1,8 +1,7 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
-const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'noreply@ogedep.example.com'
-const FROM_NAME = Deno.env.get('FROM_NAME') ?? 'MEB ÖGEDEP'
+const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'onboarding@resend.dev'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,35 +42,35 @@ serve(async (req) => {
     )
   }
 
-  // Resend supports up to 50 recipients per batch call; chunk if needed
-  const BATCH = 50
   let sent = 0
   let failed = 0
 
-  for (let i = 0; i < recipients.length; i += BATCH) {
-    const chunk = recipients.slice(i, i + BATCH)
-    const toList = chunk.map(r => r.name ? `${r.name} <${r.email}>` : r.email)
+  for (const recipient of recipients) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: `MEB OGEDEP <${FROM_EMAIL}>`,
+          to: recipient.email,
+          subject,
+          html,
+        }),
+      })
 
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: `${FROM_NAME} <${FROM_EMAIL}>`,
-        to: toList,
-        subject,
-        html,
-      }),
-    })
-
-    if (res.ok) {
-      sent += chunk.length
-    } else {
-      const err = await res.json().catch(() => ({}))
-      console.error('Resend error:', err)
-      failed += chunk.length
+      if (res.ok) {
+        sent++
+      } else {
+        const err = await res.json().catch(() => ({}))
+        console.error('Resend error for', recipient.email, ':', JSON.stringify(err))
+        failed++
+      }
+    } catch (e) {
+      console.error('Fetch error for', recipient.email, ':', e)
+      failed++
     }
   }
 
