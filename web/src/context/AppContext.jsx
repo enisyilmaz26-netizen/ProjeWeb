@@ -1137,7 +1137,8 @@ export function AppProvider({ children }) {
       console.error('registerForWorkshop error:', error)
       return { success: false, error: 'err_generic' }
     }
-    if (data) setWorkshopRegistrations(prev => [...prev, data])
+    if (!data) return { success: false, error: 'err_generic' }
+    setWorkshopRegistrations(prev => [...prev, data])
     logAudit('REGISTER_WORKSHOP', 'workshop', workshopId, `${loggedInUser.name} ${loggedInUser.surname} (${loggedInUser.email}) — ${ws.name}`)
     if (loggedInUser?.email && ws) {
       const fullName = `${loggedInUser.name || ''} ${loggedInUser.surname || ''}`.trim()
@@ -1243,6 +1244,7 @@ export function AppProvider({ children }) {
       if (error.code === '23505') return { success: false, error: 'err_email_exists' }
       return { success: false, error: error.message }
     }
+    if (!data) return { success: false, error: 'err_generic' }
     setAdmins(prev => [...prev, data].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
     logAudit('ADD_ADMIN', 'admin', data.id, `${name} (${normalizedEmail}) — ${role || 'CITY'}`)
     sendAutoEmail(
@@ -1424,6 +1426,7 @@ export function AppProvider({ children }) {
           .single())
       }
       if (error) return { success: false, error: error.message }
+      if (!result) return { success: false, error: 'err_generic' }
       if (id) {
         setCertificateTemplates(prev => prev.map(t => t.id === id ? result : t))
       } else {

@@ -132,19 +132,22 @@ export default function MyProfileScreen() {
   const handleSubmitCancel = async () => {
     if (!cancelTargetId) return
     setSubmitting(true)
-    let result
-    if (cancelType === 'direct') {
-      result = await cancelOwnAppointment(cancelTargetId)
-    } else {
-      result = await submitCancellationRequest(cancelTargetId, cancelReason)
-    }
-    setSubmitting(false)
-    if (result.success) {
-      setShowCancelModal(false)
-      setCancelTargetId(null)
-      setCancelReason('')
-      setSuccessMsg(t(cancelType === 'direct' ? 'appointment_cancelled' : 'cancellation_submitted', language))
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
+    try {
+      let result
+      if (cancelType === 'direct') {
+        result = await cancelOwnAppointment(cancelTargetId)
+      } else {
+        result = await submitCancellationRequest(cancelTargetId, cancelReason)
+      }
+      if (result.success) {
+        setShowCancelModal(false)
+        setCancelTargetId(null)
+        setCancelReason('')
+        setSuccessMsg(t(cancelType === 'direct' ? 'appointment_cancelled' : 'cancellation_submitted', language))
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -811,7 +814,7 @@ export default function MyProfileScreen() {
               <button
                 onClick={async () => {
                   const res = await removeFromWaitlist(showWaitlistRemoveConfirm)
-                  if (res.success !== false) setShowWaitlistRemoveConfirm(null)
+                  if (res.success) setShowWaitlistRemoveConfirm(null)
                 }}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition"
               >
