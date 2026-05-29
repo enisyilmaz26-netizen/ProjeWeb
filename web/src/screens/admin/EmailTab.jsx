@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Mail, Search, X, CheckSquare, Square, ChevronDown, ChevronUp } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { t } from '../../lib/languages'
@@ -116,6 +116,7 @@ export default function EmailTab({ language }) {
   const [msgUsers, setMsgUsers] = useState(null)
   const [msgAdmins, setMsgAdmins] = useState(null)
   const timerRef = useRef({})
+  useEffect(() => () => { clearTimeout(timerRef.current.u); clearTimeout(timerRef.current.a) }, [])
 
   const userItems = useMemo(() =>
     (users || [])
