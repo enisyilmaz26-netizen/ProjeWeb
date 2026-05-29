@@ -37,7 +37,3 @@ export function isTurkishHoliday(dateStr) {
 export function isSunday(dateStr) {
   return new Date(dateStr + 'T12:00:00').getDay() === 0
 }
-
-export function isSaturday(dateStr) {
-  return new Date(dateStr + 'T12:00:00').getDay() === 6
-}
