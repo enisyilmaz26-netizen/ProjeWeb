@@ -651,7 +651,7 @@ export function AppProvider({ children }) {
 
   const cancelAppointment = async (id) => {
     const appt = appointments.find(a => a.id === id)
-    const { error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id)
+    const { error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id).in('status', ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED'])
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
     if (appt) logAudit('CANCEL_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
@@ -719,6 +719,7 @@ export function AppProvider({ children }) {
       .from('appointments')
       .update({ status: 'CANCELLATION_REQUESTED', note: note || '' })
       .eq('id', id)
+      .eq('status', 'APPROVED')
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a =>
       a.id === id ? { ...a, status: 'CANCELLATION_REQUESTED', note: note || '' } : a
