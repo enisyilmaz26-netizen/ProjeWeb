@@ -7,7 +7,7 @@ import { PAGE_SIZE } from '../../lib/adminHelpers'
 import UserCard from '../../components/admin/UserCard'
 import ResetPasswordModal from '../../components/admin/ResetPasswordModal'
 import PasswordInput from '../../components/PasswordInput'
-import { isPasswordStrong } from '../../lib/passwordUtils'
+import { isPasswordStrong, generateTempPassword } from '../../lib/passwordUtils'
 
 export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { cities, users, appointments, approveUser, revokeUser, resetPassword, addUserByAdmin } = useApp()
@@ -61,7 +61,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       const cityObj = cities.find(c => String(c.id) === cityVal || c.name.toLowerCase() === cityVal.toLowerCase())
       const cityId = cityObj?.id || (!isGlobal ? adminCityId : null)
       if (!cityId) { fail++; errors.push(`Satır ${i + 1}: il bulunamadı (${cityVal})`); continue }
-      const password = 'Gecici2024!'
+      const password = generateTempPassword()
       const result = await addUserByAdmin({ name, surname, email, password, phone: phoneIdx >= 0 ? parts[phoneIdx] || '' : '', branch: branchIdx >= 0 ? parts[branchIdx] || '' : '', work_location: workLocIdx >= 0 ? parts[workLocIdx] || '' : '', district: districtIdx >= 0 ? parts[districtIdx] || '' : '', city_id: cityId, city_name: cityObj?.name || '' })
       if (result.success) ok++
       else { fail++; errors.push(`Satır ${i + 1} (${email}): ${result.error}`) }
@@ -228,7 +228,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               {csvResult.errors.length > 5 && <li>... ve {csvResult.errors.length - 5} daha</li>}
             </ul>
           )}
-          <p className="text-xs mt-1 opacity-70">{language === 'TR' ? 'Varsayılan şifre: Gecici2024! · Kullanıcılar ilk girişte şifre değiştirmek zorunda kalacak.' : 'Default password: Gecici2024! · Users will be forced to change their password on first login.'}</p>
+          <p className="text-xs mt-1 opacity-70">{language === 'TR' ? 'Her kullanıcıya benzersiz geçici şifre atanır. Kullanıcılar ilk girişte şifre değiştirmek zorunda kalacak.' : 'Each user gets a unique temporary password. Users will be forced to change it on first login.'}</p>
         </div>
       )}
 

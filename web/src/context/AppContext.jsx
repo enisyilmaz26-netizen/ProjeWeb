@@ -178,10 +178,6 @@ export function AppProvider({ children }) {
 
   useEffect(() => { loadAllData() }, [loadAllData])
 
-  useEffect(() => {
-    const interval = setInterval(() => { loadAllData(false) }, 30000)
-    return () => clearInterval(interval)
-  }, [loadAllData])
 
   useEffect(() => {
     const apptChannel = supabase
