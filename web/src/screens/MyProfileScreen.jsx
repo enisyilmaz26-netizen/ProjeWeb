@@ -73,7 +73,7 @@ export default function MyProfileScreen() {
       String(a.lab_id) === String(rescheduleTarget.lab_id) &&
       a.date === date && a.time_slot === timeRange &&
       ['PENDING', 'APPROVED'].includes(a.status) &&
-      a.id !== rescheduleTarget.id
+      String(a.id) !== String(rescheduleTarget.id)
     ).length
     const lab = labs.find(l => String(l.id) === String(rescheduleTarget.lab_id))
     const maxCap = lab?.capacity_per_slot || 1

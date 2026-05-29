@@ -353,25 +353,50 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                     {editingApptId === appt.id && (
                       <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl space-y-2">
                         <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">{language === 'TR' ? 'Tarih / Saat Değiştir' : 'Change Date / Time'}</p>
-                        <div className="flex gap-2 flex-wrap">
-                          <input
-                            type="date"
-                            value={editDate}
-                            min={todayStr}
-                            onChange={e => setEditDate(e.target.value)}
-                            className={`${inputClass} flex-1 min-w-[130px]`}
-                          />
-                          <select
-                            value={editTimeSlot}
-                            onChange={e => setEditTimeSlot(e.target.value)}
-                            className={`${inputClass} flex-1 min-w-[130px]`}
-                          >
-                            <option value="">{appt.time_slot} ({language === 'TR' ? 'mevcut' : 'current'})</option>
-                            {timeSlots.filter(s => String(s.city_id) === String(appt.city_id) && s.time_range !== appt.time_slot).map(s => (
-                              <option key={s.id} value={s.time_range}>{s.time_range}</option>
-                            ))}
-                          </select>
-                        </div>
+                        <input
+                          type="date"
+                          value={editDate}
+                          min={todayStr}
+                          onChange={e => { setEditDate(e.target.value); setEditTimeSlot('') }}
+                          className={`${inputClass} w-full`}
+                        />
+                        {editDate && (() => {
+                          const citySlots = timeSlots.filter(s => String(s.city_id) === String(appt.city_id))
+                          const lab = labs.find(l => String(l.id) === String(appt.lab_id))
+                          const maxCap = lab?.capacity_per_slot || 1
+                          return (
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {citySlots.map(s => {
+                                const count = appointments.filter(a =>
+                                  String(a.lab_id) === String(appt.lab_id) &&
+                                  a.date === editDate && a.time_slot === s.time_range &&
+                                  ['PENDING', 'APPROVED'].includes(a.status) &&
+                                  String(a.id) !== String(appt.id)
+                                ).length
+                                const isFull = count >= maxCap
+                                const isCurrent = s.time_range === appt.time_slot
+                                const isSelected = editTimeSlot === s.time_range
+                                return (
+                                  <button
+                                    key={s.id}
+                                    type="button"
+                                    disabled={isFull}
+                                    onClick={() => setEditTimeSlot(isSelected ? '' : s.time_range)}
+                                    className={`py-1.5 px-2 rounded-xl text-xs border transition text-left ${
+                                      isFull ? 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 text-gray-400' :
+                                      isSelected ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-transparent font-semibold' :
+                                      'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-[#1565C0] dark:hover:border-[#7DD4FC]'
+                                    }`}
+                                  >
+                                    {s.time_range}
+                                    {isCurrent && <span className="ml-1 text-[9px] opacity-60">({language === 'TR' ? 'mevcut' : 'current'})</span>}
+                                    <span className="block text-[9px] mt-0.5 opacity-60">{maxCap - count}/{maxCap} {language === 'TR' ? 'boş' : 'free'}</span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )
+                        })()}
                       </div>
                     )}
                     <div className="flex gap-2">
