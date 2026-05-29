@@ -622,10 +622,10 @@ export default function MyProfileScreen() {
       {/* Reschedule Modal */}
       {showReschedule && rescheduleTarget && (() => {
         const rescheduleLab = labs.find(l => String(l.id) === String(rescheduleTarget.lab_id))
-        const citySlots = timeSlots.filter(s =>
-          String(s.city_id) === String(rescheduleTarget.city_id) &&
-          (!s.location || s.location === rescheduleLab?.location)
-        )
+        const labLocation = rescheduleLab?.location || null
+        const allCitySlots = timeSlots.filter(s => String(s.city_id) === String(rescheduleTarget.city_id))
+        const specificSlots = labLocation ? allCitySlots.filter(s => s.location === labLocation) : []
+        const citySlots = specificSlots.length > 0 ? specificSlots : allCitySlots.filter(s => !s.location)
         const minDate = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0] })()
         const maxDate = (() => { const d = new Date(); d.setDate(d.getDate() + 60); return d.toISOString().split('T')[0] })()
         return (

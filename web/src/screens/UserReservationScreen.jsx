@@ -66,8 +66,9 @@ export default function UserReservationScreen() {
   const citySlots = useMemo(() => {
     if (!selectedCity) return []
     const all = timeSlots.filter(s => String(s.city_id) === String(selectedCity.id))
-    if (!selectedLab?.location) return all.filter(s => !s.location)
-    return all.filter(s => !s.location || s.location === selectedLab.location)
+    const labLocation = selectedLab?.location || null
+    const specificSlots = labLocation ? all.filter(s => s.location === labLocation) : []
+    return specificSlots.length > 0 ? specificSlots : all.filter(s => !s.location)
   }, [timeSlots, selectedCity, selectedLab])
 
   const getSlotAvailability = (slot) => {
