@@ -4,8 +4,8 @@ import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { Award, Eye, Save, Upload, X } from 'lucide-react'
 
-const DEFAULT_BODY_TR = '"{{atolye}}" başlıklı atölyeye {{tarih}} tarihinde katılmış olduğunuz tescil edilmiştir.'
-const DEFAULT_BODY_EN = 'This is to certify that you have successfully attended the "{{atolye}}" workshop on {{tarih}}.'
+const DEFAULT_BODY_TR = '{{tarih}} tarihinde "{{atolye}}" atölyesine katıldığınız için bu belgeyi almaya hak kazandınız.'
+const DEFAULT_BODY_EN = 'This certificate is awarded for attending the "{{atolye}}" workshop on {{tarih}}.'
 
 const TITLE_SIZES  = [
   { value: 'lg',  labelTR: 'Küçük',     labelEN: 'Small' },
