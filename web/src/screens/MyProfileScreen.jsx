@@ -48,7 +48,7 @@ export default function MyProfileScreen() {
       if (e.key === 'Escape') {
         if (submitting || rescheduleLoading) return
         setShowPwChange(false)
-        setShowCancelModal(false)
+        setShowCancelModal(false); setCancelReason('')
         setShowReschedule(false)
       }
     }
@@ -756,7 +756,7 @@ export default function MyProfileScreen() {
                 {submitting ? '...' : t('action_cancel', language)}
               </button>
               <button
-                onClick={() => setShowCancelModal(false)}
+                onClick={() => { setShowCancelModal(false); setCancelReason('') }}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
                 {t('btn_nevermind', language)}
