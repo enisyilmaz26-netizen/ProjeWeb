@@ -903,6 +903,7 @@ export function AppProvider({ children }) {
       .select()
       .single()
     if (error) return { success: false, error: error.message }
+    if (!data) return { success: false, error: 'err_generic' }
     setNotifications(prev => [data, ...prev])
     return { success: true }
   }
@@ -1536,7 +1537,7 @@ export function AppProvider({ children }) {
         <p style="font-size:11px;color:#9ca3af;margin:0">Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.</p>
       </div>
     </body></html>`
-    sendEmail({ recipients: [{ email: toEmail, name: toName }], subject, html }).catch(() => {})
+    sendEmail({ recipients: [{ email: toEmail, name: toName }], subject, html }).catch(err => console.error('[sendAutoEmail] failed:', err))
   }
 
   const value = {
