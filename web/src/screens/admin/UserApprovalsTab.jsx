@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { Download } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { t, translations } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
@@ -164,6 +165,29 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     }
   }
 
+  const handleCsvExport = () => {
+    const headers = language === 'TR'
+      ? ['Ad', 'Soyad', 'E-posta', 'Telefon', 'Branş', 'Kurum', 'İlçe', 'İl']
+      : ['Name', 'Surname', 'Email', 'Phone', 'Branch', 'Institution', 'District', 'Province']
+    const escape = (v) => {
+      const s = v == null ? '' : String(v)
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const rows = approvedUsers.map(u => [
+      escape(u.name), escape(u.surname), escape(u.email), escape(u.phone),
+      escape(u.branch), escape(u.work_location), escape(u.district), escape(u.city_name)
+    ].join(','))
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const today = new Date().toISOString().slice(0, 10)
+    a.href = url
+    a.download = `kullanicilar_${today}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
       <div className="mb-4 flex flex-col gap-2">
@@ -179,6 +203,10 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               {csvImporting ? '...' : (language === 'TR' ? 'CSV İçe Aktar' : 'Import CSV')}
               <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={csvImporting} />
             </label>
+            <button onClick={handleCsvExport} className="py-2 px-3 border border-[#1565C0]/40 dark:border-[#7DD4FC]/40 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition flex items-center gap-1">
+              <Download size={14} />
+              {language === 'TR' ? 'CSV İndir' : 'Export CSV'}
+            </button>
             <button onClick={() => { setShowAddUser(p => !p); setAddUserError(''); setAddUserSuccess(''); setAddUserForm({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' }) }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
               + {language === 'TR' ? 'Üye Ekle' : 'Add Member'}
             </button>

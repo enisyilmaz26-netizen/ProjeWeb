@@ -11,6 +11,7 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
   const [statsCity, setStatsCity] = useState('')
   const [showAllStudios, setShowAllStudios] = useState(false)
   const [showAllSlots, setShowAllSlots] = useState(false)
+  const [showAllUsers, setShowAllUsers] = useState(false)
 
   const scopedAppointments = useMemo(() => {
     if (!isGlobal && adminCityId) return appointments.filter(a => String(a.city_id) === String(adminCityId))
@@ -66,6 +67,17 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
       noDate: scoped.filter(w => !w.date).length,
     }
   }, [workshops, isGlobal, adminCityId, statsCity, todayStr])
+
+  const userStats = useMemo(() => {
+    const counts = {}
+    scopedAppointments.forEach(a => {
+      if (a.status === 'CANCELLED') return
+      const email = a.user_email || '?'
+      if (!counts[email]) counts[email] = { name: `${a.user_name || ''} ${a.user_surname || ''}`.trim() || email, email, count: 0 }
+      counts[email].count++
+    })
+    return Object.values(counts).sort((a, b) => b.count - a.count)
+  }, [scopedAppointments])
 
   const slotStats = useMemo(() => {
     const counts = {}
@@ -154,6 +166,37 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
                       className={`h-2 rounded-full transition-all ${item.status === 'APPROVED' ? 'bg-green-500' : item.status === 'PENDING' ? 'bg-orange-400' : item.status === 'COMPLETED' ? 'bg-blue-500' : 'bg-red-400'}`}
                       style={{ width: `${pct}%` }}
                     />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
+            {language === 'TR' ? 'En Çok Randevu Alan Kullanıcılar' : 'Top Booking Users'}
+          </h3>
+          {userStats.length > 10 && (
+            <button onClick={() => setShowAllUsers(p => !p)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
+              {showAllUsers ? (language === 'TR' ? 'Daha az' : 'Show less') : `${language === 'TR' ? 'Tümünü gör' : 'Show all'} (${userStats.length})`}
+            </button>
+          )}
+        </div>
+        {userStats.length === 0 ? <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p> : (
+          <div className="space-y-2">
+            {(showAllUsers ? userStats : userStats.slice(0, 10)).map((item, i) => {
+              const pct = Math.round((item.count / userStats[0].count) * 100)
+              return (
+                <div key={item.email}>
+                  <div className="flex justify-between text-xs text-gray-700 dark:text-gray-300 mb-0.5">
+                    <span className="truncate max-w-[70%]">{i + 1}. {item.name} <span className="text-gray-400 dark:text-gray-500">({item.email})</span></span>
+                    <span className="font-semibold">{item.count}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                    <div className="bg-[#1565C0] dark:bg-[#7DD4FC] h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               )

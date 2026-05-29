@@ -21,6 +21,7 @@ export default function MyProfileScreen() {
   const [successMsg, setSuccessMsg] = useState('')
   const successTimerRef = useRef(null)
   const [showPast, setShowPast] = useState(false)
+  const [showCancelled, setShowCancelled] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState('')
 
@@ -101,13 +102,18 @@ export default function MyProfileScreen() {
   }, [appointments, loggedInUser])
 
   const upcomingAppointments = useMemo(() =>
-    userAppointments.filter(a => a.date >= todayStr),
+    userAppointments.filter(a => a.date >= todayStr && a.status !== 'CANCELLED'),
     [userAppointments, todayStr]
   )
 
   const pastAppointments = useMemo(() =>
-    userAppointments.filter(a => a.date < todayStr),
+    userAppointments.filter(a => a.date < todayStr && a.status !== 'CANCELLED'),
     [userAppointments, todayStr]
+  )
+
+  const cancelledAppointments = useMemo(() =>
+    userAppointments.filter(a => a.status === 'CANCELLED'),
+    [userAppointments]
   )
 
   const canDirectCancel = (appt) => appt.status === 'PENDING' && appt.date >= todayStr
@@ -477,6 +483,26 @@ export default function MyProfileScreen() {
           {showPast && (
             <div className="space-y-3 mb-4 opacity-75">
               {pastAppointments.map(appt => (
+                <AppointmentCard key={appt.id} appt={appt} language={language} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Cancelled Appointments */}
+      {cancelledAppointments.length > 0 && (
+        <>
+          <button
+            onClick={() => setShowCancelled(p => !p)}
+            className="flex items-center gap-2 text-sm font-medium text-red-500 dark:text-red-400 mb-3 hover:text-red-700 dark:hover:text-red-300 transition"
+          >
+            <span>{showCancelled ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}</span>
+            {language === 'TR' ? `İptal Edilmiş (${cancelledAppointments.length})` : `Cancelled (${cancelledAppointments.length})`}
+          </button>
+          {showCancelled && (
+            <div className="space-y-3 mb-4 opacity-75">
+              {cancelledAppointments.map(appt => (
                 <AppointmentCard key={appt.id} appt={appt} language={language} />
               ))}
             </div>
