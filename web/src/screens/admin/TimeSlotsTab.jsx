@@ -40,22 +40,32 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
       return
     }
     setAddingSlot(true)
-    const result = await addTimeSlot(cityId, newSlotTime.trim(), newSlotLocation.trim() || null)
-    setAddingSlot(false)
-    if (result.success) {
-      setNewSlotTime('')
-      setNewSlotLocation('')
-      if (isGlobal) setNewSlotCityId('')
-    } else {
-      setSlotError(result.error || 'Error')
+    try {
+      const result = await addTimeSlot(cityId, newSlotTime.trim(), newSlotLocation.trim() || null)
+      if (result.success) {
+        setNewSlotTime('')
+        setNewSlotLocation('')
+        if (isGlobal) setNewSlotCityId('')
+      } else {
+        setSlotError(t('err_generic', language))
+      }
+    } catch {
+      setSlotError(t('err_generic', language))
+    } finally {
+      setAddingSlot(false)
     }
   }
 
   const handleRemoveSlot = async (id) => {
     setProcessingId(id)
-    const result = await removeTimeSlot(id)
-    setProcessingId(null)
-    if (!result.success) setSlotError(result.error || 'Error')
+    try {
+      const result = await removeTimeSlot(id)
+      if (!result.success) setSlotError(t('err_generic', language))
+    } catch {
+      setSlotError(t('err_generic', language))
+    } finally {
+      setProcessingId(null)
+    }
   }
 
   return (

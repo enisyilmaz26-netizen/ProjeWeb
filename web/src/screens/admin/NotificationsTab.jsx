@@ -42,15 +42,20 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
       const cityObj = cities.find(c => String(c.id) === String(adminCityId))
       if (cityObj) finalTitle = `[${cityObj.name}] ${rawTitle}`
     }
-    const result = await createNotification({ ...notifForm, title: finalTitle })
-    setNotifLoading(false)
-    if (result.success) {
-      setNotifForm({ title: '', message: '', type: 'SYSTEM' })
-      setNotifCity('')
-      setNotifSuccess(t('notif_sent', language))
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setNotifSuccess(''), 3000)
-    } else {
-      setNotifError(result.error || 'Error')
+    try {
+      const result = await createNotification({ ...notifForm, title: finalTitle })
+      if (result.success) {
+        setNotifForm({ title: '', message: '', type: 'SYSTEM' })
+        setNotifCity('')
+        setNotifSuccess(t('notif_sent', language))
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setNotifSuccess(''), 3000)
+      } else {
+        setNotifError(t('err_generic', language))
+      }
+    } catch {
+      setNotifError(t('err_generic', language))
+    } finally {
+      setNotifLoading(false)
     }
   }
 

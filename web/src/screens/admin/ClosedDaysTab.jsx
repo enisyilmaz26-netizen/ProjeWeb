@@ -47,13 +47,20 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
     setErrorMsg('')
     if (!form.date) return
     const cityId = isGlobal ? (form.city_id || null) : adminCityId
-    const result = await addClosedDay(form.date, cityId, form.reason)
-    if (result.success) {
-      setForm(p => ({ ...p, date: '', reason: '' }))
-      setSuccessMsg(t('closed_day_added', language))
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
-    } else {
-      setErrorMsg(result.error || 'Error')
+    setAdding(true)
+    try {
+      const result = await addClosedDay(form.date, cityId, form.reason)
+      if (result.success) {
+        setForm(p => ({ ...p, date: '', reason: '' }))
+        setSuccessMsg(t('closed_day_added', language))
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
+      } else {
+        setErrorMsg(t('err_generic', language))
+      }
+    } catch {
+      setErrorMsg(t('err_generic', language))
+    } finally {
+      setAdding(false)
     }
   }
 

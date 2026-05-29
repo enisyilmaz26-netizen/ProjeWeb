@@ -40,13 +40,19 @@ export default function StudiosTab({ language, isGlobal, adminCityId, onRequestC
     setLabError('')
     const cityId = isGlobal ? labForm.city_id : adminCityId
     if (!cityId || !labForm.name.trim()) { setLabError(t('studio_city_required', language)); return }
-    const result = await addLab({ name: labForm.name, description: labForm.description, capacity_per_slot: Number(labForm.capacity_per_slot) || 1, location: labForm.location, branches: labForm.branches, city_id: cityId })
-    if (result.success) {
-      setShowAddLab(false)
-      setLabForm({ name: '', description: '', capacity_per_slot: 1, location: '', branches: '', city_id: '' })
-      setLabSaveSuccess(language === 'TR' ? 'Kayıt eklendi.' : 'Record added.')
-      clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setLabSaveSuccess(''), 3000)
-    } else { setLabError(result.error || 'Error') }
+    try {
+      const result = await addLab({ name: labForm.name, description: labForm.description, capacity_per_slot: Number(labForm.capacity_per_slot) || 1, location: labForm.location, branches: labForm.branches, city_id: cityId })
+      if (result.success) {
+        setShowAddLab(false)
+        setLabForm({ name: '', description: '', capacity_per_slot: 1, location: '', branches: '', city_id: '' })
+        setLabSaveSuccess(language === 'TR' ? 'Kayıt eklendi.' : 'Record added.')
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setLabSaveSuccess(''), 3000)
+      } else {
+        setLabError(t('err_generic', language))
+      }
+    } catch {
+      setLabError(t('err_generic', language))
+    }
   }
 
   const startEditLab = (lab) => {
