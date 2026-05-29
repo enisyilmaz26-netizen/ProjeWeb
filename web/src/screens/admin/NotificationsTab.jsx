@@ -61,8 +61,11 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
 
   const handleDeleteNotification = async (id) => {
     setDeletingId(id)
-    await deleteNotification(id)
-    setDeletingId(null)
+    try {
+      await deleteNotification(id)
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const visibleHistory = notifications.filter(n => {

@@ -1040,6 +1040,7 @@ export function AppProvider({ children }) {
       reason: reason || '',
     }]).select().single()
     if (error) return { success: false, error: error.message }
+    if (!data) return { success: false, error: 'err_generic' }
     setClosedDays(prev => [...prev, data].sort((a, b) => a.date.localeCompare(b.date)))
     return { success: true }
   }
@@ -1377,6 +1378,7 @@ export function AppProvider({ children }) {
     if (existing) return { success: false, error: language === 'TR' ? 'Zaten bekleme listelesindesiniz.' : 'Already on the waitlist.' }
     const { data, error } = await supabase.from('waitlist').insert([{ ...slotData, status: 'WAITING' }]).select().single()
     if (error) return { success: false, error: error.message }
+    if (!data) return { success: false, error: 'err_generic' }
     setWaitlist(prev => [...prev, data])
     return { success: true }
   }
