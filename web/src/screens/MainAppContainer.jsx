@@ -1,14 +1,23 @@
-import React, { useState } from 'react'
+import React, { lazy, Suspense, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 import { Calendar, GraduationCap, User, Bell, Settings, Sun, Moon, MessageSquare } from 'lucide-react'
-import UserReservationScreen from './UserReservationScreen'
-import AdminPanelScreen from './AdminPanelScreen'
-import MyProfileScreen from './MyProfileScreen'
-import NotificationCenterScreen from './NotificationCenterScreen'
-import WorkshopsScreen from './WorkshopsScreen'
-import MessagesScreen from './MessagesScreen'
 import IdleWarningModal from '../components/IdleWarningModal'
+
+const UserReservationScreen = lazy(() => import('./UserReservationScreen'))
+const AdminPanelScreen = lazy(() => import('./AdminPanelScreen'))
+const MyProfileScreen = lazy(() => import('./MyProfileScreen'))
+const NotificationCenterScreen = lazy(() => import('./NotificationCenterScreen'))
+const WorkshopsScreen = lazy(() => import('./WorkshopsScreen'))
+const MessagesScreen = lazy(() => import('./MessagesScreen'))
+
+function TabLoader() {
+  return (
+    <div className="flex items-center justify-center py-16">
+      <div className="w-6 h-6 border-4 border-[#1565C0] dark:border-[#7DD4FC] border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
 
 export default function MainAppContainer() {
   const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading, loadError, loadAllData, idleWarning, dismissIdleWarning, conversations, messagesAvailable } = useApp()
@@ -140,12 +149,14 @@ export default function MainAppContainer() {
       {/* Screen Content */}
       <main className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto w-full">
-          {activeTab === 'book' && !isAdmin && <UserReservationScreen />}
-          {activeTab === 'workshops' && !isAdmin && <WorkshopsScreen />}
-          {activeTab === 'profile' && !isAdmin && <MyProfileScreen />}
-          {activeTab === 'admin' && isAdmin && <AdminPanelScreen />}
-          {activeTab === 'notifications' && <NotificationCenterScreen />}
-          {activeTab === 'messages' && !isAdmin && messagesAvailable && <MessagesScreen />}
+          <Suspense fallback={<TabLoader />}>
+            {activeTab === 'book' && !isAdmin && <UserReservationScreen />}
+            {activeTab === 'workshops' && !isAdmin && <WorkshopsScreen />}
+            {activeTab === 'profile' && !isAdmin && <MyProfileScreen />}
+            {activeTab === 'admin' && isAdmin && <AdminPanelScreen />}
+            {activeTab === 'notifications' && <NotificationCenterScreen />}
+            {activeTab === 'messages' && !isAdmin && messagesAvailable && <MessagesScreen />}
+          </Suspense>
         </div>
       </main>
 

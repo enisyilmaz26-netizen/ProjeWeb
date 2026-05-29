@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { lazy, Suspense, useState, useMemo, useEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 import { Settings, Lock, X, RefreshCw, Pencil } from 'lucide-react'
@@ -7,19 +7,28 @@ import PasswordInput from '../components/PasswordInput'
 import { isPasswordStrong } from '../lib/passwordUtils'
 import StatCard from '../components/admin/StatCard'
 import ConfirmModal from '../components/admin/ConfirmModal'
-import AppointmentsTab from './admin/AppointmentsTab'
-import StudiosTab from './admin/StudiosTab'
-import WorkshopsTab from './admin/WorkshopsTab'
-import TimeSlotsTab from './admin/TimeSlotsTab'
-import UserApprovalsTab from './admin/UserApprovalsTab'
-import NotificationsTab from './admin/NotificationsTab'
-import StatsTab from './admin/StatsTab'
-import AdminManagementTab from './admin/AdminManagementTab'
-import AuditTab from './admin/AuditTab'
-import ClosedDaysTab from './admin/ClosedDaysTab'
-import AdminMessagesTab from './admin/AdminMessagesTab'
-import CertificatesTab from './admin/CertificatesTab'
-import EmailTab from './admin/EmailTab'
+
+const AppointmentsTab   = lazy(() => import('./admin/AppointmentsTab'))
+const StudiosTab        = lazy(() => import('./admin/StudiosTab'))
+const WorkshopsTab      = lazy(() => import('./admin/WorkshopsTab'))
+const TimeSlotsTab      = lazy(() => import('./admin/TimeSlotsTab'))
+const UserApprovalsTab  = lazy(() => import('./admin/UserApprovalsTab'))
+const NotificationsTab  = lazy(() => import('./admin/NotificationsTab'))
+const StatsTab          = lazy(() => import('./admin/StatsTab'))
+const AdminManagementTab = lazy(() => import('./admin/AdminManagementTab'))
+const AuditTab          = lazy(() => import('./admin/AuditTab'))
+const ClosedDaysTab     = lazy(() => import('./admin/ClosedDaysTab'))
+const AdminMessagesTab  = lazy(() => import('./admin/AdminMessagesTab'))
+const CertificatesTab   = lazy(() => import('./admin/CertificatesTab'))
+const EmailTab          = lazy(() => import('./admin/EmailTab'))
+
+function TabLoader() {
+  return (
+    <div className="flex items-center justify-center py-16">
+      <div className="w-6 h-6 border-4 border-[#1565C0] dark:border-[#7DD4FC] border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
 
 export default function AdminPanelScreen() {
   const {
@@ -292,19 +301,21 @@ export default function AdminPanelScreen() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'appointments' && <AppointmentsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} onGoToMessages={messagesAvailable ? () => setActiveTab('messages') : null} />}
-      {activeTab === 'workshops' && <WorkshopsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
-      {activeTab === 'studios' && <StudiosTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
-      {activeTab === 'slots' && <TimeSlotsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
-      {activeTab === 'user_approvals' && <UserApprovalsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
-      {activeTab === 'notifications' && <NotificationsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
-      {activeTab === 'stats' && <StatsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
-      {activeTab === 'closed_days' && <ClosedDaysTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
-      {activeTab === 'messages' && messagesAvailable && <AdminMessagesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
-      {activeTab === 'certificates' && <CertificatesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
-      {activeTab === 'admins' && isGlobal && <AdminManagementTab language={language} loggedInAdmin={loggedInAdmin} onRequestConfirm={onRequestConfirm} />}
-      {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
-      {activeTab === 'email' && isGlobal && <EmailTab language={language} />}
+      <Suspense fallback={<TabLoader />}>
+        {activeTab === 'appointments' && <AppointmentsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} onGoToMessages={messagesAvailable ? () => setActiveTab('messages') : null} />}
+        {activeTab === 'workshops' && <WorkshopsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
+        {activeTab === 'studios' && <StudiosTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
+        {activeTab === 'slots' && <TimeSlotsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+        {activeTab === 'user_approvals' && <UserApprovalsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
+        {activeTab === 'notifications' && <NotificationsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+        {activeTab === 'stats' && <StatsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+        {activeTab === 'closed_days' && <ClosedDaysTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+        {activeTab === 'messages' && messagesAvailable && <AdminMessagesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+        {activeTab === 'certificates' && <CertificatesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+        {activeTab === 'admins' && isGlobal && <AdminManagementTab language={language} loggedInAdmin={loggedInAdmin} onRequestConfirm={onRequestConfirm} />}
+        {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
+        {activeTab === 'email' && isGlobal && <EmailTab language={language} />}
+      </Suspense>
 
       <ConfirmModal confirmModal={confirmModal} onClose={() => setConfirmModal(null)} language={language} />
     </div>
