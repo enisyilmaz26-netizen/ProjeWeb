@@ -56,6 +56,10 @@ export default function WorkshopsScreen() {
       setRegIsError(false)
       setRegMsg(t('workshop_unregister_success', language))
       clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 3000)
+    } else {
+      setRegIsError(true)
+      setRegMsg(t('err_generic', language))
+      clearTimeout(regTimerRef.current); regTimerRef.current = setTimeout(() => setRegMsg(''), 4000)
     }
   }
 

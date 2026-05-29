@@ -47,14 +47,20 @@ export default function MessagesScreen() {
     }
     setSelectedConvId(conv.id)
     setLoadingMsgs(true)
-    const msgs = await loadConversationMessages(conv.id)
-    setMessages(msgs)
-    setLoadingMsgs(false)
-    if (conv.unread_for_sender > 0) markConversationRead(conv.id, 'sender')
+    try {
+      const msgs = await loadConversationMessages(conv.id)
+      setMessages(msgs)
+      if (conv.unread_for_sender > 0) markConversationRead(conv.id, 'sender')
+    } catch (err) {
+      console.error('[messages] load failed:', err)
+      setConvError(language === 'TR' ? 'Mesajlar yüklenemedi. Lütfen tekrar deneyin.' : 'Failed to load messages. Please try again.')
+    } finally {
+      setLoadingMsgs(false)
+    }
   }
 
   const handleSend = async () => {
-    if (!msgInput.trim() || !selectedConvId || sending) return
+    if (!msgInput.trim() || !selectedConvId || sending || !loggedInUser) return
     setSending(true)
     const result = await sendMessage(selectedConvId, msgInput, 'sender', `${loggedInUser.name} ${loggedInUser.surname}`)
     if (result.success) {
