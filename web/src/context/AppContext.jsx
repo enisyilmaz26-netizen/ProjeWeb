@@ -1212,6 +1212,18 @@ export function AppProvider({ children }) {
     }
   }
 
+  async function sendEmail({ recipients, subject, html }) {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: { recipients, subject, html },
+      })
+      if (error) return { success: false, error: error.message }
+      return { success: true, sent: data?.sent ?? 0, failed: data?.failed ?? 0, total: data?.total ?? 0 }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  }
+
   const value = {
     loggedInUser, loggedInAdmin,
     language, isDarkMode,
@@ -1234,6 +1246,7 @@ export function AppProvider({ children }) {
     addAdmin, updateAdmin, deleteAdmin, resetAdminPasswordByGlobal,
     waitlist, loadWaitlist, addToWaitlist, removeFromWaitlist, notifyNextOnWaitlist,
     saveCertificateTemplate,
+    sendEmail,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

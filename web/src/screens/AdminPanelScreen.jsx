@@ -19,6 +19,7 @@ import AuditTab from './admin/AuditTab'
 import ClosedDaysTab from './admin/ClosedDaysTab'
 import AdminMessagesTab from './admin/AdminMessagesTab'
 import CertificatesTab from './admin/CertificatesTab'
+import EmailTab from './admin/EmailTab'
 
 export default function AdminPanelScreen() {
   const {
@@ -136,6 +137,7 @@ export default function AdminPanelScreen() {
     { key: 'certificates', label: language === 'TR' ? 'Sertifika' : 'Certificate' },
     ...(isGlobal ? [{ key: 'admins', label: t('tab_admins', language) }] : []),
     ...(isGlobal ? [{ key: 'audit', label: t('tab_audit', language) }] : []),
+    ...(isGlobal ? [{ key: 'email', label: t('tab_email', language) }] : []),
   ], [language, messagesAvailable, adminCityConvUnread, isGlobal])
 
   return (
@@ -302,6 +304,7 @@ export default function AdminPanelScreen() {
       {activeTab === 'certificates' && <CertificatesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
       {activeTab === 'admins' && isGlobal && <AdminManagementTab language={language} loggedInAdmin={loggedInAdmin} onRequestConfirm={onRequestConfirm} />}
       {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
+      {activeTab === 'email' && isGlobal && <EmailTab language={language} />}
 
       <ConfirmModal confirmModal={confirmModal} onClose={() => setConfirmModal(null)} language={language} />
     </div>

@@ -319,6 +319,27 @@ export const translations = {
   err_sunday:           { TR: 'Pazar günleri randevu alınamaz.', EN: 'Appointments cannot be made on Sundays.' },
   lbl_holiday:          { TR: 'Resmi Tatil',                 EN: 'Public Holiday' },
   today_bookings_badge: { TR: 'bugün aktif',                 EN: 'active today' },
+  // Email broadcast tab
+  tab_email:              { TR: 'E-posta Gönder',            EN: 'Send Email' },
+  email_subject:          { TR: 'Konu',                      EN: 'Subject' },
+  email_subject_ph:       { TR: 'E-posta konusu...',         EN: 'Email subject...' },
+  email_body:             { TR: 'İçerik',                    EN: 'Body' },
+  email_body_ph:          { TR: 'E-posta içeriği...',        EN: 'Email body...' },
+  email_recipients_users: { TR: 'Kullanıcılar',             EN: 'Users' },
+  email_recipients_admins:{ TR: 'Yöneticiler',              EN: 'Admins' },
+  email_send_users:       { TR: 'Kullanıcılara Gönder',     EN: 'Send to Users' },
+  email_send_admins:      { TR: 'Yöneticilere Gönder',      EN: 'Send to Admins' },
+  email_select_all:       { TR: 'Tümünü Seç',               EN: 'Select All' },
+  email_deselect_all:     { TR: 'Seçimi Kaldır',            EN: 'Deselect All' },
+  email_search_ph:        { TR: 'İsim veya e-posta ara...',  EN: 'Search by name or email...' },
+  email_no_match:         { TR: 'Eşleşen kayıt yok.',       EN: 'No matching records.' },
+  email_sending:          { TR: 'Gönderiliyor...',           EN: 'Sending...' },
+  email_sent_ok:          { TR: '{n} alıcıya başarıyla gönderildi.', EN: 'Successfully sent to {n} recipients.' },
+  email_sent_partial:     { TR: '{sent}/{total} alıcıya gönderildi ({failed} başarısız).', EN: 'Sent to {sent}/{total} recipients ({failed} failed).' },
+  email_err_no_recipients:{ TR: 'Lütfen en az bir alıcı seçin.',   EN: 'Please select at least one recipient.' },
+  email_err_subject:      { TR: 'Konu ve içerik zorunludur.',       EN: 'Subject and body are required.' },
+  email_err_send:         { TR: 'Gönderme başarısız oldu.',         EN: 'Failed to send email.' },
+  email_selected_n:       { TR: '{n} seçili',                       EN: '{n} selected' },
 }
 
 export const STATUS_COLORS = {
