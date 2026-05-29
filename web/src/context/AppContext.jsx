@@ -741,7 +741,7 @@ export function AppProvider({ children }) {
 
   const denyCancellationRequest = async (id) => {
     const appt = appointments.find(a => a.id === id)
-    const { error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id)
+    const { error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id).eq('status', 'CANCELLATION_REQUESTED')
     if (error) return { success: false, error: error.message }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'APPROVED' } : a))
     if (appt) {
@@ -1359,7 +1359,7 @@ export function AppProvider({ children }) {
   }
 
   const removeFromWaitlist = async (waitlistId) => {
-    const { error } = await supabase.from('waitlist').delete().eq('id', waitlistId)
+    const { error } = await supabase.from('waitlist').delete().eq('id', waitlistId).eq('user_email', loggedInUser?.email)
     if (error) return { success: false, error: error.message }
     setWaitlist(prev => prev.filter(w => w.id !== waitlistId))
     return { success: true }
@@ -1370,7 +1370,8 @@ export function AppProvider({ children }) {
       .select('*').eq('lab_id', labId).eq('date', date).eq('time_slot', timeSlot).eq('status', 'WAITING')
       .order('created_at', { ascending: true }).limit(1).maybeSingle()
     if (!next) return
-    await supabase.from('waitlist').update({ status: 'NOTIFIED' }).eq('id', next.id)
+    const { error: wErr } = await supabase.from('waitlist').update({ status: 'NOTIFIED' }).eq('id', next.id)
+    if (wErr) return
     await supabase.from('notifications').insert([{
       title: language === 'TR' ? 'Bekleme Listesi: Slot Açıldı' : 'Waitlist: Slot Available',
       message: language === 'TR'
