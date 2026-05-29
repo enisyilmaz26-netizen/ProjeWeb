@@ -605,6 +605,25 @@ export function AppProvider({ children }) {
         if (nd) setNotifications(prev => [nd, ...prev])
       }
     }
+    if (appt?.user_email) {
+      const userName = `${appt.user_name || ''} ${appt.user_surname || ''}`.trim() || appt.user_email
+      const finalDate = newDate || appt.date
+      const finalSlot = newTimeSlot || appt.time_slot
+      const fmtDate = finalDate ? new Date(finalDate + 'T12:00:00').toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+      sendAutoEmail(
+        appt.user_email, userName,
+        language === 'TR' ? `Randevunuz Onaylandı – ${appt.lab_name || ''}` : `Appointment Approved – ${appt.lab_name || ''}`,
+        language === 'TR'
+          ? `<p>Sayın <strong>${userName}</strong>,</p>
+             <p><strong>${appt.lab_name || ''}</strong> için randevunuz onaylanmıştır.</p>
+             ${fmtDate ? `<p>📅 Tarih: <strong>${fmtDate}</strong></p>` : ''}
+             ${finalSlot ? `<p>🕐 Saat: <strong>${finalSlot}</strong></p>` : ''}`
+          : `<p>Dear <strong>${userName}</strong>,</p>
+             <p>Your appointment for <strong>${appt.lab_name || ''}</strong> has been approved.</p>
+             ${fmtDate ? `<p>📅 Date: <strong>${fmtDate}</strong></p>` : ''}
+             ${finalSlot ? `<p>🕐 Time: <strong>${finalSlot}</strong></p>` : ''}`
+      )
+    }
     return { success: true }
   }
 
@@ -626,6 +645,21 @@ export function AppProvider({ children }) {
         if (nd) setNotifications(prev => [nd, ...prev])
       }
       notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot)
+    }
+    if (appt?.user_email) {
+      const userName = `${appt.user_name || ''} ${appt.user_surname || ''}`.trim() || appt.user_email
+      const fmtDate = appt.date ? new Date(appt.date + 'T12:00:00').toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+      sendAutoEmail(
+        appt.user_email, userName,
+        language === 'TR' ? `Randevunuz İptal Edildi – ${appt.lab_name || ''}` : `Appointment Cancelled – ${appt.lab_name || ''}`,
+        language === 'TR'
+          ? `<p>Sayın <strong>${userName}</strong>,</p>
+             <p><strong>${appt.lab_name || ''}</strong> için ${fmtDate ? `<strong>${fmtDate}</strong> tarihli ` : ''}randevunuz yönetici tarafından iptal edilmiştir.</p>
+             <p>Yeni randevu almak için sistemi ziyaret edebilirsiniz.</p>`
+          : `<p>Dear <strong>${userName}</strong>,</p>
+             <p>Your appointment for <strong>${appt.lab_name || ''}</strong>${fmtDate ? ` on <strong>${fmtDate}</strong>` : ''} has been cancelled by an administrator.</p>
+             <p>You may book a new appointment through the system.</p>`
+      )
     }
     return { success: true }
   }
@@ -698,6 +732,21 @@ export function AppProvider({ children }) {
         }]).select().single()
         if (nd) setNotifications(prev => [nd, ...prev])
       }
+    }
+    if (appt?.user_email) {
+      const userName = `${appt.user_name || ''} ${appt.user_surname || ''}`.trim() || appt.user_email
+      const fmtDate = appt.date ? new Date(appt.date + 'T12:00:00').toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+      sendAutoEmail(
+        appt.user_email, userName,
+        language === 'TR' ? 'İptal Talebiniz Reddedildi – MEB ÖGEDEP' : 'Cancellation Request Denied – MEB ÖGEDEP',
+        language === 'TR'
+          ? `<p>Sayın <strong>${userName}</strong>,</p>
+             <p><strong>${appt.lab_name || ''}</strong> için ${fmtDate ? `<strong>${fmtDate}</strong> tarihli ` : ''}randevunuza ait iptal talebiniz reddedilmiştir.</p>
+             <p>Randevunuz <strong>Onaylı</strong> statüsünde devam etmektedir.</p>`
+          : `<p>Dear <strong>${userName}</strong>,</p>
+             <p>Your cancellation request for the <strong>${appt.lab_name || ''}</strong> appointment${fmtDate ? ` on <strong>${fmtDate}</strong>` : ''} has been denied.</p>
+             <p>Your appointment remains <strong>Approved</strong>.</p>`
+      )
     }
     return { success: true }
   }
@@ -1306,6 +1355,41 @@ export function AppProvider({ children }) {
     }
   }
 
+  const requestPasswordReset = async (email) => {
+    const { data: user } = await supabase
+      .from('users').select('id,name,surname,email')
+      .eq('email', email.toLowerCase().trim()).maybeSingle()
+    if (!user) return { success: false, error: 'err_user_not_found' }
+    const pool = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%'
+    let raw = 'ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 22)]
+            + 'abcdefghjkmnpqrstuvwxyz'[Math.floor(Math.random() * 22)]
+            + '23456789'[Math.floor(Math.random() * 8)]
+            + '!@#$%'[Math.floor(Math.random() * 5)]
+    for (let i = 0; i < 4; i++) raw += pool[Math.floor(Math.random() * pool.length)]
+    const tempPw = raw.split('').sort(() => Math.random() - 0.5).join('')
+    const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: tempPw })
+    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
+    const { error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', user.id)
+    if (error) return { success: false, error: error.message }
+    const fullName = `${user.name || ''} ${user.surname || ''}`.trim()
+    sendAutoEmail(
+      user.email, fullName,
+      language === 'TR' ? 'Geçici Şifreniz – MEB ÖGEDEP' : 'Temporary Password – MEB ÖGEDEP',
+      language === 'TR'
+        ? `<p>Sayın <strong>${fullName}</strong>,</p>
+           <p>Şifre sıfırlama talebiniz alınmıştır. Geçici şifreniz:</p>
+           <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
+           <p>Sisteme giriş yaptığınızda yeni bir şifre belirlemeniz istenecektir.</p>
+           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
+        : `<p>Dear <strong>${fullName}</strong>,</p>
+           <p>A password reset has been requested. Your temporary password is:</p>
+           <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
+           <p>You will be asked to set a new password upon logging in.</p>
+           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+    )
+    return { success: true }
+  }
+
   function sendAutoEmail(toEmail, toName, subject, bodyHtml) {
     const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;font-size:14px;color:#1a1a1a;padding:32px;max-width:600px;margin:0 auto">
       <div style="border-top:4px solid #1565C0;padding-top:20px;margin-bottom:24px">
@@ -1326,7 +1410,7 @@ export function AppProvider({ children }) {
     loading, loadError,
     idleWarning, dismissIdleWarning,
     loadAllData,
-    loginUser, loginAdmin, registerUser, addUserByAdmin, findUserForReset, resetPassword, updateUserProfile, changePassword, changeAdminPassword, logout, uploadAvatar,
+    loginUser, loginAdmin, registerUser, addUserByAdmin, findUserForReset, resetPassword, requestPasswordReset, updateUserProfile, changePassword, changeAdminPassword, logout, uploadAvatar,
     toggleLanguage, toggleDarkMode,
     submitAppointment, approveAppointment, cancelAppointment, cancelOwnAppointment, submitCancellationRequest, denyCancellationRequest, markAppointmentCompleted,
     approveUser, revokeUser,
