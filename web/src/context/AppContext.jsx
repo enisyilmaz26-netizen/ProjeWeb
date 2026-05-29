@@ -800,8 +800,9 @@ export function AppProvider({ children }) {
   // USER APPROVAL ACTIONS
   const approveUser = async (userId) => {
     const user = users.find(u => u.id === userId)
-    const { error } = await supabase.from('users').update({ is_approved: true }).eq('id', userId)
+    const { data: updated, error } = await supabase.from('users').update({ is_approved: true }).eq('id', userId).select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_approved: true } : u))
     if (user) logAudit('APPROVE_USER', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
     if (user?.email) {
@@ -1266,8 +1267,9 @@ export function AppProvider({ children }) {
   const deleteAdmin = async (adminId) => {
     if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
     const target = admins.find(a => a.id === adminId)
-    const { error } = await supabase.from('admins').delete().eq('id', adminId)
+    const { data: deleted, error } = await supabase.from('admins').delete().eq('id', adminId).select('id')
     if (error) return { success: false, error: error.message }
+    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setAdmins(prev => prev.filter(a => a.id !== adminId))
     if (target) logAudit('DELETE_ADMIN', 'admin', adminId, `${target.name} (${target.email})`)
     return { success: true }

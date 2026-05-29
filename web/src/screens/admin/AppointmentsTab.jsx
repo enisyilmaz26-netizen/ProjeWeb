@@ -193,7 +193,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const execDenyCancellation = async (id) => {
     setProcessingId(id)
     try {
-      await denyCancellationRequest(id)
+      const result = await denyCancellationRequest(id)
+      if (!result.success) { showError(t('err_generic', language)); return }
       showSuccess(t('action_success_cancellation_denied', language))
     } finally {
       setProcessingId(null)
@@ -207,7 +208,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const handleMarkCompleted = (id) => onRequestConfirm(t('confirm_complete_appt', language), async () => {
     setProcessingId(id)
     try {
-      await markAppointmentCompleted(id)
+      const result = await markAppointmentCompleted(id)
+      if (!result.success) { showError(t('err_generic', language)); return }
       showSuccess(t('action_success_completed', language))
     } finally {
       setProcessingId(null)
