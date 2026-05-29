@@ -47,6 +47,10 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
     setErrorMsg('')
     if (!form.date) return
     const cityId = isGlobal ? (form.city_id || null) : adminCityId
+    if (visibleDays.some(d => d.date === form.date && String(d.city_id || '') === String(cityId || ''))) {
+      setErrorMsg(language === 'TR' ? 'Bu tarih zaten kapalı olarak işaretlenmiş.' : 'This date is already marked as closed.')
+      return
+    }
     setAdding(true)
     try {
       const result = await addClosedDay(form.date, cityId, form.reason)

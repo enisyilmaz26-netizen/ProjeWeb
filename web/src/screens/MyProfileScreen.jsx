@@ -65,7 +65,8 @@ export default function MyProfileScreen() {
   const [showWaitlistRemoveConfirm, setShowWaitlistRemoveConfirm] = useState(null)
   const [certModalWs, setCertModalWs] = useState(null)
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  const _d = new Date()
+  const todayStr = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`
 
   const getRescheduleSlotAvailability = (date, timeRange) => {
     if (!rescheduleTarget) return { count: 0, maxCap: 1, isFull: false }

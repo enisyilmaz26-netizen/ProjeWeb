@@ -39,6 +39,10 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
       setSlotError(language === 'TR' ? 'Başlangıç saati bitiş saatinden önce olmalıdır.' : 'Start time must be before end time.')
       return
     }
+    if (visibleSlots.some(s => s.time_range === newSlotTime.trim() && String(s.city_id) === String(cityId))) {
+      setSlotError(language === 'TR' ? 'Bu saat dilimi zaten mevcut.' : 'This time slot already exists.')
+      return
+    }
     setAddingSlot(true)
     try {
       const result = await addTimeSlot(cityId, newSlotTime.trim(), newSlotLocation.trim() || null)
