@@ -1165,11 +1165,13 @@ export function AppProvider({ children }) {
   const unregisterFromWorkshop = async (workshopId) => {
     if (!loggedInUser) return { success: false, error: 'err_generic' }
     const ws = workshops.find(w => w.id === workshopId)
-    const { error } = await supabase.from('workshop_registrations')
+    const { data: deleted, error } = await supabase.from('workshop_registrations')
       .delete()
       .eq('workshop_id', workshopId)
       .eq('user_id', loggedInUser.id)
+      .select('id')
     if (error) return { success: false, error: error.message }
+    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setWorkshopRegistrations(prev => prev.filter(r => !(String(r.workshop_id) === String(workshopId) && String(r.user_id) === String(loggedInUser.id))))
     if (ws) logAudit('UNREGISTER_WORKSHOP', 'workshop', workshopId, `${loggedInUser.name} ${loggedInUser.surname} (${loggedInUser.email}) — ${ws.name}`)
     if (loggedInUser?.email && ws) {
@@ -1384,8 +1386,9 @@ export function AppProvider({ children }) {
   }
 
   const removeFromWaitlist = async (waitlistId) => {
-    const { error } = await supabase.from('waitlist').delete().eq('id', waitlistId).eq('user_email', loggedInUser?.email)
+    const { data: deleted, error } = await supabase.from('waitlist').delete().eq('id', waitlistId).eq('user_email', loggedInUser?.email).select('id')
     if (error) return { success: false, error: error.message }
+    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setWaitlist(prev => prev.filter(w => w.id !== waitlistId))
     return { success: true }
   }

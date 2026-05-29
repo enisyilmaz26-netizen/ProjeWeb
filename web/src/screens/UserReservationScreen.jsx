@@ -387,7 +387,7 @@ export default function UserReservationScreen() {
                           try {
                             if (onWaitlist) {
                               const entry = waitlist.find(w => String(w.lab_id) === String(selectedLab?.id) && w.date === selectedDate && w.time_slot === slot.time_range)
-                              if (entry) { await removeFromWaitlist(entry.id); setWaitlistMsg(language === 'TR' ? 'Bekleme listesinden çıkarıldınız.' : 'Removed from waitlist.') }
+                              if (entry) { const r = await removeFromWaitlist(entry.id); setWaitlistMsg(r.success ? (language === 'TR' ? 'Bekleme listesinden çıkarıldınız.' : 'Removed from waitlist.') : (r.error || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.'))) }
                             } else {
                               const res = await addToWaitlist({
                                 lab_id: selectedLab.id, lab_name: selectedLab.name,

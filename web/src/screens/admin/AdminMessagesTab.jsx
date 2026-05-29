@@ -44,9 +44,12 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
   const openConv = async (conv) => {
     setSelectedConvId(conv.id)
     setLoadingMsgs(true)
-    const msgs = await loadConversationMessages(conv.id)
-    setMessages(msgs)
-    setLoadingMsgs(false)
+    try {
+      const msgs = await loadConversationMessages(conv.id)
+      setMessages(msgs)
+    } finally {
+      setLoadingMsgs(false)
+    }
     // Determine which side we are and mark as read
     const amRecipient = conv.recipient_type === 'city_admin' || conv.recipient_type === 'global_admin'
     const iAmCityAdmin = !isGlobal && conv.recipient_type === 'city_admin'
