@@ -14,9 +14,12 @@ export default function ConfirmModal({ confirmModal, onClose, language }) {
           <button
             onClick={async () => {
               setLoading(true)
-              await confirmModal.onConfirm()
-              setLoading(false)
-              onClose()
+              try {
+                await confirmModal.onConfirm()
+                onClose()
+              } finally {
+                setLoading(false)
+              }
             }}
             disabled={loading}
             className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60"
