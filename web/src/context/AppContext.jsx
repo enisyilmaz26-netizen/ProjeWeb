@@ -892,6 +892,13 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
+  const deleteNotification = async (id) => {
+    const { error } = await supabase.from('notifications').delete().eq('id', id)
+    if (error) return { success: false, error: error.message }
+    setNotifications(prev => prev.filter(n => n.id !== id))
+    return { success: true }
+  }
+
   // TIME SLOT ACTIONS
   const addTimeSlot = async (cityId, timeRange, location = null) => {
     const row = { city_id: cityId, time_range: timeRange }
@@ -1395,9 +1402,43 @@ export function AppProvider({ children }) {
   }
 
   const requestPasswordReset = async (email) => {
+    const normalizedEmail = email.toLowerCase().trim()
+    const { data: admin } = await supabase
+      .from('admins').select('id,name,surname,email')
+      .eq('email', normalizedEmail).maybeSingle()
+    if (admin) {
+      const pool = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%'
+      let raw = 'ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 22)]
+              + 'abcdefghjkmnpqrstuvwxyz'[Math.floor(Math.random() * 22)]
+              + '23456789'[Math.floor(Math.random() * 8)]
+              + '!@#$%'[Math.floor(Math.random() * 5)]
+      for (let i = 0; i < 4; i++) raw += pool[Math.floor(Math.random() * pool.length)]
+      const tempPw = raw.split('').sort(() => Math.random() - 0.5).join('')
+      const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: tempPw })
+      if (hashErr || !hashed) return { success: false, error: 'err_generic' }
+      const { error } = await supabase.from('admins').update({ password_hash: hashed, must_change_password: true }).eq('id', admin.id)
+      if (error) return { success: false, error: error.message }
+      const fullName = `${admin.name || ''} ${admin.surname || ''}`.trim()
+      sendAutoEmail(
+        admin.email, fullName,
+        language === 'TR' ? 'Geçici Şifreniz – MEB ÖGEDEP' : 'Temporary Password – MEB ÖGEDEP',
+        language === 'TR'
+          ? `<p>Sayın <strong>${fullName}</strong>,</p>
+             <p>Şifre sıfırlama talebiniz alınmıştır. Geçici şifreniz:</p>
+             <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
+             <p>Sisteme giriş yaptığınızda yeni bir şifre belirlemeniz istenecektir.</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
+          : `<p>Dear <strong>${fullName}</strong>,</p>
+             <p>A password reset has been requested. Your temporary password is:</p>
+             <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
+             <p>You will be asked to set a new password upon logging in.</p>
+             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+      )
+      return { success: true }
+    }
     const { data: user } = await supabase
       .from('users').select('id,name,surname,email')
-      .eq('email', email.toLowerCase().trim()).maybeSingle()
+      .eq('email', normalizedEmail).maybeSingle()
     if (!user) return { success: false, error: 'err_user_not_found' }
     const pool = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%'
     let raw = 'ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 22)]
@@ -1453,7 +1494,7 @@ export function AppProvider({ children }) {
     toggleLanguage, toggleDarkMode,
     submitAppointment, approveAppointment, cancelAppointment, cancelOwnAppointment, submitCancellationRequest, denyCancellationRequest, markAppointmentCompleted,
     approveUser, revokeUser,
-    markNotificationsRead, clearNotifications, createNotification,
+    markNotificationsRead, clearNotifications, createNotification, deleteNotification,
     addTimeSlot, removeTimeSlot,
     addLab, updateLab, deleteLab, forceDeleteLab,
     addWorkshop, updateWorkshop, deleteWorkshop,

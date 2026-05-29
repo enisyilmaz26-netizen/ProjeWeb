@@ -4,12 +4,13 @@ import { t, formatDate, translations, STATUS_COLORS, STATUS_LABELS } from '../li
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
 import { isPasswordStrong } from '../lib/passwordUtils'
-import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight, CalendarDays, List, RefreshCw } from 'lucide-react'
+import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight, CalendarDays, List, RefreshCw, Award } from 'lucide-react'
 import CalendarView from '../components/CalendarView'
 import { isTurkishHoliday, isSunday } from '../lib/holidays'
+import CertificateModal from '../components/CertificateModal'
 
 export default function MyProfileScreen() {
-  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities, waitlist, removeFromWaitlist, uploadAvatar, rescheduleAppointment, timeSlots, labs, closedDays } = useApp()
+  const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities, waitlist, removeFromWaitlist, uploadAvatar, rescheduleAppointment, timeSlots, labs, closedDays, workshopRegistrations, workshops, certificateTemplates } = useApp()
   const [apptViewMode, setApptViewMode] = useState('list')
   const [calendarSelectedDay, setCalendarSelectedDay] = useState('')
 
@@ -62,6 +63,7 @@ export default function MyProfileScreen() {
   const [editError, setEditError] = useState('')
   const [showCityChangeWarning, setShowCityChangeWarning] = useState(false)
   const [showWaitlistRemoveConfirm, setShowWaitlistRemoveConfirm] = useState(null)
+  const [certModalWs, setCertModalWs] = useState(null)
 
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -534,6 +536,53 @@ export default function MyProfileScreen() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Attended Workshops / Certificates */}
+      {(() => {
+        const attendedRegs = workshopRegistrations.filter(r =>
+          String(r.user_id) === String(loggedInUser.id) && r.attended
+        )
+        if (attendedRegs.length === 0) return null
+        return (
+          <div className="mb-4">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-2 flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
+              {language === 'TR' ? `Sertifikalarım (${attendedRegs.length})` : `My Certificates (${attendedRegs.length})`}
+            </h3>
+            <div className="space-y-2">
+              {attendedRegs.map(reg => {
+                const ws = workshops.find(w => String(w.id) === String(reg.workshop_id))
+                if (!ws) return null
+                return (
+                  <div key={reg.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow px-4 py-3 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{ws.name}</p>
+                      {ws.date && <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(ws.date)}{ws.location ? ` · ${ws.location}` : ''}</p>}
+                    </div>
+                    <button
+                      onClick={() => setCertModalWs(ws)}
+                      className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl hover:opacity-90 transition"
+                    >
+                      <Award className="w-3.5 h-3.5" />
+                      {language === 'TR' ? 'Sertifika' : 'Certificate'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
+
+      {certModalWs && (
+        <CertificateModal
+          ws={certModalWs}
+          template={certificateTemplates.find(t => String(t.city_id) === String(certModalWs.city_id)) || certificateTemplates[0] || null}
+          user={loggedInUser}
+          language={language}
+          onClose={() => setCertModalWs(null)}
+        />
       )}
 
       {/* Reschedule Modal */}

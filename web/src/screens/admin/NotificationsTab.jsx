@@ -2,9 +2,16 @@ import { useState, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
+import { Trash2 } from 'lucide-react'
+
+const TYPE_COLORS = {
+  SYSTEM:   'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  REMINDER: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+  ALERT:    'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+}
 
 export default function NotificationsTab({ language, isGlobal, adminCityId }) {
-  const { cities, createNotification } = useApp()
+  const { cities, notifications, createNotification, deleteNotification } = useApp()
   const inputClass = INPUT_BASE
 
   const [notifForm, setNotifForm] = useState({ title: '', message: '', type: 'SYSTEM' })
@@ -13,6 +20,7 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
   const [notifSuccess, setNotifSuccess] = useState('')
   const successTimerRef = useRef(null)
   const [notifError, setNotifError] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => () => clearTimeout(successTimerRef.current), [])
 
@@ -45,6 +53,20 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
       setNotifError(result.error || 'Error')
     }
   }
+
+  const handleDeleteNotification = async (id) => {
+    setDeletingId(id)
+    await deleteNotification(id)
+    setDeletingId(null)
+  }
+
+  const visibleHistory = notifications.filter(n => {
+    if (!isGlobal && adminCityId) {
+      const city = cities.find(c => String(c.id) === String(adminCityId))
+      if (city) return (n.title || '').includes(city.name) || !(n.title || '').includes('[')
+    }
+    return true
+  })
 
   return (
     <div>
@@ -85,6 +107,45 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
             {notifLoading ? '...' : t('notif_send_btn', language)}
           </button>
         </form>
+      </div>
+
+      <div className="mt-6">
+        <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">
+          {language === 'TR' ? 'Bildirim Geçmişi' : 'Notification History'}
+          <span className="ml-1.5 text-gray-400 dark:text-gray-500 font-normal">({visibleHistory.length})</span>
+        </h3>
+        {visibleHistory.length === 0 ? (
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
+            {language === 'TR' ? 'Bildirim bulunamadı.' : 'No notifications found.'}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {visibleHistory.map(n => (
+              <div key={n.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow px-4 py-3 flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${TYPE_COLORS[n.type] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
+                      {n.type}
+                    </span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                      {n.timestamp ? new Date(n.timestamp).toLocaleString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{n.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{n.message}</p>
+                </div>
+                <button
+                  onClick={() => handleDeleteNotification(n.id)}
+                  disabled={deletingId === n.id}
+                  className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition disabled:opacity-40"
+                  title={language === 'TR' ? 'Sil' : 'Delete'}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

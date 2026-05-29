@@ -3,11 +3,11 @@ import { useApp } from '../../context/AppContext'
 import { t, formatDate, STATUS_COLORS, STATUS_LABELS } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { PAGE_SIZE, statusLabel, exportToCSV } from '../../lib/adminHelpers'
-import { Download, CalendarDays, List, Pencil, X } from 'lucide-react'
+import { Download, CalendarDays, List, Pencil, X, MessageSquare } from 'lucide-react'
 import CalendarView from '../../components/CalendarView'
 import { isTurkishHoliday, isSunday } from '../../lib/holidays'
 
-export default function AppointmentsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
+export default function AppointmentsTab({ language, isGlobal, adminCityId, onRequestConfirm, onGoToMessages }) {
   const { appointments, cities, labs, timeSlots, approveAppointment, cancelAppointment, denyCancellationRequest, markAppointmentCompleted, createNotification } = useApp()
   const inputClass = INPUT_BASE
   const todayStr = new Date().toISOString().split('T')[0]
@@ -335,6 +335,17 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                   <div className="mb-3 px-3 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-xl">
                     <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-0.5">{t('lbl_cancellation_reason', language)}</p>
                     <p className="text-xs text-orange-600 dark:text-orange-300">{appt.note}</p>
+                  </div>
+                )}
+                {onGoToMessages && (
+                  <div className="mb-2">
+                    <button
+                      onClick={onGoToMessages}
+                      className="inline-flex items-center gap-1 text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-2.5 py-1 hover:bg-[#1565C0]/5 transition"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      {language === 'TR' ? 'Mesajlar' : 'Messages'}
+                    </button>
                   </div>
                 )}
                 {appt.status === 'PENDING' && (

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
-import { Award, Eye, Save, Upload, X } from 'lucide-react'
+import { Award, Eye, Save, Upload, X, Send } from 'lucide-react'
 import { CertificateCanvas } from '../../components/CertificateModal'
 
 const DEFAULT_BODY_TR = '{{tarih}} tarihinde {{konum}} adresinde gerçekleştirilen "{{atolye}}" atölyesine katıldığınız için bu belgeyi almaya hak kazandınız.'
@@ -30,7 +30,7 @@ const ALIGNS = [
 
 
 export default function CertificatesTab({ language, isGlobal, adminCityId }) {
-  const { certificateTemplates, saveCertificateTemplate, cities } = useApp()
+  const { certificateTemplates, saveCertificateTemplate, cities, workshops, workshopRegistrations, users, sendEmail } = useApp()
   const inputClass = INPUT_BASE
   const saveTimerRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -64,6 +64,10 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
   const [saving, setSaving] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [initialized, setInitialized] = useState(false)
+
+  const [emailWorkshopId, setEmailWorkshopId] = useState('')
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailResult, setEmailResult] = useState(null)
 
   useEffect(() => {
     if (!initialized) {
@@ -103,6 +107,56 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
     } else {
       setSaveError(result.error || 'Hata')
     }
+  }
+
+  const scopedWorkshops = isGlobal
+    ? workshops
+    : workshops.filter(w => String(w.city_id) === String(adminCityId))
+
+  const handleSendCertEmails = async () => {
+    if (!emailWorkshopId) return
+    const ws = workshops.find(w => String(w.id) === String(emailWorkshopId))
+    if (!ws) return
+    const attendedUserIds = workshopRegistrations
+      .filter(r => String(r.workshop_id) === String(emailWorkshopId) && r.attended)
+      .map(r => r.user_id)
+    if (attendedUserIds.length === 0) {
+      setEmailResult({ sent: 0, total: 0 })
+      return
+    }
+    const recipients = attendedUserIds.map(uid => {
+      const u = users.find(u => String(u.id) === String(uid))
+      return u ? { email: u.email, name: `${u.name || ''} ${u.surname || ''}`.trim() } : null
+    }).filter(Boolean)
+    if (recipients.length === 0) {
+      setEmailResult({ sent: 0, total: 0 })
+      return
+    }
+    setEmailSending(true)
+    setEmailResult(null)
+    const subject = language === 'TR'
+      ? `Sertifikanız Hazır – ${ws.name}`
+      : `Your Certificate is Ready – ${ws.name}`
+    const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;font-size:14px;color:#1a1a1a;padding:32px;max-width:600px;margin:0 auto">
+      <div style="border-top:4px solid #1565C0;padding-top:20px;margin-bottom:24px">
+        <p style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:0.1em;margin:0">MEB ÖGEDEP</p>
+      </div>
+      ${language === 'TR'
+        ? `<p>Sayın katılımcı,</p>
+           <p><strong>${ws.name}</strong> atölyesine katılımınız tamamlanmış olup sertifikanız hazırdır.</p>
+           <p>Sertifikanızı indirmek için sisteme giriş yapın ve profilinizi ziyaret edin.</p>
+           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
+        : `<p>Dear participant,</p>
+           <p>Your attendance at the <strong>${ws.name}</strong> workshop has been confirmed and your certificate is ready.</p>
+           <p>Log in to the system and visit your profile to download your certificate.</p>
+           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`}
+      <div style="border-top:1px solid #e5e7eb;margin-top:32px;padding-top:16px">
+        <p style="font-size:11px;color:#9ca3af;margin:0">Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.</p>
+      </div>
+    </body></html>`
+    const result = await sendEmail({ recipients, subject, html })
+    setEmailSending(false)
+    setEmailResult(result)
   }
 
   const cityName = isGlobal ? '' : cities.find(c => String(c.id) === String(adminCityId))?.name || ''
@@ -274,6 +328,55 @@ export default function CertificatesTab({ language, isGlobal, adminCityId }) {
           </button>
         </div>
       )}
+
+      {/* Certificate Email Section */}
+      <div className="mt-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Send className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
+            {language === 'TR' ? 'Sertifika E-postası Gönder' : 'Send Certificate Email'}
+          </h3>
+        </div>
+        <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 space-y-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {language === 'TR'
+              ? 'Seçili atölyeye katılmış (attended) kullanıcılara sertifika hazır bildirimi gönderir.'
+              : 'Sends a certificate-ready notification to all users marked as attended for the selected workshop.'}
+          </p>
+          <select
+            className={`${inputClass} w-full`}
+            value={emailWorkshopId}
+            onChange={e => { setEmailWorkshopId(e.target.value); setEmailResult(null) }}
+          >
+            <option value="">{language === 'TR' ? 'Atölye Seçin' : 'Select Workshop'}</option>
+            {scopedWorkshops.map(w => (
+              <option key={w.id} value={w.id}>{w.name}{w.date ? ` (${w.date})` : ''}</option>
+            ))}
+          </select>
+          {emailWorkshopId && (() => {
+            const count = workshopRegistrations.filter(r => String(r.workshop_id) === String(emailWorkshopId) && r.attended).length
+            return <p className="text-xs text-gray-500 dark:text-gray-400">{language === 'TR' ? `Katılımcı: ${count} kişi` : `Attendees: ${count}`}</p>
+          })()}
+          {emailResult && (
+            <p className={`text-xs font-medium ${emailResult.success === false ? 'text-red-500' : emailResult.sent === 0 ? 'text-orange-500' : 'text-green-600 dark:text-green-400'}`}>
+              {emailResult.success === false
+                ? (emailResult.error || 'Error')
+                : language === 'TR'
+                  ? `${emailResult.sent ?? 0}/${emailResult.total ?? 0} e-posta gönderildi`
+                  : `${emailResult.sent ?? 0}/${emailResult.total ?? 0} emails sent`}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={handleSendCertEmails}
+            disabled={!emailWorkshopId || emailSending}
+            className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            <Send className="w-4 h-4" />
+            {emailSending ? '...' : (language === 'TR' ? 'Gönder' : 'Send')}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

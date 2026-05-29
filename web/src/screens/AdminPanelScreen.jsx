@@ -292,7 +292,7 @@ export default function AdminPanelScreen() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'appointments' && <AppointmentsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
+      {activeTab === 'appointments' && <AppointmentsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} onGoToMessages={messagesAvailable ? () => setActiveTab('messages') : null} />}
       {activeTab === 'workshops' && <WorkshopsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
       {activeTab === 'studios' && <StudiosTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
       {activeTab === 'slots' && <TimeSlotsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}

@@ -9,15 +9,20 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
   const { appointments, cities, workshops } = useApp()
   const inputClass = INPUT_BASE
   const [statsCity, setStatsCity] = useState('')
+  const [statsDateFrom, setStatsDateFrom] = useState('')
+  const [statsDateTo, setStatsDateTo] = useState('')
   const [showAllStudios, setShowAllStudios] = useState(false)
   const [showAllSlots, setShowAllSlots] = useState(false)
   const [showAllUsers, setShowAllUsers] = useState(false)
 
   const scopedAppointments = useMemo(() => {
-    if (!isGlobal && adminCityId) return appointments.filter(a => String(a.city_id) === String(adminCityId))
-    if (isGlobal && statsCity) return appointments.filter(a => String(a.city_id) === String(statsCity))
-    return appointments
-  }, [appointments, isGlobal, adminCityId, statsCity])
+    let list = appointments
+    if (!isGlobal && adminCityId) list = list.filter(a => String(a.city_id) === String(adminCityId))
+    else if (isGlobal && statsCity) list = list.filter(a => String(a.city_id) === String(statsCity))
+    if (statsDateFrom) list = list.filter(a => a.date >= statsDateFrom)
+    if (statsDateTo) list = list.filter(a => a.date <= statsDateTo)
+    return list
+  }, [appointments, isGlobal, adminCityId, statsCity, statsDateFrom, statsDateTo])
 
   const studioStats = useMemo(() => {
     const counts = {}
@@ -104,6 +109,17 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
           )}
         </div>
       )}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-xs text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Tarih:' : 'Date:'}</span>
+        <input type="date" className={inputClass} value={statsDateFrom} max={statsDateTo || undefined} onChange={e => setStatsDateFrom(e.target.value)} />
+        <span className="text-xs text-gray-400">-</span>
+        <input type="date" className={inputClass} value={statsDateTo} min={statsDateFrom || undefined} onChange={e => setStatsDateTo(e.target.value)} />
+        {(statsDateFrom || statsDateTo) && (
+          <button onClick={() => { setStatsDateFrom(''); setStatsDateTo('') }} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
+            {t('clear', language)}
+          </button>
+        )}
+      </div>
       <div className="flex gap-2 justify-end">
         <button
           onClick={() => exportToCSV(scopedAppointments, language)}
