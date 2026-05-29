@@ -448,8 +448,9 @@ export function AppProvider({ children }) {
   const resetPassword = async (userId, _email, newPassword) => {
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-    const { error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', userId)
+    const { data: updated, error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', userId).select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, must_change_password: true } : u))
     const user = users.find(u => u.id === userId)
     if (user) logAudit('RESET_USER_PASSWORD', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
@@ -516,8 +517,9 @@ export function AppProvider({ children }) {
   }
 
   const updateUserProfile = async (userId, updates) => {
-    const { error } = await supabase.from('users').update(updates).eq('id', userId)
+    const { data: updated, error } = await supabase.from('users').update(updates).eq('id', userId).select('id')
     if (error) return { success: false, error: error.message }
+    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setLoggedInUser(prev => ({ ...prev, ...updates }))
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u))
     return { success: true }
@@ -866,9 +868,11 @@ export function AppProvider({ children }) {
 
   // NOTIFICATION ACTIONS
   const markNotificationsRead = async (ids) => {
-    if (!ids || ids.length === 0) return
-    await supabase.from('notifications').update({ is_read: true }).in('id', ids)
+    if (!ids || ids.length === 0) return { success: true }
+    const { data: updated, error } = await supabase.from('notifications').update({ is_read: true }).in('id', ids).select('id')
+    if (error || !updated || updated.length === 0) return { success: false }
     setNotifications(prev => prev.map(n => ids.includes(n.id) ? { ...n, is_read: true } : n))
+    return { success: true }
   }
 
   const clearNotifications = async (cityName = null) => {
