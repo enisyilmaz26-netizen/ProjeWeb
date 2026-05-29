@@ -92,37 +92,43 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     setBulkProcessing(true)
     const ids = [...selectedIds]
     let failCount = 0
-    for (const id of ids) {
-      const result = await approveAppointment(id)
-      if (result?.success === false) { failCount++; continue }
-      const appt = appointments.find(a => a.id === id)
-      if (appt) {
-        const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
-        await createNotification({ title: `${prefix}${t('notif_appt_approved', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'SYSTEM' })
+    try {
+      for (const id of ids) {
+        const result = await approveAppointment(id)
+        if (result?.success === false) { failCount++; continue }
+        const appt = appointments.find(a => a.id === id)
+        if (appt) {
+          const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
+          await createNotification({ title: `${prefix}${t('notif_appt_approved', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'SYSTEM' })
+        }
       }
+      setSelectedIds(new Set())
+      const successCount = ids.length - failCount
+      showSuccess(failCount > 0
+        ? `${t('action_success_approved', language)} (${successCount}/${ids.length})`
+        : t('action_success_approved', language))
+    } finally {
+      setBulkProcessing(false)
     }
-    setSelectedIds(new Set())
-    setBulkProcessing(false)
-    const successCount = ids.length - failCount
-    showSuccess(failCount > 0
-      ? `${t('action_success_approved', language)} (${successCount}/${ids.length})`
-      : t('action_success_approved', language))
   }
 
   const execBulkCancel = async () => {
     setBulkProcessing(true)
     const ids = [...selectedIds]
     let failCount = 0
-    for (const id of ids) {
-      const result = await cancelAppointment(id)
-      if (result?.success === false) failCount++
+    try {
+      for (const id of ids) {
+        const result = await cancelAppointment(id)
+        if (result?.success === false) failCount++
+      }
+      setSelectedIds(new Set())
+      const successCount = ids.length - failCount
+      showSuccess(failCount > 0
+        ? `${t('action_success_cancelled', language)} (${successCount}/${ids.length})`
+        : t('action_success_cancelled', language))
+    } finally {
+      setBulkProcessing(false)
     }
-    setSelectedIds(new Set())
-    setBulkProcessing(false)
-    const successCount = ids.length - failCount
-    showSuccess(failCount > 0
-      ? `${t('action_success_cancelled', language)} (${successCount}/${ids.length})`
-      : t('action_success_cancelled', language))
   }
 
   const handleBulkApprove = () => onRequestConfirm(t('bulk_approve', language), execBulkApprove)
