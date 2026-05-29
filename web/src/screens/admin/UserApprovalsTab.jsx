@@ -16,6 +16,8 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [userCityFilter, setUserCityFilter] = useState('')
   const [processingId, setProcessingId] = useState(null)
   const [visibleApprovedCount, setVisibleApprovedCount] = useState(PAGE_SIZE)
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkApproving, setBulkApproving] = useState(false)
 
   const [showAddUser, setShowAddUser] = useState(false)
   const [addUserForm, setAddUserForm] = useState({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
@@ -92,7 +94,23 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     return base.filter(u => `${u.name} ${u.surname} ${u.email}`.toLowerCase().includes(q))
   }, [users, isGlobal, adminCityId, userSearch, userCityFilter])
 
+  // Keep selection in sync when pendingUsers changes (e.g. after an approval)
+  useEffect(() => {
+    const pendingIdSet = new Set(pendingUsers.map(u => u.id))
+    setSelectedIds(prev => {
+      const next = new Set([...prev].filter(id => pendingIdSet.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [pendingUsers])
+
   const handleApproveUser = (id) => onRequestConfirm(t('confirm_approve_user', language), async () => { setProcessingId(id); await approveUser(id); setProcessingId(null) })
+  const handleBulkApprove = async () => {
+    if (selectedIds.size === 0 || bulkApproving) return
+    setBulkApproving(true)
+    await Promise.all([...selectedIds].map(id => approveUser(id)))
+    setSelectedIds(new Set())
+    setBulkApproving(false)
+  }
   const handleRevokeUser = (id) => {
     const u = users.find(usr => usr.id === id)
     const activeAppts = appointments.filter(a =>
@@ -255,13 +273,56 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
         </form>
       )}
 
-      <h3 className="font-bold text-orange-600 dark:text-orange-400 text-sm mb-2">{t('pending_users_title', language)} ({pendingUsers.length})</h3>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <h3 className="font-bold text-orange-600 dark:text-orange-400 text-sm">{t('pending_users_title', language)} ({pendingUsers.length})</h3>
+          {pendingUsers.length > 1 && (
+            <label className="flex items-center gap-1.5 cursor-pointer select-none text-xs text-gray-500 dark:text-gray-400">
+              <input
+                type="checkbox"
+                className="w-4 h-4 accent-[#1565C0] dark:accent-[#7DD4FC] cursor-pointer"
+                checked={selectedIds.size === pendingUsers.length}
+                ref={el => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < pendingUsers.length }}
+                onChange={e => {
+                  if (e.target.checked) setSelectedIds(new Set(pendingUsers.map(u => u.id)))
+                  else setSelectedIds(new Set())
+                }}
+              />
+              {language === 'TR' ? 'Tümünü Seç' : 'Select All'}
+            </label>
+          )}
+        </div>
+        {selectedIds.size > 0 && (
+          <button
+            onClick={handleBulkApprove}
+            disabled={bulkApproving}
+            className="py-1.5 px-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60"
+          >
+            {bulkApproving ? '...' : (language === 'TR' ? `Seçilenleri Onayla (${selectedIds.size})` : `Approve Selected (${selectedIds.size})`)}
+          </button>
+        )}
+      </div>
       {pendingUsers.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 text-center text-gray-500 dark:text-gray-400 text-sm mb-4">{t('no_pending_users', language)}</div>
       ) : (
         <div className="space-y-3 mb-6">
           {pendingUsers.map(user => (
-            <UserCard key={user.id} user={user} language={language} processingId={processingId} onApprove={handleApproveUser} onRevoke={handleRevokeUser} onResetPassword={() => openResetPw(user)} showApprove showDelete />
+            <div key={user.id} className="relative">
+              <input
+                type="checkbox"
+                className="absolute top-3 right-3 z-10 w-4 h-4 accent-[#1565C0] dark:accent-[#7DD4FC] cursor-pointer"
+                checked={selectedIds.has(user.id)}
+                onChange={e => {
+                  setSelectedIds(prev => {
+                    const next = new Set(prev)
+                    if (e.target.checked) next.add(user.id)
+                    else next.delete(user.id)
+                    return next
+                  })
+                }}
+              />
+              <UserCard user={user} language={language} processingId={processingId} onApprove={handleApproveUser} onRevoke={handleRevokeUser} onResetPassword={() => openResetPw(user)} showApprove showDelete />
+            </div>
           ))}
         </div>
       )}

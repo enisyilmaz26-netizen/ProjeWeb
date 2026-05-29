@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { PAGE_SIZE } from '../../lib/adminHelpers'
 import { t } from '../../lib/languages'
-import { ShieldCheck, RefreshCw, Search } from 'lucide-react'
+import { ShieldCheck, RefreshCw, Search, Download } from 'lucide-react'
 
 const ACTION_LABELS = {
   APPROVE_APPOINTMENT:  { TR: 'Randevu Onaylandı',        EN: 'Appointment Approved' },
@@ -80,6 +80,35 @@ export default function AuditTab({ language }) {
     return true
   })
 
+  const downloadCSV = () => {
+    const escapeField = (val) => {
+      const str = val == null ? '' : String(val)
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"'
+      }
+      return str
+    }
+    const headers = language === 'TR'
+      ? ['Tarih', 'İşlem', 'Detay', 'Yetkili', 'Rol', 'E-posta']
+      : ['Date', 'Action', 'Details', 'Actor', 'Role', 'Email']
+    const rows = filtered.map(l => [
+      formatDateTime(l.created_at, language),
+      ACTION_LABELS[l.action]?.[language] || l.action,
+      l.details || '',
+      l.actor_name || '',
+      l.actor_role || '',
+      l.actor_email || '',
+    ].map(escapeField).join(','))
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `audit_log_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -90,14 +119,24 @@ export default function AuditTab({ language }) {
           </h3>
           <span className="text-xs text-gray-400 dark:text-gray-500">({filtered.length})</span>
         </div>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1 disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          {language === 'TR' ? 'Yenile' : 'Refresh'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={downloadCSV}
+            disabled={filtered.length === 0}
+            className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {language === 'TR' ? 'CSV İndir' : 'Download CSV'}
+          </button>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            {language === 'TR' ? 'Yenile' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       <select
