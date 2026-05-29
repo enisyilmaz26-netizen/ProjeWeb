@@ -31,14 +31,17 @@ export default function NotificationCenterScreen() {
   }, [notifications])
 
   const handleClearAll = async () => {
-    await clearNotifications(cityName)
-    setShowClearConfirm(false)
+    const result = await clearNotifications(cityName)
+    if (result.success) setShowClearConfirm(false)
   }
 
   const handleDelete = async (id) => {
     setDeletingId(id)
-    await deleteNotification(id)
-    setDeletingId(null)
+    try {
+      await deleteNotification(id)
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   useEffect(() => {

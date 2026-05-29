@@ -70,10 +70,17 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
 
   const handleDelete = async (id) => {
     setProcessingId(id)
-    await removeClosedDay(id)
-    setProcessingId(null)
-    setSuccessMsg(t('closed_day_deleted', language))
-    clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 2000)
+    try {
+      const result = await removeClosedDay(id)
+      if (result.success) {
+        setSuccessMsg(t('closed_day_deleted', language))
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 2000)
+      } else {
+        setErrorMsg(t('err_generic', language))
+      }
+    } finally {
+      setProcessingId(null)
+    }
   }
 
   return (

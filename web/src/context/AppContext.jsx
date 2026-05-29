@@ -847,8 +847,9 @@ export function AppProvider({ children }) {
       await supabase.from('appointments').update({ status: 'CANCELLED' }).in('id', activeAppts.map(a => a.id))
       setAppointments(prev => prev.map(a => activeAppts.some(aa => aa.id === a.id) ? { ...a, status: 'CANCELLED' } : a))
     }
-    const { error } = await supabase.from('users').delete().eq('id', userId)
+    const { data: deleted, error } = await supabase.from('users').delete().eq('id', userId).select('id')
     if (error) return { success: false, error: error.message }
+    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setUsers(prev => prev.filter(u => u.id !== userId))
     if (user) logAudit('REVOKE_USER', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
     if (user) {
@@ -907,8 +908,9 @@ export function AppProvider({ children }) {
   }
 
   const deleteNotification = async (id) => {
-    const { error } = await supabase.from('notifications').delete().eq('id', id)
+    const { data: deleted, error } = await supabase.from('notifications').delete().eq('id', id).select('id')
     if (error) return { success: false, error: error.message }
+    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setNotifications(prev => prev.filter(n => n.id !== id))
     return { success: true }
   }
@@ -934,8 +936,9 @@ export function AppProvider({ children }) {
       )
       if (hasActive) return { success: false, error: 'err_slot_has_appointments' }
     }
-    const { error } = await supabase.from('city_time_slots').delete().eq('id', id)
+    const { data: deleted, error } = await supabase.from('city_time_slots').delete().eq('id', id).select('id')
     if (error) return { success: false, error: error.message }
+    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setTimeSlots(prev => prev.filter(s => s.id !== id))
     return { success: true }
   }
@@ -1046,8 +1049,9 @@ export function AppProvider({ children }) {
   }
 
   const removeClosedDay = async (id) => {
-    const { error } = await supabase.from('closed_days').delete().eq('id', id)
+    const { data: deleted, error } = await supabase.from('closed_days').delete().eq('id', id).select('id')
     if (error) return { success: false, error: error.message }
+    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setClosedDays(prev => prev.filter(d => d.id !== id))
     return { success: true }
   }
@@ -1185,8 +1189,9 @@ export function AppProvider({ children }) {
 
   const removeWorkshopRegistration = async (regId) => {
     const reg = workshopRegistrations.find(r => r.id === regId)
-    const { error } = await supabase.from('workshop_registrations').delete().eq('id', regId)
+    const { data: deleted, error } = await supabase.from('workshop_registrations').delete().eq('id', regId).select('id')
     if (error) return { success: false, error: error.message }
+    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setWorkshopRegistrations(prev => prev.filter(r => r.id !== regId))
     if (reg) {
       const ws = workshops.find(w => String(w.id) === String(reg.workshop_id))

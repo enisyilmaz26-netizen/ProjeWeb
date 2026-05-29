@@ -64,7 +64,7 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
     setProcessingId(id)
     try {
       const result = await removeTimeSlot(id)
-      if (!result.success) setSlotError(t('err_generic', language))
+      if (!result.success) setSlotError(result.error ? t(result.error, language) : t('err_generic', language))
     } catch {
       setSlotError(t('err_generic', language))
     } finally {

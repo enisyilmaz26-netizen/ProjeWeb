@@ -112,7 +112,8 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     onRequestConfirm(label, async () => {
       setProcessingId(id)
       try {
-        await deleteWorkshop(id)
+        const result = await deleteWorkshop(id)
+        if (!result.success) setWorkshopError(t('err_generic', language))
       } finally {
         setProcessingId(null)
       }
