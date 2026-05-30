@@ -1157,9 +1157,11 @@ export function DataProvider({ children }) {
 
   const resetAdminPasswordByGlobal = async (adminId, _email, newPassword) => {
     const target = admins.find(a => a.id === adminId)
+    const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
+    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { data: ok, error } = await supabase.rpc('reset_admin_password_by_global', {
       p_admin_id: adminId,
-      p_new_password: newPassword,
+      p_password_hash: hashed,
     })
     if (error) return { success: false, error: error.message }
     if (!ok) return { success: false, error: 'err_generic' }
