@@ -259,15 +259,19 @@ export function DataProvider({ children }) {
   const logAudit = (action, targetType, targetId, details) => {
     const actor = loggedInAdmin || loggedInUser
     if (!actor) return
-    supabase.from('audit_logs').insert([{
-      actor_email: actor.email,
-      actor_name: loggedInAdmin ? actor.name : `${actor.name} ${actor.surname}`,
-      actor_role: loggedInAdmin ? (actor.role || 'CITY') : 'USER',
-      action,
-      target_type: targetType || null,
-      target_id: targetId || null,
-      details: details || null,
-    }]).catch(err => console.error('[logAudit] failed:', err))
+    const run = async () => {
+      const { error } = await supabase.from('audit_logs').insert([{
+        actor_email: actor.email,
+        actor_name: loggedInAdmin ? actor.name : `${actor.name} ${actor.surname}`,
+        actor_role: loggedInAdmin ? (actor.role || 'CITY') : 'USER',
+        action,
+        target_type: targetType || null,
+        target_id: targetId || null,
+        details: details || null,
+      }])
+      if (error) console.error('[logAudit] failed:', error)
+    }
+    run()
   }
 
   // AUTH-ADJACENT DATA OPERATIONS
@@ -1163,13 +1167,10 @@ export function DataProvider({ children }) {
       p_admin_id: adminId,
       p_password_hash: hashed,
     })
-    console.log('[resetAdminPw] rpc ok, target:', target?.name)
     if (error) return { success: false, error: error.message }
     if (!ok) return { success: false, error: 'err_generic' }
     setAdmins(prev => prev.map(a => a.id === adminId ? { ...a, must_change_password: true } : a))
-    console.log('[resetAdminPw] step: logAudit')
     if (target) logAudit('RESET_ADMIN_PASSWORD', 'admin', adminId, `${target.name} (${target.email})`)
-    console.log('[resetAdminPw] step: sendEmail')
     if (target?.email) {
       sendAutoEmail(
         target.email, target.name,
@@ -1180,19 +1181,16 @@ export function DataProvider({ children }) {
          <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
       )
     }
-    console.log('[resetAdminPw] step: notification insert')
     if (target) {
       const cityObj = target.city_id ? cities.find(c => String(c.id) === String(target.city_id)) : null
       const prefix = cityObj ? `[${cityObj.name}] ` : ''
-      const { data: nd, error: ndErr } = await supabase.from('notifications').insert([{
+      const { data: nd } = await supabase.from('notifications').insert([{
         title: `${prefix}${t('notif_admin_pw_reset_title', language)}`,
         message: t('notif_admin_pw_reset_msg', language).replace('{name}', target.name).replace('{email}', target.email),
         type: 'SYSTEM', timestamp: Date.now(), is_read: false,
       }]).select().single()
-      console.log('[resetAdminPw] notification result:', { nd, ndErr })
       if (nd) setNotifications(prev => [nd, ...prev])
     }
-    console.log('[resetAdminPw] returning success')
     return { success: true }
   }
 

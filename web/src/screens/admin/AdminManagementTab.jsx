@@ -129,8 +129,7 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
         setResetAdminPwSuccess(t('reset_pw_success', language))
         clearTimeout(resetAdminPwTimerRef.current); resetAdminPwTimerRef.current = setTimeout(closeResetAdminPw, 1500)
       } else { setResetAdminPwError(result.error || t('err_generic', language)) }
-    } catch (err) {
-      console.error('[handleResetAdminPassword] caught:', err)
+    } catch {
       setResetAdminPwError(t('err_generic', language))
     } finally {
       setResetAdminPwLoading(false)
