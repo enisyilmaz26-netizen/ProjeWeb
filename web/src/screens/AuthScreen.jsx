@@ -216,11 +216,6 @@ export default function AuthScreen({ onBack }) {
                   {loginLoading ? t('loading_signin', language) : t('btn_login', language)}
                 </button>
               </form>
-              <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3 text-center">
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  {t('forgot_pw_admin_help', language)}
-                </p>
-              </div>
             </div>
           )}
 
