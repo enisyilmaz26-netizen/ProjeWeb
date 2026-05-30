@@ -208,11 +208,11 @@ export default function CertificateModal({ ws, template, user, language, onClose
         {/* Action bar */}
         <div className="flex justify-between items-center mb-3">
           <button autoFocus onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#1565C0] text-white text-sm font-semibold rounded-xl hover:opacity-90 transition">
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#1565C0] text-white text-sm font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition">
             <Printer className="w-4 h-4" aria-hidden="true" />
             {t('btn_print_pdf', language)}
           </button>
-          <button onClick={onClose} aria-label={t('btn_close', language)} className="text-white/70 hover:text-white transition">
+          <button onClick={onClose} aria-label={t('btn_close', language)} className="text-white/70 hover:text-white active:scale-[0.98] transition">
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>

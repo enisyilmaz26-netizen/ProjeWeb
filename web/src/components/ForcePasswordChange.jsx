@@ -109,7 +109,7 @@ export default function ForcePasswordChange() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl disabled:opacity-60 hover:opacity-90 transition"
+            className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl disabled:opacity-60 hover:opacity-90 active:scale-[0.98] transition"
           >
             {loading ? '...' : t('btn_update_password', language)}
           </button>
@@ -117,7 +117,7 @@ export default function ForcePasswordChange() {
 
         <button
           onClick={logout}
-          className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-center"
+          className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:opacity-70 text-center transition"
         >
           {t('btn_sign_out', language)}
         </button>

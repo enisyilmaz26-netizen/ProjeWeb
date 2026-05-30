@@ -57,7 +57,7 @@ function WorkshopCard({ ws, language, cities, workshopRegistrations, workshopReg
               {hasAttended ? (
                 <button
                   onClick={() => onOpenCertificate(ws)}
-                  className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5"
+                  className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl active:scale-[0.98] transition flex items-center justify-center gap-1.5"
                 >
                   <Award className="w-3.5 h-3.5" aria-hidden="true" />
                   {t('view_certificate', language)}
@@ -75,7 +75,7 @@ function WorkshopCard({ ws, language, cities, workshopRegistrations, workshopReg
                 <button
                   onClick={() => onUnregister(ws.id)}
                   disabled={registering === ws.id}
-                  className="w-full py-2 border border-red-400 text-red-600 dark:text-red-400 dark:border-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-60"
+                  className="w-full py-2 border border-red-400 text-red-600 dark:text-red-400 dark:border-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-[0.98] transition disabled:opacity-60"
                 >
                   {registering === ws.id ? '...' : t('workshop_unregister', language)}
                 </button>
@@ -87,7 +87,7 @@ function WorkshopCard({ ws, language, cities, workshopRegistrations, workshopReg
                 <button
                   onClick={() => onRegister(ws.id)}
                   disabled={registering === ws.id}
-                  className="w-full py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60"
+                  className="w-full py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                 >
                   {registering === ws.id ? '...' : t('workshop_register', language)}
                 </button>

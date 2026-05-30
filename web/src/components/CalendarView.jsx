@@ -113,7 +113,7 @@ export default function CalendarView({
           onClick={prevMonth}
           disabled={!canGoPrev()}
           aria-label={t('prev_month', language)}
-          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-30"
+          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition active:scale-[0.98] disabled:opacity-30"
         >
           <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" aria-hidden="true" />
         </button>
@@ -124,7 +124,7 @@ export default function CalendarView({
           onClick={nextMonth}
           disabled={!canGoNext()}
           aria-label={t('next_month', language)}
-          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-30"
+          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition active:scale-[0.98] disabled:opacity-30"
         >
           <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" aria-hidden="true" />
         </button>
@@ -167,9 +167,9 @@ export default function CalendarView({
               disabled={disabled}
               className={`relative rounded-lg p-1 flex flex-col items-center min-h-[42px] transition
                 ${disabled
-                  ? 'opacity-30 cursor-not-allowed'
+                  ? 'opacity-40 cursor-not-allowed bg-gray-100 dark:bg-gray-800/50'
                   : onDayClick
-                    ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer'
+                    ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-[0.96] cursor-pointer'
                     : 'cursor-default'
                 }
                 ${isSelected

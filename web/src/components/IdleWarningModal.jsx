@@ -37,13 +37,13 @@ export default function IdleWarningModal({ onContinue, onLogout, language }) {
           <button
             autoFocus
             onClick={onContinue}
-            className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition"
+            className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition"
           >
             {t('session_continue', language)}
           </button>
           <button
             onClick={onLogout}
-            className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition"
           >
             {t('btn_logout', language)}
           </button>

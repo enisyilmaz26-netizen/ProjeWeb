@@ -303,7 +303,7 @@ export default function MyProfileScreen() {
           {!editMode && (
             <button
               onClick={startEdit}
-              className="flex-shrink-0 text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
+              className="flex-shrink-0 text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 active:scale-[0.98] transition"
             >
               <Pencil className="w-3.5 h-3.5 inline mr-1" aria-hidden="true" />{t('btn_edit', language)}
             </button>
@@ -352,10 +352,10 @@ export default function MyProfileScreen() {
               <p role="status" aria-live="polite" className="text-red-600 dark:text-red-400 text-xs">{editError}</p>
             )}
             <div className="flex gap-2 pt-1">
-              <button type="submit" disabled={editLoading} className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm disabled:opacity-60 hover:opacity-90 transition">
+              <button type="submit" disabled={editLoading} className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm disabled:opacity-60 hover:opacity-90 active:scale-[0.98] transition">
                 {editLoading ? '...' : t('btn_save', language)}
               </button>
-              <button type="button" onClick={() => setEditMode(false)} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+              <button type="button" onClick={() => setEditMode(false)} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition">
                 {t('btn_nevermind', language)}
               </button>
             </div>
@@ -380,7 +380,7 @@ export default function MyProfileScreen() {
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow mb-5">
         <button
           onClick={() => { setShowPwChange(p => !p); setPwError(''); setPwForm({ current: '', newPw: '', confirm: '' }) }}
-          className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-700 dark:text-gray-300 active:opacity-70 transition"
         >
           <span className="inline-flex items-center gap-1"><Lock className="w-3.5 h-3.5" aria-hidden="true" />{t('change_password', language)}</span>
           <span className="text-gray-400" aria-hidden="true">{showPwChange ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
@@ -400,7 +400,7 @@ export default function MyProfileScreen() {
               <PasswordInput className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} autoComplete="new-password" required minLength={8} />
             </div>
             {pwError && <p role="status" aria-live="polite" className="text-red-600 dark:text-red-400 text-xs">{pwError}</p>}
-            <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60">
+            <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60">
               {pwLoading ? '...' : t('btn_update_password', language)}
             </button>
           </form>
@@ -437,10 +437,10 @@ export default function MyProfileScreen() {
           {t('upcoming_appointments', language)} ({upcomingAppointments.length})
         </h3>
         <div className="flex gap-1">
-          <button onClick={() => setApptViewMode('list')} aria-label={t('view_list', language)} className={`p-1.5 rounded-lg transition ${apptViewMode === 'list' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
+          <button onClick={() => setApptViewMode('list')} aria-label={t('view_list', language)} className={`p-1.5 rounded-lg transition active:scale-[0.98] ${apptViewMode === 'list' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
             <List className="w-4 h-4" aria-hidden="true" />
           </button>
-          <button onClick={() => setApptViewMode('calendar')} aria-label={t('view_calendar', language)} className={`p-1.5 rounded-lg transition ${apptViewMode === 'calendar' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
+          <button onClick={() => setApptViewMode('calendar')} aria-label={t('view_calendar', language)} className={`p-1.5 rounded-lg transition active:scale-[0.98] ${apptViewMode === 'calendar' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
             <CalendarDays className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
@@ -509,7 +509,7 @@ export default function MyProfileScreen() {
         <>
           <button
             onClick={() => setShowPast(p => !p)}
-            className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-200 transition"
+            className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-200 active:opacity-70 transition"
           >
             <span aria-hidden="true">{showPast ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}</span>
             {t('past_appointments', language)} ({pastAppointments.length})
@@ -529,7 +529,7 @@ export default function MyProfileScreen() {
         <>
           <button
             onClick={() => setShowCancelled(p => !p)}
-            className="flex items-center gap-2 text-sm font-medium text-red-500 dark:text-red-400 mb-3 hover:text-red-700 dark:hover:text-red-300 transition"
+            className="flex items-center gap-2 text-sm font-medium text-red-500 dark:text-red-400 mb-3 hover:text-red-700 dark:hover:text-red-300 active:opacity-70 transition"
           >
             <span aria-hidden="true">{showCancelled ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}</span>
             {t('appts_cancelled_n', language).replace('{n}', cancelledAppointments.length)}
@@ -560,7 +560,7 @@ export default function MyProfileScreen() {
                 </div>
                 <button
                   onClick={() => setShowWaitlistRemoveConfirm(w.id)}
-                  className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                  className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-[0.98] transition"
                 >
                   {t('btn_remove', language)}
                 </button>
@@ -628,7 +628,7 @@ export default function MyProfileScreen() {
                     </div>
                     <button
                       onClick={() => setCertModalWs(ws)}
-                      className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl hover:opacity-90 transition"
+                      className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl hover:opacity-90 active:scale-[0.98] transition"
                     >
                       <Award className="w-3.5 h-3.5" aria-hidden="true" />
                       {t('tab_certificate', language)}
@@ -697,7 +697,7 @@ export default function MyProfileScreen() {
                           key={s.id}
                           disabled={isFull}
                           onClick={() => setRescheduleSlot(s.time_range)}
-                          className={`py-2 px-3 rounded-xl text-xs border transition text-left ${
+                          className={`py-2 px-3 rounded-xl text-xs border transition active:scale-[0.98] text-left ${
                             isFull ? 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 text-gray-400' :
                             isSelected ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] border-transparent font-semibold' :
                             'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-[#1565C0] dark:hover:border-[#7DD4FC]'
@@ -717,13 +717,13 @@ export default function MyProfileScreen() {
                 <button
                   disabled={!rescheduleDate || !rescheduleSlot || rescheduleLoading}
                   onClick={handleReschedule}
-                  className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl disabled:opacity-40 transition"
+                  className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl disabled:opacity-40 active:scale-[0.98] transition"
                 >
                   {rescheduleLoading ? '...' : t('btn_update', language)}
                 </button>
                 <button
                   onClick={() => setShowReschedule(false)}
-                  className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl"
+                  className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition"
                 >
                   {t('btn_nevermind', language)}
                 </button>
@@ -765,13 +765,13 @@ export default function MyProfileScreen() {
               <button
                 onClick={handleSubmitCancel}
                 disabled={submitting}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition disabled:opacity-60"
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl active:scale-[0.98] transition disabled:opacity-60"
               >
                 {submitting ? '...' : t('action_cancel', language)}
               </button>
               <button
                 onClick={() => { setShowCancelModal(false); setCancelReason('') }}
-                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition"
               >
                 {t('btn_nevermind', language)}
               </button>
@@ -795,13 +795,13 @@ export default function MyProfileScreen() {
                 autoFocus
                 onClick={(e) => handleSaveProfile(e)}
                 disabled={editLoading}
-                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50"
               >
                 {t('btn_continue', language)}
               </button>
               <button
                 onClick={() => setShowCityChangeWarning(false)}
-                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition"
               >
                 {t('btn_nevermind', language)}
               </button>
@@ -830,13 +830,13 @@ export default function MyProfileScreen() {
                   if (res.success) setShowWaitlistRemoveConfirm(null)
                 }}
                 disabled={waitlistRemoving}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition disabled:opacity-50"
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl active:scale-[0.98] transition disabled:opacity-50"
               >
                 {t('btn_yes_remove', language)}
               </button>
               <button
                 onClick={() => setShowWaitlistRemoveConfirm(null)}
-                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition"
               >
                 {t('btn_nevermind', language)}
               </button>
@@ -874,7 +874,7 @@ function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, on
           {canReschedule && (
             <button
               onClick={onRescheduleClick}
-              className="flex-1 py-2 border border-[#1565C0]/40 text-[#1565C0] dark:text-[#7DD4FC] dark:border-[#7DD4FC]/40 text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition inline-flex items-center justify-center gap-1"
+              className="flex-1 py-2 border border-[#1565C0]/40 text-[#1565C0] dark:text-[#7DD4FC] dark:border-[#7DD4FC]/40 text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 active:scale-[0.98] transition inline-flex items-center justify-center gap-1"
             >
               <RefreshCw className="w-3 h-3" aria-hidden="true" />{t('reschedule_title', language)}
             </button>
@@ -882,7 +882,7 @@ function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, on
           {canDirectCancel && (
             <button
               onClick={onDirectCancelClick}
-              className="flex-1 py-2 border border-red-400 text-red-600 dark:text-red-400 dark:border-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+              className="flex-1 py-2 border border-red-400 text-red-600 dark:text-red-400 dark:border-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-[0.98] transition"
             >
               {t('action_cancel', language)}
             </button>
@@ -890,7 +890,7 @@ function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, on
           {canRequestCancel && (
             <button
               onClick={onRequestCancelClick}
-              className="flex-1 py-2 border border-orange-400 text-orange-600 dark:text-orange-400 dark:border-orange-600 text-xs font-semibold rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 transition"
+              className="flex-1 py-2 border border-orange-400 text-orange-600 dark:text-orange-400 dark:border-orange-600 text-xs font-semibold rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/20 active:scale-[0.98] transition"
             >
               {t('btn_request_cancellation', language)}
             </button>

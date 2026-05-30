@@ -31,14 +31,14 @@ export default function ConfirmModal({ confirmModal, onClose, language }) {
             }}
             disabled={loading}
             autoFocus
-            className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60"
+            className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
           >
             {loading ? '...' : t('btn_yes', language)}
           </button>
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-60"
+            className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition disabled:opacity-60"
           >
             {t('btn_nevermind', language)}
           </button>

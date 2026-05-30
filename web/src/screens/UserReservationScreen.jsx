@@ -203,7 +203,7 @@ export default function UserReservationScreen() {
 
       {/* Breadcrumb / Progress */}
       <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-4 flex-wrap">
-        <button onClick={() => resetToStep(1)} className={`font-medium ${step >= 1 ? 'text-[#1565C0] dark:text-[#7DD4FC]' : ''}`}>
+        <button onClick={() => resetToStep(1)} className={`font-medium active:opacity-70 ${step >= 1 ? 'text-[#1565C0] dark:text-[#7DD4FC]' : ''}`}>
           {t('select_city', language)}
         </button>
         {step >= 2 && <><span>›</span><button onClick={() => resetToStep(2)} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedCity?.name}</button></>}
@@ -292,7 +292,7 @@ export default function UserReservationScreen() {
               })()}
             </div>
           )}
-          <button onClick={() => resetToStep(1)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
+          <button onClick={() => resetToStep(1)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1 active:opacity-70">
             ← {t('back_to_province', language)}
           </button>
         </div>
@@ -417,7 +417,7 @@ export default function UserReservationScreen() {
                             setWaitlistProcessing('')
                           }
                         }}
-                        className={`w-full py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${onWaitlist ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200' : 'border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+                        className={`w-full py-1.5 rounded-xl text-xs font-medium transition active:scale-[0.98] flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${onWaitlist ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200' : 'border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
                       >
                         <Clock className="w-3 h-3" aria-hidden="true" />
                         {onWaitlist ? t('waitlist_on_list', language) : t('waitlist_join', language)}
@@ -428,7 +428,7 @@ export default function UserReservationScreen() {
               })}
             </div>
           )}
-          <button onClick={() => resetToStep(3)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
+          <button onClick={() => resetToStep(3)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1 active:opacity-70">
             ← {t('back_to_date', language)}
           </button>
         </div>
@@ -498,7 +498,7 @@ export default function UserReservationScreen() {
             </button>
           </form>
 
-          <button onClick={() => resetToStep(4)} className="mt-3 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1">
+          <button onClick={() => resetToStep(4)} className="mt-2 text-sm text-[#1565C0] dark:text-[#7DD4FC] font-medium flex items-center gap-1 active:opacity-70">
             ← {t('back_to_time', language)}
           </button>
         </div>
@@ -522,13 +522,13 @@ export default function UserReservationScreen() {
                 onClick={doSubmit}
                 disabled={submitting}
                 autoFocus
-                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50"
               >
                 {submitting ? t('submitting', language) : t('btn_confirm', language)}
               </button>
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition"
               >
                 {t('btn_go_back', language)}
               </button>

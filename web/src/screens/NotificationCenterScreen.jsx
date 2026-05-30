@@ -68,7 +68,7 @@ export default function NotificationCenterScreen() {
         {loggedInAdmin && notifications.length > 0 && (
           <button
             onClick={() => setShowClearConfirm(true)}
-            className="text-xs text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition font-medium"
+            className="text-xs text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-[0.98] transition font-medium"
           >
             {t('clear_notifications', language)}
           </button>
@@ -131,7 +131,7 @@ export default function NotificationCenterScreen() {
                       <button
                         onClick={() => handleDelete(notif.id)}
                         disabled={deletingId === notif.id}
-                        className="text-gray-400 hover:text-red-500 transition disabled:opacity-50"
+                        className="text-gray-400 hover:text-red-500 active:scale-[0.98] transition disabled:opacity-50"
                         aria-label={t('btn_delete', language)} title={t('btn_delete', language)}
                       >
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -164,13 +164,13 @@ export default function NotificationCenterScreen() {
               <button
                 autoFocus
                 onClick={handleClearAll}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition"
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl active:scale-[0.98] transition"
               >
                 {t('btn_yes', language)}, {t('clear_notifications', language)}
               </button>
               <button
                 onClick={() => setShowClearConfirm(false)}
-                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition"
               >
                 {t('btn_nevermind', language)}
               </button>
