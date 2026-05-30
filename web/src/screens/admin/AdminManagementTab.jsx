@@ -22,6 +22,8 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
   const [adminFormSuccess, setAdminFormSuccess] = useState('')
   const adminFormTimerRef = useRef(null)
   const [adminFormLoading, setAdminFormLoading] = useState(false)
+  const [copyAdminPwModal, setCopyAdminPwModal] = useState(null)
+  const [copyAdminPwCopied, setCopyAdminPwCopied] = useState(false)
 
   const [editAdminModal, setEditAdminModal] = useState(null)
   const [editAdminLoading, setEditAdminLoading] = useState(false)
@@ -58,10 +60,13 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
     try {
       const result = await addAdmin(adminForm)
       if (result.success) {
+        const createdEmail = adminForm.email.trim().toLowerCase()
+        const savedPw = adminForm.password
+        const createdName = adminForm.name
         setShowAddAdmin(false)
         setAdminForm({ name: '', email: '', password: '', role: 'CITY', city_id: '', phone: '' })
-        setAdminFormSuccess(t('admin_added', language))
-        clearTimeout(adminFormTimerRef.current); adminFormTimerRef.current = setTimeout(() => setAdminFormSuccess(''), 3000)
+        setCopyAdminPwModal({ password: savedPw, email: createdEmail, name: createdName })
+        setCopyAdminPwCopied(false)
       } else { setAdminFormError(result.error || t('err_generic', language)) }
     } catch {
       setAdminFormError(t('err_generic', language))
@@ -320,6 +325,40 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
         loading={resetAdminPwLoading}
         language={language}
       />
+
+      {copyAdminPwModal && (
+        <div role="dialog" aria-modal="true" aria-labelledby="copy-admin-pw-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-4">
+            <h3 id="copy-admin-pw-title" className="font-bold text-gray-900 dark:text-gray-100 text-base">{t('copy_pw_modal_title', language)}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('copy_pw_modal_desc', language)}</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-gray-100 dark:bg-[#060E26] rounded-lg px-3 py-2 text-sm font-mono text-gray-900 dark:text-gray-100 select-all break-all">
+                {copyAdminPwModal.password}
+              </code>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => {
+                  navigator.clipboard.writeText(copyAdminPwModal.password).catch(() => {})
+                  setCopyAdminPwCopied(true)
+                  setTimeout(() => setCopyAdminPwCopied(false), 2000)
+                }}
+                className="px-3 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-lg hover:opacity-90 transition flex-shrink-0"
+              >
+                {copyAdminPwCopied ? t('copy_pw_btn_copied', language) : t('copy_pw_btn_copy', language)}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{copyAdminPwModal.email}</p>
+            <button
+              type="button"
+              onClick={() => { setCopyAdminPwModal(null); setCopyAdminPwCopied(false); setAdminFormSuccess(t('admin_added', language)); clearTimeout(adminFormTimerRef.current); adminFormTimerRef.current = setTimeout(() => setAdminFormSuccess(''), 3000) }}
+              className="w-full py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-semibold rounded-xl hover:opacity-80 transition"
+            >
+              {t('copy_pw_done_btn', language)}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

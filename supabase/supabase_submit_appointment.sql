@@ -1,4 +1,4 @@
--- Server-side appointment submission
+-- Server-side appointment submission with capacity enforcement
 -- Run this in Supabase SQL Editor.
 -- NOTE: All ID columns are integer (not uuid).
 
@@ -31,13 +31,21 @@ CREATE FUNCTION public.submit_appointment(
 RETURNS TABLE(id integer, status text, created_timestamp bigint)
 LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
-  v_lab_city_id integer;
-  v_appt_id     integer;
-  v_ts          bigint;
+  v_lab_city_id   integer;
+  v_max_capacity  integer;
+  v_current_count bigint;
+  v_appt_id       integer;
+  v_ts            bigint;
 BEGIN
-  SELECT city_id INTO v_lab_city_id
+  -- Serialize concurrent bookings for the same lab+date+slot to prevent race conditions
+  PERFORM pg_advisory_xact_lock(
+    hashtext(p_lab_id::text || '|' || p_date || '|' || p_time_slot)
+  );
+
+  SELECT city_id, COALESCE(capacity_per_slot, 1)
+    INTO v_lab_city_id, v_max_capacity
   FROM public.laboratories
-  WHERE laboratories.id = p_lab_id;
+  WHERE id = p_lab_id;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'err_lab_not_found';
@@ -45,6 +53,17 @@ BEGIN
 
   IF v_lab_city_id <> p_city_id THEN
     RAISE EXCEPTION 'err_lab_city_mismatch';
+  END IF;
+
+  SELECT COUNT(*) INTO v_current_count
+  FROM public.appointments
+  WHERE lab_id = p_lab_id
+    AND date = p_date
+    AND time_slot = p_time_slot
+    AND status IN ('PENDING', 'APPROVED', 'CANCELLATION_REQUESTED');
+
+  IF v_current_count >= v_max_capacity THEN
+    RAISE EXCEPTION 'err_slot_full';
   END IF;
 
   v_ts := EXTRACT(EPOCH FROM now())::bigint * 1000;

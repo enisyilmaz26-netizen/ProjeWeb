@@ -51,6 +51,9 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const addUserTimerRef = useRef(null)
   const [addUserLoading, setAddUserLoading] = useState(false)
 
+  const [copyPwModal, setCopyPwModal] = useState(null)
+  const [copyPwCopied, setCopyPwCopied] = useState(false)
+
   const [csvImporting, setCsvImporting] = useState(false)
   const [csvResult, setCsvResult] = useState(null)
 
@@ -209,10 +212,12 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       const cityObj = cities.find(c => String(c.id) === String(cityId))
       const result = await addUserByAdmin({ ...addUserForm, email: addUserForm.email.trim().toLowerCase(), city_id: cityId, city_name: cityObj?.name || '' })
       if (result.success) {
+        const createdEmail = addUserForm.email.trim().toLowerCase()
+        const createdName = `${addUserForm.name} ${addUserForm.surname}`.trim()
         setShowAddUser(false)
         setAddUserForm({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
-        setAddUserSuccess(t('user_added', language))
-        clearTimeout(addUserTimerRef.current); addUserTimerRef.current = setTimeout(() => setAddUserSuccess(''), 3000)
+        setCopyPwModal({ password: result.password, email: createdEmail, name: createdName })
+        setCopyPwCopied(false)
       } else {
         const errKey = result.error
         setAddUserError((errKey && translations[errKey]) ? t(errKey, language) : (result.error || t('err_generic', language)))
@@ -456,6 +461,40 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
         loading={resetPwLoading}
         language={language}
       />
+
+      {copyPwModal && (
+        <div role="dialog" aria-modal="true" aria-labelledby="copy-pw-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-2xl p-6 w-full max-w-sm space-y-4">
+            <h3 id="copy-pw-title" className="font-bold text-gray-900 dark:text-gray-100 text-base">{t('copy_pw_modal_title', language)}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('copy_pw_modal_desc', language)}</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-gray-100 dark:bg-[#060E26] rounded-lg px-3 py-2 text-sm font-mono text-gray-900 dark:text-gray-100 select-all break-all">
+                {copyPwModal.password}
+              </code>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => {
+                  navigator.clipboard.writeText(copyPwModal.password).catch(() => {})
+                  setCopyPwCopied(true)
+                  setTimeout(() => setCopyPwCopied(false), 2000)
+                }}
+                className="px-3 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-lg hover:opacity-90 transition flex-shrink-0"
+              >
+                {copyPwCopied ? t('copy_pw_btn_copied', language) : t('copy_pw_btn_copy', language)}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{copyPwModal.email}</p>
+            <button
+              type="button"
+              onClick={() => { setCopyPwModal(null); setCopyPwCopied(false); setAddUserSuccess(t('user_added', language)); clearTimeout(addUserTimerRef.current); addUserTimerRef.current = setTimeout(() => setAddUserSuccess(''), 3000) }}
+              className="w-full py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-semibold rounded-xl hover:opacity-80 transition"
+            >
+              {t('copy_pw_done_btn', language)}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
