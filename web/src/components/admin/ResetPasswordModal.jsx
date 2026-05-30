@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
 import { t } from '../../lib/languages'
 import PasswordInput from '../PasswordInput'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 export default function ResetPasswordModal({ isOpen, targetName, targetEmail, value, onChange, onSubmit, onClose, error, success, loading, language }) {
+  const trapRef = useFocusTrap(isOpen)
   useEffect(() => {
     if (!isOpen) return
     const handler = (e) => { if (e.key === 'Escape' && !loading) onClose() }
@@ -13,7 +15,7 @@ export default function ResetPasswordModal({ isOpen, targetName, targetEmail, va
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="reset-pw-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="reset-pw-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
         <h3 id="reset-pw-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">{t('reset_pw_title', language)}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 truncate">{targetName} — {targetEmail}</p>
         <form onSubmit={onSubmit} className="space-y-3">

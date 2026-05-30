@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { t } from '../lib/languages'
 import { Timer } from 'lucide-react'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 const COUNTDOWN_SECS = 5 * 60 // 5-minute countdown shown in warning
 
 export default function IdleWarningModal({ onContinue, onLogout, language }) {
   const [seconds, setSeconds] = useState(COUNTDOWN_SECS)
+  const trapRef = useFocusTrap()
 
   useEffect(() => {
     const tick = setInterval(() => {
@@ -23,7 +25,7 @@ export default function IdleWarningModal({ onContinue, onLogout, language }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] px-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="idle-warning-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-2xl p-6 max-w-sm w-full">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="idle-warning-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-2xl p-6 max-w-sm w-full">
         <div className="text-center mb-5">
           <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
             <Timer className="w-6 h-6 text-orange-500" aria-hidden="true" />

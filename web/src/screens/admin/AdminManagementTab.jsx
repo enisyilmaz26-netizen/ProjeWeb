@@ -24,6 +24,7 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
   const [adminFormLoading, setAdminFormLoading] = useState(false)
   const [copyAdminPwModal, setCopyAdminPwModal] = useState(null)
   const [copyAdminPwCopied, setCopyAdminPwCopied] = useState(false)
+  const copyAdminPwCopiedTimerRef = useRef(null)
 
   const [editAdminModal, setEditAdminModal] = useState(null)
   const [editAdminLoading, setEditAdminLoading] = useState(false)
@@ -36,7 +37,7 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
   const [resetAdminPwSuccess, setResetAdminPwSuccess] = useState('')
   const resetAdminPwTimerRef = useRef(null)
 
-  useEffect(() => () => { clearTimeout(adminFormTimerRef.current); clearTimeout(resetAdminPwTimerRef.current) }, [])
+  useEffect(() => () => { clearTimeout(adminFormTimerRef.current); clearTimeout(resetAdminPwTimerRef.current); clearTimeout(copyAdminPwCopiedTimerRef.current) }, [])
   useEffect(() => {
     if (!editAdminModal) return
     const handler = (e) => { if (e.key === 'Escape') { setEditAdminModal(null); setEditAdminError('') } }
@@ -341,7 +342,8 @@ export default function AdminManagementTab({ language, loggedInAdmin, onRequestC
                 onClick={() => {
                   navigator.clipboard.writeText(copyAdminPwModal.password).catch(() => {})
                   setCopyAdminPwCopied(true)
-                  setTimeout(() => setCopyAdminPwCopied(false), 2000)
+                  clearTimeout(copyAdminPwCopiedTimerRef.current)
+                  copyAdminPwCopiedTimerRef.current = setTimeout(() => setCopyAdminPwCopied(false), 2000)
                 }}
                 className="px-3 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-lg hover:opacity-90 transition flex-shrink-0"
               >

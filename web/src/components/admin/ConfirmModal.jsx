@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { t } from '../../lib/languages'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 export default function ConfirmModal({ confirmModal, onClose, language }) {
   const [loading, setLoading] = useState(false)
+  const trapRef = useFocusTrap(!!confirmModal)
 
   useEffect(() => {
     if (!confirmModal) return
@@ -14,7 +16,7 @@ export default function ConfirmModal({ confirmModal, onClose, language }) {
   if (!confirmModal) return null
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="confirm-modal-label" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="confirm-modal-label" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
         <p id="confirm-modal-label" className="text-sm text-gray-800 dark:text-gray-100 font-medium mb-5">
           {loading ? t('processing_please_wait', language) : confirmModal.label}
         </p>

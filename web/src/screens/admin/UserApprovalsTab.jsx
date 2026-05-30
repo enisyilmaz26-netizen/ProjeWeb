@@ -53,6 +53,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
 
   const [copyPwModal, setCopyPwModal] = useState(null)
   const [copyPwCopied, setCopyPwCopied] = useState(false)
+  const copyPwCopiedTimerRef = useRef(null)
 
   const [csvImporting, setCsvImporting] = useState(false)
   const [csvResult, setCsvResult] = useState(null)
@@ -111,7 +112,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [resetPwSuccess, setResetPwSuccess] = useState('')
   const resetPwTimerRef = useRef(null)
 
-  useEffect(() => () => { clearTimeout(resetPwTimerRef.current); clearTimeout(addUserTimerRef.current); clearTimeout(opErrorTimerRef.current) }, [])
+  useEffect(() => () => { clearTimeout(resetPwTimerRef.current); clearTimeout(addUserTimerRef.current); clearTimeout(opErrorTimerRef.current); clearTimeout(copyPwCopiedTimerRef.current) }, [])
 
   const pendingUsers = useMemo(() => {
     let base = isGlobal ? users.filter(u => !u.is_approved) : users.filter(u => !u.is_approved && String(u.city_id) === String(adminCityId))
@@ -477,7 +478,8 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
                 onClick={() => {
                   navigator.clipboard.writeText(copyPwModal.password).catch(() => {})
                   setCopyPwCopied(true)
-                  setTimeout(() => setCopyPwCopied(false), 2000)
+                  clearTimeout(copyPwCopiedTimerRef.current)
+                  copyPwCopiedTimerRef.current = setTimeout(() => setCopyPwCopied(false), 2000)
                 }}
                 className="px-3 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-lg hover:opacity-90 transition flex-shrink-0"
               >

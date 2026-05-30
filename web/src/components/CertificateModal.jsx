@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { X, Printer } from 'lucide-react'
 import { t, getLocale } from '../lib/languages'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 function fmtDate(dateStr, language) {
   if (!dateStr) return ''
@@ -168,6 +169,7 @@ export function CertificateCanvas({ template, fullName, workshopName, dateStr, l
 }
 
 export default function CertificateModal({ ws, template, user, language, onClose }) {
+  const trapRef = useFocusTrap()
   const innerRef = useRef(null)
   const scaleRef = useRef(1)
 
@@ -204,7 +206,7 @@ export default function CertificateModal({ ws, template, user, language, onClose
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div role="dialog" aria-modal="true" aria-label={t('tab_certificate', language)} className="relative z-10 w-full max-w-4xl my-auto">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label={t('tab_certificate', language)} className="relative z-10 w-full max-w-4xl my-auto">
         {/* Action bar */}
         <div className="flex justify-between items-center mb-3">
           <button autoFocus onClick={handlePrint}

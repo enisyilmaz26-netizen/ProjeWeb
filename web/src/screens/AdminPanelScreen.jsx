@@ -293,6 +293,7 @@ export default function AdminPanelScreen() {
             key={tab.key}
             role="tab"
             aria-selected={activeTab === tab.key}
+            aria-controls={`admin-tabpanel-${tab.key}`}
             onClick={() => setActiveTab(tab.key)}
             className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition whitespace-nowrap relative ${
               activeTab === tab.key
@@ -311,6 +312,7 @@ export default function AdminPanelScreen() {
       </div>
 
       {/* Tab Content */}
+      <div id={`admin-tabpanel-${activeTab}`} role="tabpanel">
       <Suspense fallback={<TabLoader />}>
         {activeTab === 'appointments' && <AppointmentsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} onGoToMessages={messagesAvailable ? () => setActiveTab('messages') : null} />}
         {activeTab === 'workshops' && <WorkshopsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
@@ -326,6 +328,7 @@ export default function AdminPanelScreen() {
         {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
         {activeTab === 'email' && isGlobal && <EmailTab language={language} />}
       </Suspense>
+      </div>
 
       <ConfirmModal confirmModal={confirmModal} onClose={() => setConfirmModal(null)} language={language} />
     </div>

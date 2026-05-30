@@ -99,6 +99,7 @@ export default function MainAppContainer() {
               key={tab.key}
               role="tab"
               aria-selected={activeTab === tab.key}
+              aria-controls={`tabpanel-${tab.key}`}
               aria-label={tab.label}
               onClick={() => setActiveTab(tab.key)}
               className={`flex-1 flex items-center justify-center py-2.5 text-xs font-medium transition active:opacity-70 ${
@@ -149,14 +150,16 @@ export default function MainAppContainer() {
       {/* Screen Content */}
       <main className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto w-full">
-          <Suspense fallback={<TabLoader />}>
-            {activeTab === 'book' && !isAdmin && <UserReservationScreen />}
-            {activeTab === 'workshops' && !isAdmin && <WorkshopsScreen />}
-            {activeTab === 'profile' && !isAdmin && <MyProfileScreen />}
-            {activeTab === 'admin' && isAdmin && <AdminPanelScreen />}
-            {activeTab === 'notifications' && <NotificationCenterScreen />}
-            {activeTab === 'messages' && !isAdmin && messagesAvailable && <MessagesScreen />}
-          </Suspense>
+          <div id={`tabpanel-${activeTab}`} role="tabpanel">
+            <Suspense fallback={<TabLoader />}>
+              {activeTab === 'book' && !isAdmin && <UserReservationScreen />}
+              {activeTab === 'workshops' && !isAdmin && <WorkshopsScreen />}
+              {activeTab === 'profile' && !isAdmin && <MyProfileScreen />}
+              {activeTab === 'admin' && isAdmin && <AdminPanelScreen />}
+              {activeTab === 'notifications' && <NotificationCenterScreen />}
+              {activeTab === 'messages' && !isAdmin && messagesAvailable && <MessagesScreen />}
+            </Suspense>
+          </div>
         </div>
       </main>
 

@@ -156,7 +156,10 @@ export default function MessagesScreen() {
         {loadingMsgs ? (
           <div className="text-center text-gray-400 text-sm py-8">{t('loading', language)}</div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-gray-400 text-sm py-8">{t('msg_no_messages', language)}</div>
+          <div className="flex flex-col items-center justify-center py-16 gap-2">
+            <MessageSquare className="w-10 h-10 text-gray-300 dark:text-gray-600" aria-hidden="true" />
+            <p className="text-gray-400 dark:text-gray-500 text-sm">{t('msg_no_messages', language)}</p>
+          </div>
         ) : (
           messages.map(msg => {
             const isMine = msg.authored_by === 'sender'
