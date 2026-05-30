@@ -1157,11 +1157,13 @@ export function DataProvider({ children }) {
 
   const resetAdminPasswordByGlobal = async (adminId, _email, newPassword) => {
     const target = admins.find(a => a.id === adminId)
-    const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
-    if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-    const { data: updated, error } = await supabase.from('admins').update({ password_hash: hashed }).eq('id', adminId).select('id')
+    const { data: ok, error } = await supabase.rpc('reset_admin_password_by_global', {
+      p_admin_id: adminId,
+      p_new_password: newPassword,
+    })
     if (error) return { success: false, error: error.message }
-    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    if (!ok) return { success: false, error: 'err_generic' }
+    setAdmins(prev => prev.map(a => a.id === adminId ? { ...a, must_change_password: true } : a))
     if (target) logAudit('RESET_ADMIN_PASSWORD', 'admin', adminId, `${target.name} (${target.email})`)
     if (target?.email) {
       sendAutoEmail(
