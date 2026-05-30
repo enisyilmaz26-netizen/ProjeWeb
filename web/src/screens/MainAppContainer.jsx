@@ -71,21 +71,21 @@ export default function MainAppContainer() {
             <button
               onClick={toggleLanguage}
               aria-label={t('toggle_lang', language)}
-              className="text-white border border-white/40 rounded-lg px-2 py-0.5 text-xs font-medium hover:bg-white/20 transition"
+              className="text-white border border-white/40 rounded-lg px-2 py-0.5 text-xs font-medium hover:bg-white/20 transition active:scale-[0.98]"
             >
               {language === 'TR' ? 'EN' : 'TR'}
             </button>
             <button
               onClick={toggleDarkMode}
               aria-label={t('toggle_dark', language)}
-              className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition"
+              className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition active:scale-[0.98]"
             >
               {isDarkMode ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
             </button>
             <button
               onClick={logout}
               aria-label={t('btn_logout', language)}
-              className="text-white border border-white/40 rounded-lg px-2 py-1 text-xs font-medium hover:bg-white/20 transition"
+              className="text-white border border-white/40 rounded-lg px-2 py-1 text-xs font-medium hover:bg-white/20 transition active:scale-[0.98]"
             >
               {t('btn_logout', language)}
             </button>
@@ -101,7 +101,7 @@ export default function MainAppContainer() {
               aria-selected={activeTab === tab.key}
               aria-label={tab.label}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center py-2.5 text-xs font-medium transition ${
+              className={`flex-1 flex items-center justify-center py-2.5 text-xs font-medium transition active:opacity-70 ${
                 activeTab === tab.key
                   ? 'text-white border-b-2 border-white'
                   : 'text-white/60 hover:text-white/90'

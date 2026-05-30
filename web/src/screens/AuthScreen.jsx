@@ -120,7 +120,7 @@ export default function AuthScreen({ onBack }) {
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#1565C0] dark:bg-[#061A3A] shadow">
         {onBack ? (
-          <button onClick={onBack} className="text-white/80 hover:text-white flex items-center gap-1 text-xs font-medium transition">
+          <button onClick={onBack} className="text-white/80 hover:text-white flex items-center gap-1 text-xs font-medium transition active:opacity-70">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
             {t('btn_back', language)}
           </button>
@@ -132,14 +132,14 @@ export default function AuthScreen({ onBack }) {
         <div className="flex items-center gap-2">
           <button
             onClick={toggleLanguage}
-            className="text-white border border-white/40 rounded-lg px-2 py-0.5 text-xs font-medium hover:bg-white/20 transition"
+            className="text-white border border-white/40 rounded-lg px-2 py-0.5 text-xs font-medium hover:bg-white/20 transition active:scale-[0.98]"
           >
             {language === 'TR' ? 'EN' : 'TR'}
           </button>
           <button
             onClick={toggleDarkMode}
             aria-label={t('toggle_dark', language)}
-            className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition"
+            className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition active:scale-[0.98]"
           >
             {isDarkMode ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
           </button>
@@ -563,13 +563,13 @@ export default function AuthScreen({ onBack }) {
               <button
                 autoFocus
                 onClick={() => { setRegForm(p => ({ ...p, kvkk: true })); setShowKvkkModal(false) }}
-                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
+                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition active:scale-[0.98]"
               >
                 {t('kvkk_agree_btn', language)}
               </button>
               <button
                 onClick={() => setShowKvkkModal(false)}
-                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition active:scale-[0.98]"
               >
                 {t('btn_close', language)}
               </button>
@@ -593,7 +593,7 @@ export default function AuthScreen({ onBack }) {
             <button
               autoFocus
               onClick={() => { setShowRegSuccessModal(false); setActiveTab('login') }}
-              className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
+              className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition active:scale-[0.98]"
             >
               {t('btn_ok', language)}
             </button>

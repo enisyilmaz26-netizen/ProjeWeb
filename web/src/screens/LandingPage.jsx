@@ -108,7 +108,7 @@ export default function LandingPage({ onLoginClick }) {
               <button
                 key={l.href}
                 onClick={() => scrollTo(l.href.slice(1))}
-                className="text-sm font-medium text-gray-700 dark:text-gray-300 transition hover:text-[#1565C0] dark:hover:text-[#7DD4FC]"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 transition hover:text-[#1565C0] dark:hover:text-[#7DD4FC] active:opacity-70"
               >
                 {l.label[lang]}
               </button>
@@ -117,15 +117,15 @@ export default function LandingPage({ onLoginClick }) {
 
           {/* Controls */}
           <div className="flex items-center gap-2">
-            <button onClick={toggleLanguage} className="text-xs font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1 transition hover:border-[#1565C0] hover:text-[#1565C0]">
+            <button onClick={toggleLanguage} className="text-xs font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1 transition hover:border-[#1565C0] hover:text-[#1565C0] active:scale-[0.98]">
               {lang === 'TR' ? 'EN' : 'TR'}
             </button>
-            <button onClick={toggleDarkMode} aria-label={isDarkMode ? t('toggle_light', lang) : t('toggle_dark', lang)} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <button onClick={toggleDarkMode} aria-label={isDarkMode ? t('toggle_light', lang) : t('toggle_dark', lang)} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition active:scale-[0.98]">
               {isDarkMode ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
             </button>
             <button
               onClick={onLoginClick}
-              className="ml-1 px-4 py-2 rounded-xl text-sm font-semibold bg-[#1565C0] hover:bg-[#0D47A1] text-white transition shadow-sm"
+              className="ml-1 px-4 py-2 rounded-xl text-sm font-semibold bg-[#1565C0] hover:bg-[#0D47A1] text-white transition shadow-sm active:scale-[0.98]"
             >
               {lang === 'TR' ? 'Giriş Yap' : 'Sign In'}
             </button>
@@ -158,7 +158,7 @@ export default function LandingPage({ onLoginClick }) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/30 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-20 text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white leading-[1.35] sm:leading-[1.3] mb-6">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight mb-6">
             {lang === 'TR'
               ? <>Öğretmenler<br /><span className="text-[#1565C0] dark:text-[#7DD4FC]">Dijital Dönüşümün</span><br />Öncüsüdür</>
               : <>Teachers Are the<br /><span className="text-[#1565C0] dark:text-[#7DD4FC]">Pioneers of</span><br />Digital Transformation</>
@@ -201,12 +201,6 @@ export default function LandingPage({ onLoginClick }) {
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-gray-400 dark:text-white/50 animate-bounce" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-            <path d="M12 5v14M5 12l7 7 7-7"/>
-          </svg>
-        </div>
       </section>
 
       {/* ── PROJE HAKKINDA ── */}
@@ -218,7 +212,7 @@ export default function LandingPage({ onLoginClick }) {
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
               {lang === 'TR' ? 'Proje Hakkında' : 'About the Project'}
             </span>
-            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
+            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] text-gray-900 dark:text-white">
               {lang === 'TR' ? 'Neden Öğretmen Öğrenme Laboratuvarları?' : 'Why Teacher Learning Labs?'}
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -293,7 +287,7 @@ export default function LandingPage({ onLoginClick }) {
               href="https://ogedep.eba.gov.tr/ogretmen-ogrenme-laboratuvarlari/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-7 py-3 bg-[#1565C0] hover:bg-[#0D47A1] dark:bg-[#7DD4FC] dark:hover:bg-[#4DC8FA] text-white dark:text-[#060E26] font-semibold rounded-2xl text-sm transition shadow-lg hover:shadow-blue-200/40 active:scale-95"
+              className="inline-flex items-center gap-2 px-7 py-3 bg-[#1565C0] hover:bg-[#0D47A1] dark:bg-[#7DD4FC] dark:hover:bg-[#4DC8FA] text-white dark:text-[#060E26] font-semibold rounded-2xl text-sm transition shadow-lg hover:shadow-blue-200/40 active:scale-[0.98]"
             >
               {lang === 'TR' ? 'Daha Fazla Detay' : 'Learn More'}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0" aria-hidden="true">
@@ -330,7 +324,7 @@ export default function LandingPage({ onLoginClick }) {
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
               {lang === 'TR' ? 'Kapsam' : 'Coverage'}
             </span>
-            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
+            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] text-gray-900 dark:text-white">
               {lang === 'TR' ? 'Türkiye Genelinde 7 İl' : '7 Provinces Across Turkey'}
             </h2>
             <p className="mt-3 text-gray-500 dark:text-gray-400 text-sm max-w-xl mx-auto">
@@ -384,7 +378,7 @@ export default function LandingPage({ onLoginClick }) {
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
               {lang === 'TR' ? 'Eğitim Programı' : 'Training Program'}
             </span>
-            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
+            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] text-gray-900 dark:text-white">
               {lang === 'TR' ? 'Öğretim Tasarımı Atölyeleri' : 'Instructional Design Workshops'}
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
@@ -451,7 +445,7 @@ export default function LandingPage({ onLoginClick }) {
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
               {lang === 'TR' ? 'Nasıl Çalışır?' : 'How It Works'}
             </span>
-            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
+            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] text-gray-900 dark:text-white">
               {lang === 'TR' ? '4 Adımda Stüdyona Ulaş' : 'Reach the Studio in 4 Steps'}
             </h2>
           </div>
