@@ -49,6 +49,7 @@ export default function UserReservationScreen() {
   const [dateError, setDateError] = useState('')
   const [waitlistMsg, setWaitlistMsg] = useState('')
   const [waitlistProcessing, setWaitlistProcessing] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
   const successTimerRef = useRef(null)
   useEffect(() => () => clearTimeout(successTimerRef.current), [])
   useEffect(() => {
@@ -57,7 +58,6 @@ export default function UserReservationScreen() {
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [showConfirm, submitting])
-  const [showConfirm, setShowConfirm] = useState(false)
 
   // User can only see their own city
   const userCity = useMemo(() => {
