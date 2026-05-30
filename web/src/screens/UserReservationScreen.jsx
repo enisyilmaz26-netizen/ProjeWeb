@@ -357,7 +357,7 @@ export default function UserReservationScreen() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {waitlistMsg && (
-                <div className="col-span-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl text-blue-700 dark:text-blue-300 text-xs">{waitlistMsg}</div>
+                <div role="status" aria-live="polite" className="col-span-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl text-blue-700 dark:text-blue-300 text-xs">{waitlistMsg}</div>
               )}
               {citySlots.map(slot => {
                 const avail = getSlotAvailability(slot)

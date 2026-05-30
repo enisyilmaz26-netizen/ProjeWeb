@@ -418,6 +418,7 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     if (!newUser) return { success: false, error: 'err_generic' }
     setUsers(prev => [...prev, newUser].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
+    logAudit('ADD_USER_BY_ADMIN', 'user', newUser.id, `${newUser.name} ${newUser.surname} (${email})`)
 
     if (email) {
       const fullName = `${formData.name || ''} ${formData.surname || ''}`.trim()
@@ -927,6 +928,8 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('city_time_slots').select('*')
     if (all) setTimeSlots(all)
+    const cityName = cities.find(c => String(c.id) === String(cityId))?.name || cityId
+    logAudit('ADD_TIME_SLOT', 'city_time_slot', null, `${timeRange}${location ? ` — ${location}` : ''} (${cityName})`)
     return { success: true }
   }
 
@@ -944,6 +947,10 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setTimeSlots(prev => prev.filter(s => s.id !== id))
+    if (slot) {
+      const cityName = cities.find(c => String(c.id) === String(slot.city_id))?.name || slot.city_id
+      logAudit('REMOVE_TIME_SLOT', 'city_time_slot', id, `${slot.time_range}${slot.location ? ` — ${slot.location}` : ''} (${cityName})`)
+    }
     return { success: true }
   }
 
@@ -953,6 +960,7 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('laboratories').select('*')
     if (all) setLabs(all)
+    logAudit('ADD_LAB', 'laboratory', null, labData.name || '')
     return { success: true }
   }
 
@@ -968,6 +976,8 @@ export function AppProvider({ children }) {
       return { success: false, error: 'err_update_failed' }
     }
     setLabs(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l))
+    const lab = labs.find(l => l.id === id)
+    if (lab) logAudit('UPDATE_LAB', 'laboratory', id, lab.name)
     return { success: true }
   }
 
@@ -978,6 +988,7 @@ export function AppProvider({ children }) {
     )
     if (hasActive) return { success: false, error: 'err_lab_has_appointments' }
 
+    const lab = labs.find(l => l.id === id)
     const { error } = await supabase.from('laboratories').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('laboratories').select('*')
@@ -987,6 +998,7 @@ export function AppProvider({ children }) {
     } else {
       setLabs(prev => prev.filter(l => l.id !== id))
     }
+    if (lab) logAudit('DELETE_LAB', 'laboratory', id, lab.name)
     return { success: true }
   }
 
@@ -1009,6 +1021,7 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('workshops').select('*')
     if (all) setWorkshops(all)
+    logAudit('ADD_WORKSHOP', 'workshop', null, data.name || '')
     return { success: true }
   }
 
@@ -1019,10 +1032,13 @@ export function AppProvider({ children }) {
     const { data: all } = await supabase.from('workshops').select('*')
     if (all) setWorkshops(all)
     else setWorkshops(prev => prev.map(w => w.id === id ? { ...w, ...updates } : w))
+    const ws = workshops.find(w => w.id === id)
+    if (ws) logAudit('UPDATE_WORKSHOP', 'workshop', id, ws.name)
     return { success: true }
   }
 
   const deleteWorkshop = async (id) => {
+    const ws = workshops.find(w => w.id === id)
     const { error } = await supabase.from('workshops').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
     // Reload to verify deletion — RLS can silently block DELETE (no error, 0 rows affected)
@@ -1033,6 +1049,7 @@ export function AppProvider({ children }) {
     } else {
       setWorkshops(prev => prev.filter(w => w.id !== id))
     }
+    if (ws) logAudit('DELETE_WORKSHOP', 'workshop', id, ws.name)
     return { success: true }
   }
 
@@ -1046,14 +1063,21 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     if (!data) return { success: false, error: 'err_generic' }
     setClosedDays(prev => [...prev, data].sort((a, b) => a.date.localeCompare(b.date)))
+    const cityName = cityId ? (cities.find(c => String(c.id) === String(cityId))?.name || cityId) : t('filter_all_provinces', language)
+    logAudit('ADD_CLOSED_DAY', 'closed_day', data.id, `${date} — ${cityName}${reason ? ` (${reason})` : ''}`)
     return { success: true }
   }
 
   const removeClosedDay = async (id) => {
+    const day = closedDays.find(d => d.id === id)
     const { data: deleted, error } = await supabase.from('closed_days').delete().eq('id', id).select('id')
     if (error) return { success: false, error: error.message }
     if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
     setClosedDays(prev => prev.filter(d => d.id !== id))
+    if (day) {
+      const cityName = day.city_id ? (cities.find(c => String(c.id) === String(day.city_id))?.name || day.city_id) : t('filter_all_provinces', language)
+      logAudit('REMOVE_CLOSED_DAY', 'closed_day', id, `${day.date} — ${cityName}`)
+    }
     return { success: true }
   }
 
@@ -1224,6 +1248,7 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
     if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, ...updates } : a))
+    logAudit('RESCHEDULE_APPOINTMENT', 'appointment', appointmentId, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${newDate} ${newTimeSlot}`)
     notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot)
     if (appt.status === 'APPROVED') {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
@@ -1288,6 +1313,8 @@ export function AppProvider({ children }) {
     if (!data || data.length === 0) return { success: false, error: 'err_update_failed' }
     setAdmins(prev => prev.map(a => a.id === adminId ? { ...a, ...updates } : a))
     if (loggedInAdmin?.id === adminId) setLoggedInAdmin(prev => ({ ...prev, ...updates }))
+    const target = admins.find(a => a.id === adminId)
+    if (target) logAudit('EDIT_ADMIN', 'admin', adminId, `${target.name} (${target.email})`)
     return { success: true }
   }
 
