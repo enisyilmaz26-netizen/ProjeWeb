@@ -89,13 +89,13 @@ CREATE POLICY "workshops_delete" ON public.workshops
   FOR DELETE TO anon USING (true);
 
 -- ── 5. DİĞER TABLOLAR (labs, time_slots, closed_days, cities) ──────────────
-ALTER TABLE public.labs ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "labs_all" ON public.labs;
-CREATE POLICY "labs_all" ON public.labs FOR ALL TO anon USING (true) WITH CHECK (true);
+ALTER TABLE public.laboratories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "laboratories_all" ON public.laboratories;
+CREATE POLICY "laboratories_all" ON public.laboratories FOR ALL TO anon USING (true) WITH CHECK (true);
 
-ALTER TABLE public.time_slots ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "time_slots_all" ON public.time_slots;
-CREATE POLICY "time_slots_all" ON public.time_slots FOR ALL TO anon USING (true) WITH CHECK (true);
+ALTER TABLE public.city_time_slots ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "city_time_slots_all" ON public.city_time_slots;
+CREATE POLICY "city_time_slots_all" ON public.city_time_slots FOR ALL TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE public.closed_days ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "closed_days_all" ON public.closed_days;
@@ -104,6 +104,22 @@ CREATE POLICY "closed_days_all" ON public.closed_days FOR ALL TO anon USING (tru
 ALTER TABLE public.cities ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "cities_select" ON public.cities;
 CREATE POLICY "cities_select" ON public.cities FOR SELECT TO anon USING (true);
+
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "conversations_all" ON public.conversations;
+CREATE POLICY "conversations_all" ON public.conversations FOR ALL TO anon USING (true) WITH CHECK (true);
+
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "messages_all" ON public.messages;
+CREATE POLICY "messages_all" ON public.messages FOR ALL TO anon USING (true) WITH CHECK (true);
+
+ALTER TABLE public.workshop_registrations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "workshop_registrations_all" ON public.workshop_registrations;
+CREATE POLICY "workshop_registrations_all" ON public.workshop_registrations FOR ALL TO anon USING (true) WITH CHECK (true);
+
+ALTER TABLE public.certificate_templates ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "certificate_templates_all" ON public.certificate_templates;
+CREATE POLICY "certificate_templates_all" ON public.certificate_templates FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- ── 6. PASSWORD_HASH kolonunu gizle ─────────────────────────────────────────
 -- Anon rolünün password_hash kolonuna doğrudan erişimini kaldır.
