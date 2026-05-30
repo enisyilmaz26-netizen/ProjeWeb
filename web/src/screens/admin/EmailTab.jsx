@@ -33,24 +33,25 @@ function RecipientPanel({ title, items, selected, onToggle, onSelectAll, onDesel
             </span>
           )}
         </span>
-        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" aria-hidden="true" /> : <ChevronDown className="w-4 h-4 text-gray-400" aria-hidden="true" />}
       </button>
 
       {expanded && (
         <div className="p-3 space-y-2">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
             <input
               type="text"
+              aria-label={t('email_search_ph', language)}
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={t('email_search_ph', language)}
               className={`${INPUT_BASE} w-full pl-8 text-xs py-1.5`}
             />
             {search && (
-              <button type="button" onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
-                <X className="w-3 h-3 text-gray-400" />
+              <button type="button" onClick={() => setSearch('')} aria-label={t('btn_close', language)} className="absolute right-2 top-1/2 -translate-y-1/2">
+                <X className="w-3 h-3 text-gray-400" aria-hidden="true" />
               </button>
             )}
           </div>
@@ -86,8 +87,8 @@ function RecipientPanel({ title, items, selected, onToggle, onSelectAll, onDesel
                 <label key={r.email} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer">
                   <span className="flex-shrink-0 text-[#1565C0] dark:text-[#7DD4FC]">
                     {checked
-                      ? <CheckSquare className="w-4 h-4" />
-                      : <Square className="w-4 h-4 text-gray-300 dark:text-gray-600" />}
+                      ? <CheckSquare className="w-4 h-4" aria-hidden="true" />
+                      : <Square className="w-4 h-4 text-gray-300 dark:text-gray-600" aria-hidden="true" />}
                   </span>
                   <input type="checkbox" className="sr-only" checked={checked} onChange={() => onToggle(r.email)} />
                   <div className="min-w-0">
@@ -199,6 +200,8 @@ export default function EmailTab({ language }) {
       setMsg(type, { ok: false, text: t('email_sent_partial', language).replace('{sent}', result.sent).replace('{total}', result.total).replace('{failed}', result.failed) })
     } else {
       setMsg(type, { ok: true, text: t('email_sent_ok', language).replace('{n}', result.sent) })
+      if (type === 'users') setSelectedUsers(new Set())
+      else setSelectedAdmins(new Set())
     }
   }
 
@@ -244,7 +247,7 @@ export default function EmailTab({ language }) {
             language={language}
           />
           {msgUsers && (
-            <p className={`text-xs px-1 ${msgUsers.ok ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+            <p role="status" aria-live="polite" className={`text-xs px-1 ${msgUsers.ok ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
               {msgUsers.text}
             </p>
           )}
@@ -254,7 +257,7 @@ export default function EmailTab({ language }) {
             disabled={sendingUsers || selectedUsers.size === 0}
             className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
           >
-            <Mail className="w-4 h-4" />
+            <Mail className="w-4 h-4" aria-hidden="true" />
             {sendingUsers
               ? t('email_sending', language)
               : `${t('email_send_users', language)}${selectedUsers.size > 0 ? ` (${selectedUsers.size})` : ''}`}
@@ -273,7 +276,7 @@ export default function EmailTab({ language }) {
             language={language}
           />
           {msgAdmins && (
-            <p className={`text-xs px-1 ${msgAdmins.ok ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+            <p role="status" aria-live="polite" className={`text-xs px-1 ${msgAdmins.ok ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
               {msgAdmins.text}
             </p>
           )}
@@ -283,7 +286,7 @@ export default function EmailTab({ language }) {
             disabled={sendingAdmins || selectedAdmins.size === 0}
             className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
           >
-            <Mail className="w-4 h-4" />
+            <Mail className="w-4 h-4" aria-hidden="true" />
             {sendingAdmins
               ? t('email_sending', language)
               : `${t('email_send_admins', language)}${selectedAdmins.size > 0 ? ` (${selectedAdmins.size})` : ''}`}

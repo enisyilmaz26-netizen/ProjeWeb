@@ -21,22 +21,23 @@ export default function UserCard({ user, language, processingId, onApprove, onRe
       </div>
       <div className="flex gap-2">
         {showApprove && (
-          <button onClick={() => onApprove(user.id)} disabled={processingId === user.id} className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
+          <button onClick={() => onApprove(user.id)} disabled={processingId === user.id} aria-label={t('btn_approve_member', language)} className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
             {processingId === user.id ? '...' : t('btn_approve_member', language)}
           </button>
         )}
         {showRevoke && (
-          <button onClick={() => onRevoke(user.id)} disabled={processingId === user.id} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
+          <button onClick={() => onRevoke(user.id)} disabled={processingId === user.id} aria-label={t('btn_revoke_member', language)} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
             {processingId === user.id ? '...' : t('btn_revoke_member', language)}
           </button>
         )}
         {showDelete && (
-          <button onClick={() => onRevoke(user.id)} disabled={processingId === user.id} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
+          <button onClick={() => onRevoke(user.id)} disabled={processingId === user.id} aria-label={t('btn_reject_member', language)} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60">
             {processingId === user.id ? '...' : t('btn_reject_member', language)}
           </button>
         )}
         <button
           onClick={onResetPassword}
+          aria-label={t('btn_reset_password', language)}
           className="flex-1 py-2 border border-[#1565C0]/50 dark:border-[#7DD4FC]/50 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 dark:hover:bg-[#7DD4FC]/5 transition"
         >
           {t('btn_reset_password', language)}

@@ -31,16 +31,16 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
       return
     }
     if (!TIME_RANGE_RE.test(newSlotTime.trim())) {
-      setSlotError(language === 'TR' ? 'Geçersiz format. Örn: 09:00 - 17:00' : 'Invalid format. E.g.: 09:00 - 17:00')
+      setSlotError(t('slot_invalid_format', language))
       return
     }
     const [slotStart, slotEnd] = newSlotTime.trim().split(/\s*[-–]\s*/)
     if (slotStart >= slotEnd) {
-      setSlotError(language === 'TR' ? 'Başlangıç saati bitiş saatinden önce olmalıdır.' : 'Start time must be before end time.')
+      setSlotError(t('slot_start_before_end', language))
       return
     }
     if (visibleSlots.some(s => s.time_range === newSlotTime.trim() && String(s.city_id) === String(cityId))) {
-      setSlotError(language === 'TR' ? 'Bu saat dilimi zaten mevcut.' : 'This time slot already exists.')
+      setSlotError(t('slot_already_exists', language))
       return
     }
     setAddingSlot(true)
@@ -82,11 +82,11 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
             <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{t('slot_add_new', language)}</h4>
             <div className="flex flex-col gap-2">
               <div className="flex flex-col sm:flex-row gap-2">
-                <select className={`${inputClass} flex-1`} value={newSlotCityId} onChange={e => { setNewSlotCityId(e.target.value); setNewSlotLocation('') }}>
+                <select aria-label={t('select_province', language)} className={`${inputClass} flex-1`} value={newSlotCityId} onChange={e => { setNewSlotCityId(e.target.value); setNewSlotLocation('') }}>
                   <option value="">{t('select_province', language)}</option>
                   {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <input type="text" placeholder={t('slot_placeholder', language)} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
+                <input type="text" aria-label={t('slot_placeholder', language)} placeholder={t('slot_placeholder', language)} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
                 <button onClick={handleAddSlot} disabled={addingSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60">
                   {addingSlot ? '...' : `+ ${t('btn_add', language)}`}
                 </button>
@@ -94,14 +94,15 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
               {newSlotCityId && (
                 <input
                   type="text"
-                  placeholder={language === 'TR' ? 'Konum (isteğe bağlı), örn: Gölbaşı BİLSEM' : 'Location (optional), e.g.: Gölbaşı BİLSEM'}
+                  aria-label={t('location_placeholder', language)}
+                  placeholder={t('location_placeholder', language)}
                   className={`${inputClass} w-full`}
                   value={newSlotLocation}
                   onChange={e => setNewSlotLocation(e.target.value)}
                 />
               )}
             </div>
-            {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" /></button></p>}
+            {slotError && <p role="status" aria-live="polite" className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} aria-label={t('btn_close', language)} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" aria-hidden="true" /></button></p>}
           </div>
 
           {cities.map(city => {
@@ -129,7 +130,7 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
                     ))}
                     {citySlots.filter(s => !s.location).length > 0 && (
                       <div>
-                        <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Genel' : 'General'}</h5>
+                        <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{t('lbl_general', language)}</h5>
                         <div className="space-y-2">
                           {citySlots.filter(s => !s.location).map(slot => (
                             <SlotItem key={slot.id} slot={slot} processingId={processingId} onRemove={handleRemoveSlot} language={language} />
@@ -168,7 +169,7 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
                   language={language}
                 />
               ))}
-              {slotError && <p className="text-red-500 text-xs mt-1">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" /></button></p>}
+              {slotError && <p role="status" aria-live="polite" className="text-red-500 text-xs mt-1">{slotError} <button onClick={() => setSlotError('')} aria-label={t('btn_close', language)} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" aria-hidden="true" /></button></p>}
             </div>
           )
         }
@@ -178,12 +179,12 @@ export default function TimeSlotsTab({ language, isGlobal, adminCityId }) {
             <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4">
               <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{t('slot_add_new', language)}</h4>
               <div className="flex flex-col sm:flex-row gap-2">
-                <input type="text" placeholder={t('slot_placeholder', language)} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
+                <input type="text" aria-label={t('slot_placeholder', language)} placeholder={t('slot_placeholder', language)} className={`${inputClass} flex-1`} value={newSlotTime} onChange={e => setNewSlotTime(e.target.value)} />
                 <button onClick={handleAddSlot} disabled={addingSlot} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60">
                   {addingSlot ? '...' : `+ ${t('btn_add', language)}`}
                 </button>
               </div>
-              {slotError && <p className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" /></button></p>}
+              {slotError && <p role="status" aria-live="polite" className="text-red-500 text-xs mt-2">{slotError} <button onClick={() => setSlotError('')} aria-label={t('btn_close', language)} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" aria-hidden="true" /></button></p>}
             </div>
             <div className="space-y-2">
               {visibleSlots.length === 0 ? (

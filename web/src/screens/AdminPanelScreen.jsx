@@ -71,7 +71,7 @@ export default function AdminPanelScreen() {
     setAdminProfileError('')
     const emailTrim = adminProfileForm.email.trim()
     if (!emailTrim || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
-      setAdminProfileError(language === 'TR' ? 'Geçerli bir e-posta adresi girin.' : 'Enter a valid email address.')
+      setAdminProfileError(t('err_invalid_email', language))
       return
     }
     setAdminProfileLoading(true)
@@ -79,7 +79,7 @@ export default function AdminPanelScreen() {
       const result = await updateAdmin(loggedInAdmin.id, { name: adminProfileForm.name.trim(), phone: adminProfileForm.phone.trim(), email: emailTrim })
       if (result.success) {
         setShowAdminProfileEdit(false)
-        setAdminProfileSuccess(language === 'TR' ? 'Profil güncellendi.' : 'Profile updated.')
+        setAdminProfileSuccess(t('profile_updated', language))
         clearTimeout(profileSuccessTimer.current)
         profileSuccessTimer.current = setTimeout(() => setAdminProfileSuccess(''), 3000)
       } else {
@@ -150,7 +150,7 @@ export default function AdminPanelScreen() {
     { key: 'notifications', label: t('tab_send_notif', language) },
     { key: 'stats', label: t('tab_stats', language) },
     ...(messagesAvailable ? [{ key: 'messages', label: t('tab_messages', language), unread: adminCityConvUnread }] : []),
-    { key: 'certificates', label: language === 'TR' ? 'Sertifika' : 'Certificate' },
+    { key: 'certificates', label: t('tab_certificate', language) },
     ...(isGlobal ? [{ key: 'admins', label: t('tab_admins', language) }] : []),
     ...(isGlobal ? [{ key: 'audit', label: t('tab_audit', language) }] : []),
     ...(isGlobal ? [{ key: 'email', label: t('tab_email', language) }] : []),
@@ -159,25 +159,25 @@ export default function AdminPanelScreen() {
   return (
     <div className="px-4 py-4">
       {adminPwSuccess && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between">
+        <div role="status" aria-live="polite" className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between">
           <span>{adminPwSuccess}</span>
-          <button onClick={() => setAdminPwSuccess('')} className="ml-2 text-green-500"><X className="w-4 h-4" /></button>
+          <button type="button" onClick={() => setAdminPwSuccess('')} aria-label={t('btn_close', language)} className="ml-2 text-green-500"><X className="w-4 h-4" aria-hidden="true" /></button>
         </div>
       )}
 
       {/* Admin header */}
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4">
-        {adminProfileSuccess && <div className="mb-3 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 text-xs">{adminProfileSuccess}</div>}
-        {avatarError && <div className="mb-3 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs">{avatarError}</div>}
+        {adminProfileSuccess && <div role="status" aria-live="polite" className="mb-3 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 text-xs">{adminProfileSuccess}</div>}
+        {avatarError && <div role="status" aria-live="polite" className="mb-3 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs flex items-center justify-between"><span>{avatarError}</span><button type="button" onClick={() => setAvatarError('')} aria-label={t('btn_close', language)} className="ml-2 text-red-400 opacity-60 hover:opacity-100"><X className="w-3 h-3" aria-hidden="true" /></button></div>}
         <div className="flex items-center gap-3">
           <div className="relative flex-shrink-0">
             <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center overflow-hidden">
               {loggedInAdmin?.avatar_url
-                ? <img src={loggedInAdmin.avatar_url} alt={`${loggedInAdmin.name} profil fotoğrafı`} className="w-full h-full object-cover" />
-                : <Settings className="w-5 h-5 text-[#1565C0] dark:text-[#7DD4FC]" />}
+                ? <img src={loggedInAdmin.avatar_url} alt={`${loggedInAdmin.name} ${t('alt_profile_photo', language)}`} className="w-full h-full object-cover" />
+                : <Settings className="w-5 h-5 text-[#1565C0] dark:text-[#7DD4FC]" aria-hidden="true" />}
             </div>
             <label className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#1565C0] dark:bg-[#7DD4FC] rounded-full flex items-center justify-center cursor-pointer shadow hover:opacity-90 transition">
-              {avatarUploading ? <span className="text-white dark:text-[#060E26] text-[8px]">...</span> : <Pencil className="w-2.5 h-2.5 text-white dark:text-[#060E26]" />}
+              {avatarUploading ? <span className="text-white dark:text-[#060E26] text-[8px]">...</span> : <Pencil className="w-2.5 h-2.5 text-white dark:text-[#060E26]" aria-hidden="true" />}
               <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" disabled={avatarUploading} onChange={async (e) => {
                 const file = e.target.files[0]; if (!file) return; e.target.value = ''
                 setAvatarError(''); setAvatarUploading(true)
@@ -206,38 +206,38 @@ export default function AdminPanelScreen() {
               onClick={() => { setShowAdminProfileEdit(p => !p); setAdminProfileForm({ name: loggedInAdmin?.name || '', phone: loggedInAdmin?.phone || '', email: loggedInAdmin?.email || '' }); setAdminProfileError('') }}
               className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
             >
-              <Pencil className="w-3.5 h-3.5 inline mr-1" />{language === 'TR' ? 'Düzenle' : 'Edit'}
+              <Pencil className="w-3.5 h-3.5 inline mr-1" aria-hidden="true" />{t('btn_edit', language)}
             </button>
             <button
               onClick={() => { setShowAdminPwChange(p => !p); setAdminPwError(''); setAdminPwForm({ current: '', newPw: '', confirm: '' }) }}
               className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
             >
-              <Lock className="w-3.5 h-3.5 inline mr-1" />{t('change_password', language)}
+              <Lock className="w-3.5 h-3.5 inline mr-1" aria-hidden="true" />{t('change_password', language)}
             </button>
             <button onClick={loadAllData} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1">
-              <RefreshCw className="w-3.5 h-3.5" />{t('btn_refresh', language)}
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />{t('btn_refresh', language)}
             </button>
           </div>
         </div>
 
         {showAdminProfileEdit && (
           <form onSubmit={handleAdminProfileSave} className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
-            <p className="text-[10px] text-gray-400 dark:text-gray-500">{language === 'TR' ? 'Fotoğraf: JPEG, PNG, WebP veya GIF · Maks. 1 MB' : 'Photo: JPEG, PNG, WebP or GIF · Max 1 MB'}</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">{t('photo_hint', language)}</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Ad Soyad' : 'Name'}</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_full_name', language)}</label>
                 <input type="text" className={`w-full ${inputClass}`} value={adminProfileForm.name} onChange={e => setAdminProfileForm(p => ({ ...p, name: e.target.value }))} required />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Telefon' : 'Phone'}</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_phone', language)}</label>
                 <input type="text" className={`w-full ${inputClass}`} value={adminProfileForm.phone} onChange={e => setAdminProfileForm(p => ({ ...p, phone: e.target.value }))} />
               </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'E-posta' : 'Email'}</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_email', language)}</label>
               <input type="email" className={`w-full ${inputClass}`} value={adminProfileForm.email} onChange={e => setAdminProfileForm(p => ({ ...p, email: e.target.value }))} required />
             </div>
-            {adminProfileError && <p className="text-red-500 dark:text-red-400 text-xs">{adminProfileError}</p>}
+            {adminProfileError && <p role="status" aria-live="polite" className="text-red-500 dark:text-red-400 text-xs">{adminProfileError}</p>}
             <div className="flex gap-2">
               <button type="submit" disabled={adminProfileLoading} className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60">
                 {adminProfileLoading ? '...' : t('btn_save', language)}
@@ -254,18 +254,18 @@ export default function AdminPanelScreen() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('current_password', language)} *</label>
-                <PasswordInput className={inputClass} value={adminPwForm.current} onChange={e => setAdminPwForm(p => ({ ...p, current: e.target.value }))} required />
+                <PasswordInput className={inputClass} value={adminPwForm.current} onChange={e => setAdminPwForm(p => ({ ...p, current: e.target.value }))} autoComplete="current-password" required />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('new_password', language)} *</label>
-                <PasswordInput className={inputClass} value={adminPwForm.newPw} onChange={e => setAdminPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={8} />
+                <PasswordInput className={inputClass} value={adminPwForm.newPw} onChange={e => setAdminPwForm(p => ({ ...p, newPw: e.target.value }))} autoComplete="new-password" required minLength={8} />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_confirm_password', language)} *</label>
-                <PasswordInput className={inputClass} value={adminPwForm.confirm} onChange={e => setAdminPwForm(p => ({ ...p, confirm: e.target.value }))} required minLength={8} />
+                <PasswordInput className={inputClass} value={adminPwForm.confirm} onChange={e => setAdminPwForm(p => ({ ...p, confirm: e.target.value }))} autoComplete="new-password" required minLength={8} />
               </div>
             </div>
-            {adminPwError && <p className="text-red-500 dark:text-red-400 text-xs">{adminPwError}</p>}
+            {adminPwError && <p role="status" aria-live="polite" className="text-red-500 dark:text-red-400 text-xs">{adminPwError}</p>}
             <div className="flex gap-2">
               <button type="submit" disabled={adminPwLoading} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60 hover:opacity-90 transition">
                 {adminPwLoading ? '...' : t('btn_update_password', language)}
@@ -321,7 +321,7 @@ export default function AdminPanelScreen() {
         {activeTab === 'stats' && <StatsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
         {activeTab === 'closed_days' && <ClosedDaysTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
         {activeTab === 'messages' && messagesAvailable && <AdminMessagesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
-        {activeTab === 'certificates' && <CertificatesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+        {activeTab === 'certificates' && <CertificatesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
         {activeTab === 'admins' && isGlobal && <AdminManagementTab language={language} loggedInAdmin={loggedInAdmin} onRequestConfirm={onRequestConfirm} />}
         {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
         {activeTab === 'email' && isGlobal && <EmailTab language={language} />}

@@ -46,36 +46,36 @@ export default function ForcePasswordChange() {
     <div className="min-h-screen bg-[#EFF8FF] dark:bg-[#060E26] flex items-center justify-center px-4">
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 w-full max-w-sm">
         <div className="flex items-center gap-2 mb-1">
-          <ShieldAlert className="w-5 h-5 text-orange-500" />
+          <ShieldAlert className="w-5 h-5 text-orange-500" aria-hidden="true" />
           <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-            {language === 'TR' ? 'Şifrenizi Değiştirin' : 'Change Your Password'}
+            {t('force_pw_title', language)}
           </h2>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">
-          {language === 'TR'
-            ? 'Yöneticiniz şifrenizi sıfırladı. Devam edebilmek için yeni bir şifre belirlemeniz gerekiyor.'
-            : 'Your admin has reset your password. You must set a new password to continue.'}
+          {t('force_pw_subtitle', language)}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-              {language === 'TR' ? 'Geçici Şifre (Admin Tarafından Verilen)' : 'Temporary Password (Given by Admin)'}
+              {t('lbl_temp_password', language)}
             </label>
             <PasswordInput
               value={form.current}
               onChange={e => setForm(p => ({ ...p, current: e.target.value }))}
+              autoComplete="current-password"
               required
               className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0]"
             />
           </div>
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-              {language === 'TR' ? 'Yeni Şifre' : 'New Password'}
+              {t('new_password', language)}
             </label>
             <PasswordInput
               value={form.newPw}
               onChange={e => setForm(p => ({ ...p, newPw: e.target.value }))}
+              autoComplete="new-password"
               required
               className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0]"
             />
@@ -87,6 +87,7 @@ export default function ForcePasswordChange() {
             <PasswordInput
               value={form.confirm}
               onChange={e => setForm(p => ({ ...p, confirm: e.target.value }))}
+              autoComplete="new-password"
               required
               className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0]"
             />
@@ -96,21 +97,21 @@ export default function ForcePasswordChange() {
             <ul className="space-y-1">
               {reqs.map(r => (
                 <li key={r.key} className={`flex items-center gap-1.5 text-xs ${r.met ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
-                  {r.met ? <Check className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+                  {r.met ? <Check className="w-3 h-3" aria-hidden="true" /> : <Circle className="w-3 h-3" aria-hidden="true" />}
                   {t(r.key, language)}
                 </li>
               ))}
             </ul>
           )}
 
-          {error && <p className="text-red-500 dark:text-red-400 text-xs">{error}</p>}
+          {error && <p role="status" aria-live="polite" className="text-red-500 dark:text-red-400 text-xs">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl disabled:opacity-60 hover:opacity-90 transition"
           >
-            {loading ? '...' : (language === 'TR' ? 'Şifremi Güncelle' : 'Update Password')}
+            {loading ? '...' : t('btn_update_password', language)}
           </button>
         </form>
 
@@ -118,7 +119,7 @@ export default function ForcePasswordChange() {
           onClick={logout}
           className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-center"
         >
-          {language === 'TR' ? 'Çıkış Yap' : 'Sign Out'}
+          {t('btn_sign_out', language)}
         </button>
       </div>
     </div>

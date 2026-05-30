@@ -43,18 +43,20 @@ export default function MyProfileScreen() {
   useEffect(() => () => clearTimeout(successTimerRef.current), [])
 
   useEffect(() => {
-    if (!showPwChange && !showCancelModal && !showReschedule) return
+    if (!showPwChange && !showCancelModal && !showReschedule && !showCityChangeWarning && !showWaitlistRemoveConfirm) return
     const handler = (e) => {
       if (e.key === 'Escape') {
         if (submitting || rescheduleLoading) return
         setShowPwChange(false)
         setShowCancelModal(false); setCancelReason('')
         setShowReschedule(false)
+        setShowCityChangeWarning(false)
+        setShowWaitlistRemoveConfirm(null)
       }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [showPwChange, showCancelModal, showReschedule, submitting, rescheduleLoading])
+  }, [showPwChange, showCancelModal, showReschedule, showCityChangeWarning, showWaitlistRemoveConfirm, submitting, rescheduleLoading])
 
   // Profile editing
   const [editMode, setEditMode] = useState(false)
@@ -63,6 +65,7 @@ export default function MyProfileScreen() {
   const [editError, setEditError] = useState('')
   const [showCityChangeWarning, setShowCityChangeWarning] = useState(false)
   const [showWaitlistRemoveConfirm, setShowWaitlistRemoveConfirm] = useState(null)
+  const [waitlistRemoving, setWaitlistRemoving] = useState(false)
   const [certModalWs, setCertModalWs] = useState(null)
 
   const _d = new Date()
@@ -92,7 +95,7 @@ export default function MyProfileScreen() {
         setRescheduleTarget(null)
         setRescheduleDate('')
         setRescheduleSlot('')
-        setSuccessMsg(language === 'TR' ? 'Randevu yeniden zamanlandı.' : 'Appointment rescheduled.')
+        setSuccessMsg(t('appt_rescheduled', language))
         clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
       } else {
         setRescheduleError(res.error)
@@ -204,7 +207,7 @@ export default function MyProfileScreen() {
     const phoneDigits = editForm.phone.replace(/\D/g, '')
     // Türk telefon numarası: 05XXXXXXXXX (11 hane) veya 5XXXXXXXXX (10 hane)
     if (phoneDigits.length === 0 || !/^(0?5\d{9})$/.test(phoneDigits)) {
-      setEditError(language === 'TR' ? 'Geçerli bir telefon numarası girin. Örnek: 05XX XXX XX XX' : 'Enter a valid phone number. Example: 05XX XXX XX XX')
+      setEditError(t('err_phone_format', language))
       return
     }
     const cityChanged = String(editForm.city_id) !== String(loggedInUser.city_id)
@@ -250,13 +253,16 @@ export default function MyProfileScreen() {
   return (
     <div className="px-4 py-4">
       {successMsg && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between items-start">
+        <div role="status" aria-live="polite" className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between items-start">
           <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg('')} className="ml-2 text-green-500"><X className="w-4 h-4" /></button>
+          <button type="button" onClick={() => setSuccessMsg('')} aria-label={t('btn_close', language)} className="ml-2 text-green-500"><X className="w-4 h-4" aria-hidden="true" /></button>
         </div>
       )}
       {avatarError && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-4">{avatarError}</div>
+        <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-4 flex items-center justify-between">
+          <span>{avatarError}</span>
+          <button type="button" onClick={() => setAvatarError('')} aria-label={t('btn_close', language)} className="ml-2 text-red-400 opacity-60 hover:opacity-100"><X className="w-3.5 h-3.5" aria-hidden="true" /></button>
+        </div>
       )}
 
       {/* Profile Card */}
@@ -265,11 +271,11 @@ export default function MyProfileScreen() {
           <div className="relative flex-shrink-0">
             <div className="w-16 h-16 rounded-2xl bg-[#1565C0] dark:bg-[#7DD4FC] flex items-center justify-center overflow-hidden">
               {loggedInUser.avatar_url
-                ? <img src={loggedInUser.avatar_url} alt={`${loggedInUser.name} profil fotoğrafı`} className="w-full h-full object-cover" />
+                ? <img src={loggedInUser.avatar_url} alt={`${loggedInUser.name} ${t('alt_profile_photo', language)}`} className="w-full h-full object-cover" />
                 : <span className="text-white dark:text-[#060E26] text-xl font-bold">{initials}</span>}
             </div>
-            <label className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#1565C0] dark:bg-[#7DD4FC] rounded-full flex items-center justify-center cursor-pointer shadow hover:opacity-90 transition" title={language === 'TR' ? 'JPEG, PNG, WebP veya GIF · Maks. 1 MB' : 'JPEG, PNG, WebP or GIF · Max 1 MB'}>
-              {avatarUploading ? <span className="text-white dark:text-[#060E26] text-[10px]">...</span> : <Pencil className="w-3 h-3 text-white dark:text-[#060E26]" />}
+            <label className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#1565C0] dark:bg-[#7DD4FC] rounded-full flex items-center justify-center cursor-pointer shadow hover:opacity-90 transition" title={t('avatar_upload_hint', language)}>
+              {avatarUploading ? <span className="text-white dark:text-[#060E26] text-[10px]">...</span> : <Pencil className="w-3 h-3 text-white dark:text-[#060E26]" aria-hidden="true" />}
               <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" disabled={avatarUploading} onChange={async (e) => {
                 const file = e.target.files[0]; if (!file) return; e.target.value = ''
                 setAvatarError(''); setAvatarUploading(true)
@@ -292,14 +298,14 @@ export default function MyProfileScreen() {
           <div className="min-w-0 flex-1">
             <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">{loggedInUser.name} {loggedInUser.surname}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{loggedInUser.email}</p>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{language === 'TR' ? 'Fotoğraf: JPEG, PNG, WebP, GIF · Maks. 1 MB' : 'Photo: JPEG, PNG, WebP, GIF · Max 1 MB'}</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{t('photo_hint_extended', language)}</p>
           </div>
           {!editMode && (
             <button
               onClick={startEdit}
               className="flex-shrink-0 text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition"
             >
-              <Pencil className="w-3.5 h-3.5 inline mr-1" />{t('btn_edit', language)}
+              <Pencil className="w-3.5 h-3.5 inline mr-1" aria-hidden="true" />{t('btn_edit', language)}
             </button>
           )}
         </div>
@@ -343,7 +349,7 @@ export default function MyProfileScreen() {
               <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{t('city_change_note', language)}</p>
             </div>
             {editError && (
-              <p className="text-red-600 dark:text-red-400 text-xs">{editError}</p>
+              <p role="status" aria-live="polite" className="text-red-600 dark:text-red-400 text-xs">{editError}</p>
             )}
             <div className="flex gap-2 pt-1">
               <button type="submit" disabled={editLoading} className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm disabled:opacity-60 hover:opacity-90 transition">
@@ -376,24 +382,24 @@ export default function MyProfileScreen() {
           onClick={() => { setShowPwChange(p => !p); setPwError(''); setPwForm({ current: '', newPw: '', confirm: '' }) }}
           className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          <span className="inline-flex items-center gap-1"><Lock className="w-3.5 h-3.5" />{t('change_password', language)}</span>
-          <span className="text-gray-400">{showPwChange ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
+          <span className="inline-flex items-center gap-1"><Lock className="w-3.5 h-3.5" aria-hidden="true" />{t('change_password', language)}</span>
+          <span className="text-gray-400" aria-hidden="true">{showPwChange ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
         </button>
         {showPwChange && (
           <form onSubmit={handleChangePassword} className="px-5 pb-5 space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
             <div>
               <label className={labelClass}>{t('current_password', language)} *</label>
-              <PasswordInput className={inputClass} value={pwForm.current} onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))} required />
+              <PasswordInput className={inputClass} value={pwForm.current} onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))} autoComplete="current-password" required />
             </div>
             <div>
               <label className={labelClass}>{t('new_password', language)} *</label>
-              <PasswordInput className={inputClass} value={pwForm.newPw} onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} required minLength={8} />
+              <PasswordInput className={inputClass} value={pwForm.newPw} onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} autoComplete="new-password" required minLength={8} />
             </div>
             <div>
               <label className={labelClass}>{t('input_confirm_password', language)} *</label>
-              <PasswordInput className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} required minLength={8} />
+              <PasswordInput className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} autoComplete="new-password" required minLength={8} />
             </div>
-            {pwError && <p className="text-red-600 dark:text-red-400 text-xs">{pwError}</p>}
+            {pwError && <p role="status" aria-live="polite" className="text-red-600 dark:text-red-400 text-xs">{pwError}</p>}
             <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60">
               {pwLoading ? '...' : t('btn_update_password', language)}
             </button>
@@ -405,8 +411,8 @@ export default function MyProfileScreen() {
       {upcomingAppointments.filter(a => a.status === 'CANCELLATION_REQUESTED').length > 0 && (
         <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 mb-4">
           <h3 className="font-bold text-orange-700 dark:text-orange-300 text-sm mb-2 flex items-center gap-1.5">
-            <Clock className="w-4 h-4" />
-            {language === 'TR' ? 'Bekleyen İptal Talepleriniz' : 'Pending Cancellation Requests'}
+            <Clock className="w-4 h-4" aria-hidden="true" />
+            {t('pending_cancellation_title', language)}
           </h3>
           <div className="space-y-2">
             {upcomingAppointments.filter(a => a.status === 'CANCELLATION_REQUESTED').map(appt => (
@@ -417,7 +423,7 @@ export default function MyProfileScreen() {
                   <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 italic">"{appt.note}"</p>
                 )}
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
-                  {language === 'TR' ? 'Yönetici onayı bekleniyor.' : 'Waiting for admin review.'}
+                  {t('waiting_admin_review', language)}
                 </p>
               </div>
             ))}
@@ -431,11 +437,11 @@ export default function MyProfileScreen() {
           {t('upcoming_appointments', language)} ({upcomingAppointments.length})
         </h3>
         <div className="flex gap-1">
-          <button onClick={() => setApptViewMode('list')} className={`p-1.5 rounded-lg transition ${apptViewMode === 'list' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
-            <List className="w-4 h-4" />
+          <button onClick={() => setApptViewMode('list')} aria-label={t('view_list', language)} className={`p-1.5 rounded-lg transition ${apptViewMode === 'list' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
+            <List className="w-4 h-4" aria-hidden="true" />
           </button>
-          <button onClick={() => setApptViewMode('calendar')} className={`p-1.5 rounded-lg transition ${apptViewMode === 'calendar' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
-            <CalendarDays className="w-4 h-4" />
+          <button onClick={() => setApptViewMode('calendar')} aria-label={t('view_calendar', language)} className={`p-1.5 rounded-lg transition ${apptViewMode === 'calendar' ? 'bg-[#1565C0]/10 text-[#1565C0] dark:bg-[#7DD4FC]/10 dark:text-[#7DD4FC]' : 'text-gray-400 hover:text-gray-600'}`}>
+            <CalendarDays className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -452,7 +458,7 @@ export default function MyProfileScreen() {
             const dayAppts = userAppointments.filter(a => a.date === calendarSelectedDay)
             if (dayAppts.length === 0) return (
               <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-3">
-                {language === 'TR' ? 'Bu tarihte randevu yok.' : 'No appointments on this date.'}
+                {t('no_appts_on_date', language)}
               </p>
             )
             return (
@@ -505,7 +511,7 @@ export default function MyProfileScreen() {
             onClick={() => setShowPast(p => !p)}
             className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-200 transition"
           >
-            <span>{showPast ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}</span>
+            <span aria-hidden="true">{showPast ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}</span>
             {t('past_appointments', language)} ({pastAppointments.length})
           </button>
           {showPast && (
@@ -525,8 +531,8 @@ export default function MyProfileScreen() {
             onClick={() => setShowCancelled(p => !p)}
             className="flex items-center gap-2 text-sm font-medium text-red-500 dark:text-red-400 mb-3 hover:text-red-700 dark:hover:text-red-300 transition"
           >
-            <span>{showCancelled ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}</span>
-            {language === 'TR' ? `İptal Edilmiş (${cancelledAppointments.length})` : `Cancelled (${cancelledAppointments.length})`}
+            <span aria-hidden="true">{showCancelled ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}</span>
+            {t('appts_cancelled_n', language).replace('{n}', cancelledAppointments.length)}
           </button>
           {showCancelled && (
             <div className="space-y-3 mb-4 opacity-75">
@@ -542,8 +548,8 @@ export default function MyProfileScreen() {
       {waitlist.length > 0 && (
         <div className="mb-4">
           <h3 className="font-bold text-blue-600 dark:text-blue-400 text-sm mb-2 flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            {language === 'TR' ? `Bekleme Listesi (${waitlist.length})` : `Waitlist (${waitlist.length})`}
+            <Clock className="w-4 h-4" aria-hidden="true" />
+            {t('waitlist_title_n', language).replace('{n}', waitlist.length)}
           </h3>
           <div className="space-y-2">
             {waitlist.map(w => (
@@ -556,7 +562,7 @@ export default function MyProfileScreen() {
                   onClick={() => setShowWaitlistRemoveConfirm(w.id)}
                   className="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                 >
-                  {language === 'TR' ? 'Çıkar' : 'Remove'}
+                  {t('btn_remove', language)}
                 </button>
               </div>
             ))}
@@ -576,8 +582,8 @@ export default function MyProfileScreen() {
         return (
           <div className="mb-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-2 flex items-center gap-1.5">
-              <ChevronRight className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
-              {language === 'TR' ? `Atölye Kayıtlarım (${upcomingRegs.length})` : `My Workshop Registrations (${upcomingRegs.length})`}
+              <ChevronRight className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" aria-hidden="true" />
+              {t('my_workshop_regs_n', language).replace('{n}', upcomingRegs.length)}
             </h3>
             <div className="space-y-2">
               {upcomingRegs.map(reg => {
@@ -587,7 +593,7 @@ export default function MyProfileScreen() {
                   <div key={reg.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow px-4 py-3">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{ws.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      {ws.date ? formatDate(ws.date) : (language === 'TR' ? 'Tarih belirlenmedi' : 'Date TBD')}
+                      {ws.date ? formatDate(ws.date) : t('workshop_date_tbd', language)}
                       {ws.location ? ` · ${ws.location}` : ''}
                     </p>
                   </div>
@@ -607,8 +613,8 @@ export default function MyProfileScreen() {
         return (
           <div className="mb-4">
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-2 flex items-center gap-1.5">
-              <Award className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
-              {language === 'TR' ? `Sertifikalarım (${attendedRegs.length})` : `My Certificates (${attendedRegs.length})`}
+              <Award className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" aria-hidden="true" />
+              {t('my_certificates_n', language).replace('{n}', attendedRegs.length)}
             </h3>
             <div className="space-y-2">
               {attendedRegs.map(reg => {
@@ -624,8 +630,8 @@ export default function MyProfileScreen() {
                       onClick={() => setCertModalWs(ws)}
                       className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl hover:opacity-90 transition"
                     >
-                      <Award className="w-3.5 h-3.5" />
-                      {language === 'TR' ? 'Sertifika' : 'Certificate'}
+                      <Award className="w-3.5 h-3.5" aria-hidden="true" />
+                      {t('tab_certificate', language)}
                     </button>
                   </div>
                 )
@@ -659,14 +665,14 @@ export default function MyProfileScreen() {
             <div role="dialog" aria-modal="true" aria-labelledby="reschedule-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-1">
                 <h3 id="reschedule-title" className="font-bold text-gray-900 dark:text-gray-100 text-base flex items-center gap-1.5">
-                  <RefreshCw className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
-                  {language === 'TR' ? 'Yeniden Zamanla' : 'Reschedule'}
+                  <RefreshCw className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" aria-hidden="true" />
+                  {t('reschedule_title', language)}
                 </h3>
-                <button onClick={() => setShowReschedule(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+                <button autoFocus onClick={() => setShowReschedule(false)} aria-label={t('btn_close', language)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" aria-hidden="true" /></button>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{rescheduleTarget.lab_name} · {rescheduleTarget.city_name}</p>
 
-              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">{language === 'TR' ? '1. Yeni Tarih Seçin' : '1. Pick a New Date'}</p>
+              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">{t('reschedule_step1', language)}</p>
               <CalendarView
                 selectedDate={rescheduleDate}
                 onDayClick={(date) => { setRescheduleDate(date); setRescheduleSlot('') }}
@@ -681,7 +687,7 @@ export default function MyProfileScreen() {
 
               {rescheduleDate && citySlots.length > 0 && (
                 <>
-                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2">{language === 'TR' ? '2. Saat Seçin' : '2. Pick a Time'}</p>
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2">{t('reschedule_step2', language)}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {citySlots.map(s => {
                       const { count, maxCap, isFull } = getRescheduleSlotAvailability(rescheduleDate, s.time_range)
@@ -698,7 +704,7 @@ export default function MyProfileScreen() {
                           }`}
                         >
                           {s.time_range}
-                          <span className="block text-[10px] mt-0.5 opacity-70">{maxCap - count}/{maxCap} {language === 'TR' ? 'boş' : 'free'}</span>
+                          <span className="block text-[10px] mt-0.5 opacity-70">{maxCap - count}/{maxCap} {t('slot_free_count', language)}</span>
                         </button>
                       )
                     })}
@@ -706,14 +712,14 @@ export default function MyProfileScreen() {
                 </>
               )}
 
-              {rescheduleError && <p className="text-red-500 dark:text-red-400 text-xs mt-3">{rescheduleError}</p>}
+              {rescheduleError && <p role="status" aria-live="polite" className="text-red-500 dark:text-red-400 text-xs mt-3">{rescheduleError}</p>}
               <div className="flex gap-2 mt-4">
                 <button
                   disabled={!rescheduleDate || !rescheduleSlot || rescheduleLoading}
                   onClick={handleReschedule}
                   className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl disabled:opacity-40 transition"
                 >
-                  {rescheduleLoading ? '...' : (language === 'TR' ? 'Güncelle' : 'Update')}
+                  {rescheduleLoading ? '...' : t('btn_update', language)}
                 </button>
                 <button
                   onClick={() => setShowReschedule(false)}
@@ -742,6 +748,7 @@ export default function MyProfileScreen() {
             {cancelType === 'request' && (
               <div className="mb-4">
                 <textarea
+                  autoFocus
                   className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1565C0] text-sm resize-none"
                   rows={4}
                   maxLength={300}
@@ -778,25 +785,25 @@ export default function MyProfileScreen() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div role="dialog" aria-modal="true" aria-labelledby="city-change-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 id="city-change-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
-              {language === 'TR' ? 'Şehir Değişikliği' : 'City Change'}
+              {t('city_change_title', language)}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-              {language === 'TR'
-                ? 'Aktif randevularınız var. Şehri değiştirirseniz mevcut randevularınız etkilenmez ancak yeni şehirde oluşturmanız gerekebilir. Devam etmek istiyor musunuz?'
-                : 'You have active appointments. Changing city will not cancel them but new appointments must be in the new city. Do you want to continue?'}
+              {t('city_change_warning', language)}
             </p>
             <div className="flex gap-3">
               <button
+                autoFocus
                 onClick={(e) => handleSaveProfile(e)}
-                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition"
+                disabled={editLoading}
+                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50"
               >
-                {language === 'TR' ? 'Devam Et' : 'Continue'}
+                {t('btn_continue', language)}
               </button>
               <button
                 onClick={() => setShowCityChangeWarning(false)}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
-                {language === 'TR' ? 'Vazgeç' : 'Cancel'}
+                {t('btn_nevermind', language)}
               </button>
             </div>
           </div>
@@ -808,26 +815,30 @@ export default function MyProfileScreen() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div role="dialog" aria-modal="true" aria-labelledby="waitlist-remove-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 id="waitlist-remove-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
-              {language === 'TR' ? 'Bekleme Listesinden Çıkar' : 'Remove from Waitlist'}
+              {t('waitlist_remove_title', language)}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-              {language === 'TR' ? 'Bu bekleme listesi kaydını silmek istediğinizden emin misiniz?' : 'Are you sure you want to remove this waitlist entry?'}
+              {t('waitlist_remove_confirm', language)}
             </p>
             <div className="flex gap-3">
               <button
+                autoFocus
                 onClick={async () => {
+                  setWaitlistRemoving(true)
                   const res = await removeFromWaitlist(showWaitlistRemoveConfirm)
+                  setWaitlistRemoving(false)
                   if (res.success) setShowWaitlistRemoveConfirm(null)
                 }}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition"
+                disabled={waitlistRemoving}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition disabled:opacity-50"
               >
-                {language === 'TR' ? 'Evet, Çıkar' : 'Yes, Remove'}
+                {t('btn_yes_remove', language)}
               </button>
               <button
                 onClick={() => setShowWaitlistRemoveConfirm(null)}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
-                {language === 'TR' ? 'Vazgeç' : 'Cancel'}
+                {t('btn_nevermind', language)}
               </button>
             </div>
           </div>
@@ -850,8 +861,8 @@ function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, on
         </span>
       </div>
       <div className="flex gap-4 text-xs text-gray-600 dark:text-gray-400 mb-2">
-        <span className="inline-flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(appt.date)}</span>
-        <span className="inline-flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{appt.time_slot}</span>
+        <span className="inline-flex items-center gap-1"><Calendar className="w-3.5 h-3.5" aria-hidden="true" />{formatDate(appt.date)}</span>
+        <span className="inline-flex items-center gap-1"><Clock className="w-3.5 h-3.5" aria-hidden="true" />{appt.time_slot}</span>
       </div>
       {appt.note && appt.status === 'CANCELLATION_REQUESTED' && (
         <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
@@ -865,7 +876,7 @@ function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, on
               onClick={onRescheduleClick}
               className="flex-1 py-2 border border-[#1565C0]/40 text-[#1565C0] dark:text-[#7DD4FC] dark:border-[#7DD4FC]/40 text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition inline-flex items-center justify-center gap-1"
             >
-              <RefreshCw className="w-3 h-3" />{language === 'TR' ? 'Yeniden Zamanla' : 'Reschedule'}
+              <RefreshCw className="w-3 h-3" aria-hidden="true" />{t('reschedule_title', language)}
             </button>
           )}
           {canDirectCancel && (

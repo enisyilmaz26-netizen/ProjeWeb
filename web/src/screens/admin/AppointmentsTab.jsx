@@ -8,7 +8,7 @@ import CalendarView from '../../components/CalendarView'
 import { isTurkishHoliday, isSunday } from '../../lib/holidays'
 
 export default function AppointmentsTab({ language, isGlobal, adminCityId, onRequestConfirm, onGoToMessages }) {
-  const { appointments, cities, labs, timeSlots, approveAppointment, cancelAppointment, denyCancellationRequest, markAppointmentCompleted, createNotification } = useApp()
+  const { appointments, cities, labs, timeSlots, approveAppointment, cancelAppointment, denyCancellationRequest, markAppointmentCompleted, isDateClosed } = useApp()
   const inputClass = INPUT_BASE
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -35,6 +35,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const [editingApptId, setEditingApptId] = useState(null)
   const [editDate, setEditDate] = useState('')
   const [editTimeSlot, setEditTimeSlot] = useState('')
+  const [editDateError, setEditDateError] = useState('')
   const [viewMode, setViewMode] = useState('list')
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkProcessing, setBulkProcessing] = useState(false)
@@ -89,18 +90,14 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   }
 
   const execBulkApprove = async () => {
+    setErrorMsg('')
     setBulkProcessing(true)
     const ids = [...selectedIds]
     let failCount = 0
     try {
       for (const id of ids) {
         const result = await approveAppointment(id)
-        if (result?.success === false) { failCount++; continue }
-        const appt = appointments.find(a => a.id === id)
-        if (appt) {
-          const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
-          await createNotification({ title: `${prefix}${t('notif_appt_approved', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'SYSTEM' })
-        }
+        if (result?.success === false) failCount++
       }
       setSelectedIds(new Set())
       const successCount = ids.length - failCount
@@ -113,6 +110,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   }
 
   const execBulkCancel = async () => {
+    setErrorMsg('')
     setBulkProcessing(true)
     const ids = [...selectedIds]
     let failCount = 0
@@ -135,13 +133,15 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
   const handleBulkCancel = () => onRequestConfirm(t('bulk_cancel', language), execBulkCancel)
 
   const showSuccess = (msg) => {
-    setSuccessMsg(msg)
+    clearTimeout(errorTimer.current); setErrorMsg('')
     clearTimeout(successTimer.current)
+    setSuccessMsg(msg)
     successTimer.current = setTimeout(() => setSuccessMsg(''), 3000)
   }
   const showError = (msg) => {
-    setErrorMsg(msg)
+    clearTimeout(successTimer.current); setSuccessMsg('')
     clearTimeout(errorTimer.current)
+    setErrorMsg(msg)
     errorTimer.current = setTimeout(() => setErrorMsg(''), 3000)
   }
 
@@ -150,14 +150,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     try {
       const result = await approveAppointment(id, newDate || null, newTimeSlot || null)
       if (!result.success) { showError(t('err_generic', language)); return }
-      const appt = appointments.find(a => a.id === id)
-      if (appt) {
-        const finalDate = newDate || appt.date
-        const finalSlot = newTimeSlot || appt.time_slot
-        const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
-        await createNotification({ title: `${prefix}${t('notif_appt_approved', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${finalDate} ${finalSlot}`, type: 'SYSTEM' })
-      }
-      setEditingApptId(null); setEditDate(''); setEditTimeSlot('')
+      setEditingApptId(null); setEditDate(''); setEditTimeSlot(''); setEditDateError('')
       showSuccess(t('action_success_approved', language))
     } finally {
       setProcessingId(null)
@@ -169,11 +162,6 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     try {
       const result = await cancelAppointment(id)
       if (!result.success) { showError(t('err_generic', language)); return }
-      const appt = appointments.find(a => a.id === id)
-      if (appt) {
-        const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
-        await createNotification({ title: `${prefix}${t('notif_appt_cancelled', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'ALERT' })
-      }
       showSuccess(t('action_success_cancelled', language))
     } finally {
       setProcessingId(null)
@@ -185,11 +173,6 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     try {
       const result = await cancelAppointment(id)
       if (!result.success) { showError(t('err_generic', language)); return }
-      const appt = appointments.find(a => a.id === id)
-      if (appt) {
-        const prefix = appt.city_name ? `[${appt.city_name}] ` : ''
-        await createNotification({ title: `${prefix}${t('notif_appt_cancelled', language)}`, message: `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`, type: 'ALERT' })
-      }
       showSuccess(t('action_success_cancellation_approved', language))
     } finally {
       setProcessingId(null)
@@ -229,13 +212,13 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
           onClick={() => setViewMode('list')}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition ${viewMode === 'list' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26]' : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
         >
-          <List className="w-3.5 h-3.5" />{t('view_list', language)}
+          <List className="w-3.5 h-3.5" aria-hidden="true" />{t('view_list', language)}
         </button>
         <button
           onClick={() => setViewMode('calendar')}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition ${viewMode === 'calendar' ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26]' : 'border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
         >
-          <CalendarDays className="w-3.5 h-3.5" />{t('view_calendar', language)}
+          <CalendarDays className="w-3.5 h-3.5" aria-hidden="true" />{t('view_calendar', language)}
         </button>
       </div>
 
@@ -257,20 +240,20 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
 
       <div className="flex flex-col gap-2 mb-3">
         <div className="flex flex-wrap gap-2">
-          <input type="text" placeholder={t('search_placeholder', language)} className={`${inputClass} flex-1 min-w-[160px]`} value={searchInput} onChange={e => { setSearchInput(e.target.value); setVisibleCount(PAGE_SIZE) }} />
+          <input type="text" aria-label={t('search_placeholder', language)} placeholder={t('search_placeholder', language)} className={`${inputClass} flex-1 min-w-[160px]`} value={searchInput} onChange={e => { setSearchInput(e.target.value); setVisibleCount(PAGE_SIZE) }} />
           {isGlobal && (
-            <select className={inputClass} value={filterCity} onChange={e => { setFilterCity(e.target.value); setFilterLocation(''); setVisibleCount(PAGE_SIZE) }}>
+            <select aria-label={t('filter_all_provinces', language)} className={inputClass} value={filterCity} onChange={e => { setFilterCity(e.target.value); setFilterLocation(''); setVisibleCount(PAGE_SIZE) }}>
               <option value="">{t('filter_all_provinces', language)}</option>
               {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           )}
           {availableLocations.length > 1 && (
-            <select className={inputClass} value={filterLocation} onChange={e => { setFilterLocation(e.target.value); setVisibleCount(PAGE_SIZE) }}>
+            <select aria-label={t('filter_all_locations', language)} className={inputClass} value={filterLocation} onChange={e => { setFilterLocation(e.target.value); setVisibleCount(PAGE_SIZE) }}>
               <option value="">{t('filter_all_locations', language)}</option>
               {availableLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
             </select>
           )}
-          <select className={inputClass} value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setVisibleCount(PAGE_SIZE) }}>
+          <select aria-label={t('filter_all_statuses', language)} className={inputClass} value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setVisibleCount(PAGE_SIZE) }}>
             <option value="">{t('filter_all_statuses', language)}</option>
             <option value="PENDING">{STATUS_LABELS.PENDING[language]}</option>
             <option value="APPROVED">{STATUS_LABELS.APPROVED[language]}</option>
@@ -281,9 +264,9 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs text-gray-500 dark:text-gray-400">{t('filter_date', language)}</span>
-          <input type="date" className={inputClass} value={filterDateFrom} max={filterDateTo || undefined} onChange={e => { setFilterDateFrom(e.target.value); setVisibleCount(PAGE_SIZE) }} />
+          <input type="date" aria-label={t('filter_date_from', language)} className={inputClass} value={filterDateFrom} max={filterDateTo || undefined} onChange={e => { setFilterDateFrom(e.target.value); setVisibleCount(PAGE_SIZE) }} />
           <span className="text-xs text-gray-400">—</span>
-          <input type="date" className={inputClass} value={filterDateTo} min={filterDateFrom || undefined} onChange={e => { setFilterDateTo(e.target.value); setVisibleCount(PAGE_SIZE) }} />
+          <input type="date" aria-label={t('filter_date_to', language)} className={inputClass} value={filterDateTo} min={filterDateFrom || undefined} onChange={e => { setFilterDateTo(e.target.value); setVisibleCount(PAGE_SIZE) }} />
           {(searchInput || filterCity || filterStatus || filterLocation || filterDateFrom || filterDateTo) && (
             <button onClick={resetFilters} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">{t('filter_clear', language)}</button>
           )}
@@ -291,12 +274,12 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
       </div>
 
       {successMsg && (
-        <div className="mb-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 text-xs font-medium">
+        <div role="status" aria-live="polite" className="mb-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 text-xs font-medium">
           {successMsg}
         </div>
       )}
       {errorMsg && (
-        <div className="mb-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs font-medium">
+        <div role="status" aria-live="polite" className="mb-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs font-medium">
           {errorMsg}
         </div>
       )}
@@ -323,6 +306,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
           {filteredAppointments.slice(0, visibleCount).some(a => a.status === 'PENDING') && (
             <input
               type="checkbox"
+              aria-label={t('bulk_select_all', language)}
               checked={filteredAppointments.slice(0, visibleCount).filter(a => a.status === 'PENDING').every(a => selectedIds.has(a.id))}
               onChange={() => {
                 const pending = filteredAppointments.slice(0, visibleCount).filter(a => a.status === 'PENDING')
@@ -339,7 +323,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
         </div>
         {filteredAppointments.length > 0 && (
           <button onClick={() => exportToCSV(filteredAppointments, language)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1">
-            <Download className="w-3.5 h-3.5" />{t('export_csv', language)}
+            <Download className="w-3.5 h-3.5" aria-hidden="true" />{t('export_csv', language)}
           </button>
         )}
       </div>
@@ -356,6 +340,7 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                     {appt.status === 'PENDING' && (
                       <input
                         type="checkbox"
+                        aria-label={`${t('bulk_select_one', language)} ${appt.user_name} ${appt.user_surname}`}
                         checked={selectedIds.has(appt.id)}
                         onChange={() => toggleSelect(appt.id)}
                         className="mt-0.5 flex-shrink-0 accent-[#1565C0] dark:accent-[#7DD4FC] w-4 h-4 cursor-pointer"
@@ -392,8 +377,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                       onClick={onGoToMessages}
                       className="inline-flex items-center gap-1 text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-2.5 py-1 hover:bg-[#1565C0]/5 transition"
                     >
-                      <MessageSquare className="w-3 h-3" />
-                      {language === 'TR' ? 'Mesajlar' : 'Messages'}
+                      <MessageSquare className="w-3 h-3" aria-hidden="true" />
+                      {t('tab_messages', language)}
                     </button>
                   </div>
                 )}
@@ -401,15 +386,24 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                   <>
                     {editingApptId === appt.id && (
                       <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl space-y-2">
-                        <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">{language === 'TR' ? 'Tarih / Saat Değiştir' : 'Change Date / Time'}</p>
+                        <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">{t('appt_edit_datetime', language)}</p>
                         <input
                           type="date"
+                          aria-label={t('appt_edit_datetime', language)}
                           value={editDate}
                           min={todayStr}
-                          onChange={e => { setEditDate(e.target.value); setEditTimeSlot('') }}
+                          onChange={e => {
+                            const d = e.target.value
+                            setEditDate(d); setEditTimeSlot('')
+                            if (isSunday(d)) { setEditDateError(t('err_sunday', language)); return }
+                            if (isTurkishHoliday(d)) { setEditDateError(t('err_date_holiday', language)); return }
+                            if (isDateClosed(d, appt.city_id)) { setEditDateError(t('err_date_closed', language)); return }
+                            setEditDateError('')
+                          }}
                           className={`${inputClass} w-full`}
                         />
-                        {editDate && (() => {
+                        {editDateError && <p role="status" aria-live="polite" className="text-xs text-red-500 dark:text-red-400">{editDateError}</p>}
+                        {editDate && !editDateError && (() => {
                           const citySlots = timeSlots.filter(s => String(s.city_id) === String(appt.city_id))
                           const lab = labs.find(l => String(l.id) === String(appt.lab_id))
                           const maxCap = lab?.capacity_per_slot || 1
@@ -429,6 +423,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                                   <button
                                     key={s.id}
                                     type="button"
+                                    aria-label={`${s.time_range} — ${maxCap - count}/${maxCap} ${t('slot_free_count', language)}`}
+                                    aria-pressed={isSelected}
                                     disabled={isFull}
                                     onClick={() => setEditTimeSlot(isSelected ? '' : s.time_range)}
                                     className={`py-1.5 px-2 rounded-xl text-xs border transition text-left ${
@@ -438,8 +434,8 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                                     }`}
                                   >
                                     {s.time_range}
-                                    {isCurrent && <span className="ml-1 text-[9px] opacity-60">({language === 'TR' ? 'mevcut' : 'current'})</span>}
-                                    <span className="block text-[9px] mt-0.5 opacity-60">{maxCap - count}/{maxCap} {language === 'TR' ? 'boş' : 'free'}</span>
+                                    {isCurrent && <span className="ml-1 text-[9px] opacity-60">({t('appt_edit_current', language)})</span>}
+                                    <span className="block text-[9px] mt-0.5 opacity-60">{maxCap - count}/{maxCap} {t('slot_free_count', language)}</span>
                                   </button>
                                 )
                               })}
@@ -451,18 +447,19 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
-                          if (editingApptId === appt.id) { setEditingApptId(null); setEditDate(''); setEditTimeSlot('') }
-                          else { setEditingApptId(appt.id); setEditDate(appt.date); setEditTimeSlot('') }
+                          if (editingApptId === appt.id) { setEditingApptId(null); setEditDate(''); setEditTimeSlot(''); setEditDateError('') }
+                          else { setEditingApptId(appt.id); setEditDate(appt.date >= todayStr ? appt.date : todayStr); setEditTimeSlot(''); setEditDateError('') }
                         }}
                         disabled={processingId === appt.id}
                         className="p-2 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-60"
-                        title={language === 'TR' ? 'Tarih/Saat Değiştir' : 'Change Date/Time'}
+                        title={t('btn_change_datetime', language)}
+                        aria-label={t('btn_change_datetime', language)}
                       >
-                        {editingApptId === appt.id ? <X className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
+                        {editingApptId === appt.id ? <X className="w-3.5 h-3.5" aria-hidden="true" /> : <Pencil className="w-3.5 h-3.5" aria-hidden="true" />}
                       </button>
                       <button
                         onClick={() => handleApprove(appt.id, editingApptId === appt.id ? editDate : null, editingApptId === appt.id ? editTimeSlot : null)}
-                        disabled={processingId === appt.id || (editingApptId === appt.id && !!editDate && !editTimeSlot)}
+                        disabled={processingId === appt.id || (editingApptId === appt.id && !!editDate && !editTimeSlot) || (editingApptId === appt.id && !!editDateError)}
                         className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition disabled:opacity-60"
                       >
                         {processingId === appt.id ? '...' : t('action_approve', language)}

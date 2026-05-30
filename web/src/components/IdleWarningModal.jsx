@@ -26,7 +26,7 @@ export default function IdleWarningModal({ onContinue, onLogout, language }) {
       <div role="dialog" aria-modal="true" aria-labelledby="idle-warning-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-2xl p-6 max-w-sm w-full">
         <div className="text-center mb-5">
           <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Timer className="w-6 h-6 text-orange-500" />
+            <Timer className="w-6 h-6 text-orange-500" aria-hidden="true" />
           </div>
           <h3 id="idle-warning-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
             {t('session_timeout_title', language)}
@@ -35,6 +35,7 @@ export default function IdleWarningModal({ onContinue, onLogout, language }) {
         </div>
         <div className="flex gap-3">
           <button
+            autoFocus
             onClick={onContinue}
             className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition"
           >

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
-import { t } from '../../lib/languages'
+import { t, getLocale } from '../../lib/languages'
 import { Send, ArrowLeft, MessageSquare, Shield } from 'lucide-react'
 
-function formatMsgTime(iso) {
+function formatMsgTime(iso, language) {
   if (!iso) return ''
   const d = new Date(iso)
-  return d.toLocaleString(undefined, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleString(getLocale(language), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
@@ -18,10 +18,22 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
   const [loadingMsgs, setLoadingMsgs] = useState(false)
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef(null)
+  const lastKnownAt = useRef(null)
+
+  const selectedConv = conversations.find(c => c.id === selectedConvId)
 
   useEffect(() => {
     if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    const t = selectedConv?.last_message_at
+    if (!selectedConvId || !t) return
+    if (lastKnownAt.current && t > lastKnownAt.current) {
+      lastKnownAt.current = t
+      loadConversationMessages(selectedConvId).then(msgs => setMessages(msgs))
+    }
+  }, [selectedConv?.last_message_at])
 
   // City admin: sees user→city convos from their city + their own→global thread
   // Global admin: sees ALL conversations
@@ -34,7 +46,6 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
     : conversations.filter(c => c.recipient_type === 'global_admin' && String(c.sender_id) === String(loggedInAdmin?.id))
 
   const allConvs = [...cityConvs, ...globalConvs]
-  const selectedConv = conversations.find(c => c.id === selectedConvId)
 
   const totalUnread = isGlobal
     ? conversations.reduce((sum, c) => sum + (c.unread_for_recipient || 0), 0)
@@ -43,6 +54,7 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
 
   const openConv = async (conv) => {
     setSelectedConvId(conv.id)
+    lastKnownAt.current = conv.last_message_at ?? null
     setLoadingMsgs(true)
     try {
       const msgs = await loadConversationMessages(conv.id)
@@ -78,16 +90,18 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
   const handleSend = async () => {
     if (!msgInput.trim() || !selectedConvId || sending || !selectedConv) return
     setSending(true)
-    // Am I the recipient or the sender in this conversation?
-    const iAmRecipient = (selectedConv.recipient_type === 'city_admin' && !isGlobal) ||
-                         (selectedConv.recipient_type === 'global_admin' && isGlobal)
-    const authoredBy = iAmRecipient ? 'recipient' : 'sender'
-    const result = await sendMessage(selectedConvId, msgInput, authoredBy, loggedInAdmin?.name || '')
-    if (result.success) {
-      setMessages(prev => [...prev, result.data])
-      setMsgInput('')
+    try {
+      const iAmRecipient = (selectedConv.recipient_type === 'city_admin' && !isGlobal) ||
+                           (selectedConv.recipient_type === 'global_admin' && isGlobal)
+      const authoredBy = iAmRecipient ? 'recipient' : 'sender'
+      const result = await sendMessage(selectedConvId, msgInput, authoredBy, loggedInAdmin?.name || '')
+      if (result.success) {
+        setMessages(prev => [...prev, result.data])
+        setMsgInput('')
+      }
+    } finally {
+      setSending(false)
     }
-    setSending(false)
   }
 
   const getConvTitle = (conv) => {
@@ -116,8 +130,8 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
     return (
       <div className="flex flex-col" style={{ height: 'calc(100vh - 280px)', minHeight: '400px' }}>
         <div className="flex items-center gap-3 mb-3 pb-3 border-b border-gray-100 dark:border-gray-700">
-          <button onClick={() => { setSelectedConvId(null); setMessages([]) }} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 transition">
-            <ArrowLeft className="w-5 h-5" />
+          <button onClick={() => { setSelectedConvId(null); setMessages([]); lastKnownAt.current = null }} aria-label={t('btn_back', language)} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 transition">
+            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
           </button>
           <div>
             <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{getConvTitle(selectedConv)}</p>
@@ -127,7 +141,7 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
 
         <div className="flex-1 overflow-y-auto space-y-3 mb-3">
           {loadingMsgs ? (
-            <div className="text-center text-gray-400 text-sm py-8">{language === 'TR' ? 'Yükleniyor...' : 'Loading...'}</div>
+            <div className="text-center text-gray-400 text-sm py-8">{t('loading', language)}</div>
           ) : messages.length === 0 ? (
             <div className="text-center text-gray-400 text-sm py-8">{t('msg_no_messages', language)}</div>
           ) : (
@@ -138,7 +152,7 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
                   <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${isMine ? 'bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-br-sm' : 'bg-gray-100 dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 rounded-bl-sm'}`}>
                     {!isMine && <p className="text-[10px] font-semibold text-[#1565C0] dark:text-[#7DD4FC] mb-0.5">{msg.author_name}</p>}
                     <p className="text-sm leading-relaxed">{msg.body}</p>
-                    <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70 dark:text-[#060E26]/70' : 'text-gray-400 dark:text-gray-500'}`}>{formatMsgTime(msg.created_at)}</p>
+                    <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70 dark:text-[#060E26]/70' : 'text-gray-400 dark:text-gray-500'}`}>{formatMsgTime(msg.created_at, language)}</p>
                   </div>
                 </div>
               )
@@ -159,9 +173,10 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
           <button
             onClick={handleSend}
             disabled={!msgInput.trim() || sending}
+            aria-label={t('msg_send', language)}
             className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] hover:opacity-90 transition disabled:opacity-40 flex-shrink-0"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -179,29 +194,32 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
       </div>
 
       {/* City admin → global thread button */}
-      {!isGlobal && (
-        <button
-          onClick={openOrCreateGlobalConv}
-          className="w-full mb-3 bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 flex items-center gap-3 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition text-left"
-        >
-          <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC] flex-shrink-0">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div className="flex-1">
-            <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{t('msg_to_global_admin', language)}</p>
-            {globalConvs.find(c => String(c.sender_id) === String(loggedInAdmin?.id)) ? (
-              <p className="text-xs text-gray-400">{formatMsgTime(globalConvs.find(c => String(c.sender_id) === String(loggedInAdmin?.id))?.last_message_at)}</p>
-            ) : (
-              <p className="text-xs text-gray-400">{t('msg_no_conversations', language)}</p>
+      {!isGlobal && (() => {
+        const myGlobalConv = globalConvs.find(c => String(c.sender_id) === String(loggedInAdmin?.id))
+        return (
+          <button
+            onClick={openOrCreateGlobalConv}
+            className="w-full mb-3 bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 flex items-center gap-3 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition text-left"
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC] flex-shrink-0">
+              <Shield className="w-5 h-5" aria-hidden="true" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{t('msg_to_global_admin', language)}</p>
+              {myGlobalConv ? (
+                <p className="text-xs text-gray-400">{formatMsgTime(myGlobalConv.last_message_at, language)}</p>
+              ) : (
+                <p className="text-xs text-gray-400">{t('msg_no_conversations', language)}</p>
+              )}
+            </div>
+            {myGlobalConv?.unread_for_sender > 0 && (
+              <span className="bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">
+                {myGlobalConv.unread_for_sender}
+              </span>
             )}
-          </div>
-          {globalConvs.find(c => String(c.sender_id) === String(loggedInAdmin?.id))?.unread_for_sender > 0 && (
-            <span className="bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">
-              {globalConvs.find(c => String(c.sender_id) === String(loggedInAdmin?.id)).unread_for_sender}
-            </span>
-          )}
-        </button>
-      )}
+          </button>
+        )
+      })()}
 
       {/* User conversations (for this city) */}
       {cityConvs.length === 0 && globalConvs.filter(c => isGlobal).length === 0 ? (
@@ -221,11 +239,11 @@ export default function AdminMessagesTab({ language, isGlobal, adminCityId }) {
                 className="w-full bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 flex items-center gap-3 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition text-left"
               >
                 <div className="w-10 h-10 rounded-xl bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC] flex-shrink-0">
-                  <MessageSquare className="w-5 h-5" />
+                  <MessageSquare className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{getConvTitle(conv)}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{getConvSubtitle(conv)} · {formatMsgTime(conv.last_message_at)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{getConvSubtitle(conv)} · {formatMsgTime(conv.last_message_at, language)}</p>
                 </div>
                 {unread > 0 && (
                   <span className="bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">

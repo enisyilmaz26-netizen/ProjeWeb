@@ -120,8 +120,8 @@ export default function LandingPage({ onLoginClick }) {
             <button onClick={toggleLanguage} className="text-xs font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1 transition hover:border-[#1565C0] hover:text-[#1565C0]">
               {lang === 'TR' ? 'EN' : 'TR'}
             </button>
-            <button onClick={toggleDarkMode} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <button onClick={toggleDarkMode} aria-label={isDarkMode ? t('toggle_light', lang) : t('toggle_dark', lang)} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              {isDarkMode ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
             </button>
             <button
               onClick={onLoginClick}
@@ -403,7 +403,7 @@ export default function LandingPage({ onLoginClick }) {
               {[...workshops].sort((a, b) => {
                 const ca = cities.find(c => String(c.id) === String(a.city_id))?.name || ''
                 const cb = cities.find(c => String(c.id) === String(b.city_id))?.name || ''
-                return ca.localeCompare(cb, 'tr')
+                return ca.localeCompare(cb, lang === 'TR' ? 'tr' : 'en')
               }).map(ws => {
                 const city = cities.find(c => String(c.id) === String(ws.city_id))
                 return (
@@ -419,17 +419,17 @@ export default function LandingPage({ onLoginClick }) {
                       <div className="flex flex-wrap gap-2 mt-2">
                         {city && (
                           <span className="text-[11px] font-medium text-[#1565C0] dark:text-[#7DD4FC] bg-[#1565C0]/8 dark:bg-[#7DD4FC]/10 px-2 py-0.5 rounded-lg inline-flex items-center gap-0.5">
-                            <MapPin className="w-3 h-3 inline" />{city.name}{ws.location ? ` · ${ws.location}` : ''}
+                            <MapPin className="w-3 h-3 inline" aria-hidden="true" />{city.name}{ws.location ? ` · ${ws.location}` : ''}
                           </span>
                         )}
                         {ws.date && (
                           <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-lg inline-flex items-center gap-0.5">
-                            <Calendar className="w-3 h-3 inline" />{formatDate(ws.date)}
+                            <Calendar className="w-3 h-3 inline" aria-hidden="true" />{formatDate(ws.date)}
                           </span>
                         )}
                         {ws.time && (
                           <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-lg inline-flex items-center gap-0.5">
-                            <Clock className="w-3 h-3 inline" />{ws.time}
+                            <Clock className="w-3 h-3 inline" aria-hidden="true" />{ws.time}
                           </span>
                         )}
                       </div>

@@ -141,7 +141,7 @@ export default function AuthScreen({ onBack }) {
             aria-label={t('toggle_dark', language)}
             className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition"
           >
-            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDarkMode ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -188,6 +188,7 @@ export default function AuthScreen({ onBack }) {
                     placeholder={t('placeholder_email', language)}
                     value={loginEmail}
                     onChange={e => setLoginEmail(e.target.value)}
+                    autoComplete="email"
                     required
                   />
                 </div>
@@ -198,11 +199,12 @@ export default function AuthScreen({ onBack }) {
                     placeholder={t('placeholder_password', language)}
                     value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
+                    autoComplete="current-password"
                     required
                   />
                 </div>
                 {loginError && (
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
+                  <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
                     {loginError}
                   </div>
                 )}
@@ -216,9 +218,7 @@ export default function AuthScreen({ onBack }) {
               </form>
               <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3 text-center">
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  {language === 'TR'
-                    ? 'Şifrenizi unuttuysanız sistem yöneticinizle iletişime geçin.'
-                    : 'If you forgot your password, please contact your system administrator.'}
+                  {t('forgot_pw_admin_help', language)}
                 </p>
               </div>
             </div>
@@ -258,6 +258,7 @@ export default function AuthScreen({ onBack }) {
                     className={inputClass}
                     value={regForm.email}
                     onChange={e => setRegForm(p => ({ ...p, email: e.target.value }))}
+                    autoComplete="email"
                     required
                   />
                 </div>
@@ -327,6 +328,7 @@ export default function AuthScreen({ onBack }) {
                     className={inputClass}
                     value={regForm.password}
                     onChange={e => setRegForm(p => ({ ...p, password: e.target.value }))}
+                    autoComplete="new-password"
                     required
                     minLength={8}
                   />
@@ -355,6 +357,7 @@ export default function AuthScreen({ onBack }) {
                     className={inputClass}
                     value={regForm.confirmPassword}
                     onChange={e => setRegForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                    autoComplete="new-password"
                     required
                     minLength={8}
                   />
@@ -386,7 +389,7 @@ export default function AuthScreen({ onBack }) {
                 </div>
 
                 {regError && (
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
+                  <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
                     {regError}
                   </div>
                 )}
@@ -415,9 +418,10 @@ export default function AuthScreen({ onBack }) {
               </h3>
               <button
                 onClick={() => setShowKvkkModal(false)}
+                aria-label={t('btn_close', language)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold leading-none"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
             <div className="overflow-y-auto px-6 py-4 flex-1 space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -557,6 +561,7 @@ export default function AuthScreen({ onBack }) {
             </div>
             <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
               <button
+                autoFocus
                 onClick={() => { setRegForm(p => ({ ...p, kvkk: true })); setShowKvkkModal(false) }}
                 className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
               >
@@ -577,7 +582,7 @@ export default function AuthScreen({ onBack }) {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div role="dialog" aria-modal="true" aria-labelledby="reg-success-title" className="bg-white dark:bg-[#070E1E] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
             <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <Check className="w-6 h-6 text-green-600 dark:text-green-400" aria-hidden="true" />
             </div>
             <h3 id="reg-success-title" className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">
               {t('reg_success_title', language)}
@@ -586,6 +591,7 @@ export default function AuthScreen({ onBack }) {
               {t('reg_success_msg', language)}
             </p>
             <button
+              autoFocus
               onClick={() => { setShowRegSuccessModal(false); setActiveTab('login') }}
               className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition"
             >

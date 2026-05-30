@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { X, Printer } from 'lucide-react'
+import { t, getLocale } from '../lib/languages'
 
 function fmtDate(dateStr, language) {
   if (!dateStr) return ''
   const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  return d.toLocaleDateString(getLocale(language), { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 const NAT_W = 900
@@ -36,11 +37,9 @@ export function CertificateCanvas({ template, fullName, workshopName, dateStr, l
     return () => obs.disconnect()
   }, [updateScale])
 
-  const title          = template?.title          || (language === 'TR' ? 'KATILIM SERTİFİKASI' : 'CERTIFICATE OF ATTENDANCE')
+  const title          = template?.title          || t('cert_default_title', language)
   const institution    = template?.institution    || 'Millî Eğitim Bakanlığı ÖGEDEP'
-  const bodyText       = (template?.body_text || (language === 'TR'
-    ? '{{tarih}} tarihinde {{konum}} adresinde gerçekleştirilen "{{atolye}}" atölyesine katıldığınız için bu belgeyi almaya hak kazandınız.'
-    : 'This certificate is awarded for attending the "{{atolye}}" workshop held at {{konum}} on {{tarih}}.'))
+  const bodyText       = (template?.body_text || t('cert_default_body', language))
     .replace(/{{katilimci}}/g, fullName)
     .replace(/{{atolye}}/g, workshopName)
     .replace(/{{tarih}}/g, dateStr)
@@ -101,7 +100,7 @@ export function CertificateCanvas({ template, fullName, workshopName, dateStr, l
           {/* Header: logo top, institution below */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: ai, paddingBottom: 16, borderBottom: '1px solid rgba(21,101,192,0.15)', flexShrink: 0 }}>
             {logoUrl && (
-              <img src={logoUrl} alt="Kurum logosu"
+              <img src={logoUrl} alt={t('alt_cert_logo', language)}
                 style={{ height: logoPx, objectFit: 'contain', marginBottom: 8 }} />
             )}
             <p style={{
@@ -134,7 +133,7 @@ export function CertificateCanvas({ template, fullName, workshopName, dateStr, l
             </div>
 
             <p style={{ fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.2em', textAlign: ta, margin: 0 }}>
-              {language === 'TR' ? 'Sayın' : 'This certifies that'}
+              {t('cert_greeting', language)}
             </p>
 
             <p style={{
@@ -205,16 +204,16 @@ export default function CertificateModal({ ws, template, user, language, onClose
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div role="dialog" aria-modal="true" aria-label={language === 'TR' ? 'Sertifika' : 'Certificate'} className="relative z-10 w-full max-w-4xl my-auto">
+      <div role="dialog" aria-modal="true" aria-label={t('tab_certificate', language)} className="relative z-10 w-full max-w-4xl my-auto">
         {/* Action bar */}
         <div className="flex justify-between items-center mb-3">
-          <button onClick={handlePrint}
+          <button autoFocus onClick={handlePrint}
             className="flex items-center gap-1.5 px-4 py-2 bg-[#1565C0] text-white text-sm font-semibold rounded-xl hover:opacity-90 transition">
-            <Printer className="w-4 h-4" />
-            {language === 'TR' ? 'Yazdır / PDF' : 'Print / PDF'}
+            <Printer className="w-4 h-4" aria-hidden="true" />
+            {t('btn_print_pdf', language)}
           </button>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} aria-label={t('btn_close', language)} className="text-white/70 hover:text-white transition">
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 

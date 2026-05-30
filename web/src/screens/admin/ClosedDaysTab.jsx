@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
-import { t } from '../../lib/languages'
+import { t, getLocale } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { isTurkishHoliday } from '../../lib/holidays'
 import { Trash2, Plus, CalendarX } from 'lucide-react'
@@ -19,7 +19,7 @@ function getMaxDate() {
 
 function formatClosedDate(dateStr, language) {
   const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  return d.toLocaleDateString(getLocale(language), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 }
 
 export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
@@ -48,7 +48,7 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
     if (!form.date) return
     const cityId = isGlobal ? (form.city_id || null) : adminCityId
     if (visibleDays.some(d => d.date === form.date && String(d.city_id || '') === String(cityId || ''))) {
-      setErrorMsg(language === 'TR' ? 'Bu tarih zaten kapalı olarak işaretlenmiş.' : 'This date is already marked as closed.')
+      setErrorMsg(t('closed_day_already_exists', language))
       return
     }
     setAdding(true)
@@ -86,15 +86,13 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <CalendarX className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
+        <CalendarX className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" aria-hidden="true" />
         <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{t('tab_closed_days', language)}</h3>
       </div>
 
       {/* Holidays note */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 mb-4 text-xs text-blue-700 dark:text-blue-300">
-        {language === 'TR'
-          ? 'Pazar günleri ve resmi tatiller otomatik olarak kapalıdır. Aşağıdan ek kapalı günler ekleyebilirsiniz.'
-          : 'Sundays and public holidays are automatically closed. You can add additional closed days below.'}
+        {t('closed_days_auto_note', language)}
       </div>
 
       {/* Add form */}
@@ -102,9 +100,10 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
         <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{t('closed_day_add', language)}</h4>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Tarih *' : 'Date *'}</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_date_required', language)}</label>
             <input
               type="date"
+              aria-label={t('lbl_date_required', language)}
               min={getTomorrowDate()}
               max={getMaxDate()}
               className={`${inputClass} w-full`}
@@ -117,8 +116,9 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('closed_day_reason', language)}</label>
             <input
               type="text"
+              aria-label={t('closed_day_reason', language)}
               className={`${inputClass} w-full`}
-              placeholder={language === 'TR' ? 'Tatil, bakım...' : 'Holiday, maintenance...'}
+              placeholder={t('closed_day_reason_ph', language)}
               value={form.reason}
               onChange={e => setForm(p => ({ ...p, reason: e.target.value }))}
             />
@@ -128,25 +128,25 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_province', language)}</label>
             <select className={`${inputClass} w-full`} value={form.city_id} onChange={e => setForm(p => ({ ...p, city_id: e.target.value }))}>
-              <option value="">{language === 'TR' ? 'Tüm İller (global)' : 'All Provinces (global)'}</option>
+              <option value="">{t('all_provinces_global', language)}</option>
               {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
         )}
-        {errorMsg && <p className="text-red-500 dark:text-red-400 text-xs">{errorMsg}</p>}
-        {successMsg && <p className="text-green-600 dark:text-green-400 text-xs font-medium">{successMsg}</p>}
+        {errorMsg && <p role="status" aria-live="polite" className="text-red-500 dark:text-red-400 text-xs">{errorMsg}</p>}
+        {successMsg && <p role="status" aria-live="polite" className="text-green-600 dark:text-green-400 text-xs font-medium">{successMsg}</p>}
         <button
           type="submit"
           disabled={adding || !form.date}
           className="flex items-center gap-1 py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60"
         >
-          <Plus className="w-3.5 h-3.5" />{t('closed_day_add', language)}
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />{t('closed_day_add', language)}
         </button>
       </form>
 
       {/* Filter */}
       {isGlobal && (
-        <select className={`${inputClass} w-full mb-3`} value={filterCity} onChange={e => setFilterCity(e.target.value)}>
+        <select aria-label={t('filter_all_provinces', language)} className={`${inputClass} w-full mb-3`} value={filterCity} onChange={e => setFilterCity(e.target.value)}>
           <option value="">{t('filter_all_provinces', language)}</option>
           {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
@@ -169,7 +169,7 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
                     {formatClosedDate(day.date, language)}
                   </p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {city ? city.name : (language === 'TR' ? 'Tüm İller' : 'All Provinces')}
+                    {city ? city.name : t('filter_all_provinces', language)}
                     {day.reason ? ` · ${day.reason}` : ''}
                     {isHoliday ? ` · ${t('lbl_holiday', language)}` : ''}
                   </p>
@@ -177,9 +177,11 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
                 <button
                   onClick={() => handleDelete(day.id)}
                   disabled={processingId === day.id}
+                  aria-label={t('btn_delete', language)}
+                  title={t('btn_delete', language)}
                   className="text-red-500 hover:text-red-700 p-1.5 disabled:opacity-40 flex-shrink-0"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
             )

@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
-import { t, formatDate } from '../../lib/languages'
+import { t, formatDate, getLocale } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { X, Calendar, Clock, Users, Pencil, Trash2, ChevronDown, ChevronRight, Download, CheckCircle2, Circle } from 'lucide-react'
 import { getLabIcon } from '../../lib/icons'
@@ -15,11 +15,13 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
   const [workshopSuccess, setWorkshopSuccess] = useState('')
   const successTimerRef = useRef(null)
   const [showAddWorkshop, setShowAddWorkshop] = useState(false)
+  const [addWorkshopLoading, setAddWorkshopLoading] = useState(false)
   const [editingWorkshopId, setEditingWorkshopId] = useState(null)
   const [editWorkshopForm, setEditWorkshopForm] = useState({})
   const [editWorkshopLoading, setEditWorkshopLoading] = useState(false)
   const [workshopCityFilter, setWorkshopCityFilter] = useState('')
   const [processingId, setProcessingId] = useState(null)
+  const [processingRegId, setProcessingRegId] = useState(null)
   const todayStr = new Date().toISOString().split('T')[0]
   const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0] })()
   const TIME_RANGE_RE = /^([01]\d|2[0-3]):[0-5]\d\s*[-–]\s*([01]\d|2[0-3]):[0-5]\d$/
@@ -37,7 +39,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     return [...list].sort((a, b) => {
       const cityA = cities.find(c => String(c.id) === String(a.city_id))?.name || ''
       const cityB = cities.find(c => String(c.id) === String(b.city_id))?.name || ''
-      return cityA.localeCompare(cityB, 'tr')
+      return cityA.localeCompare(cityB, getLocale(language))
     })
   }, [workshops, isGlobal, adminCityId, workshopCityFilter, cities])
 
@@ -48,10 +50,11 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     const cityObj = cities.find(c => String(c.id) === String(cityId))
     if (!workshopForm.name.trim() || !cityId) { setWorkshopError(t('workshop_name_required', language)); return }
     if (workshopForm.time && !validateTimeRange(workshopForm.time.trim())) {
-      setWorkshopError(language === 'TR' ? 'Saat formatı geçersiz veya bitiş saati başlangıçtan önce. Örnek: 09:00 - 17:00' : 'Invalid time format or end time is before start. Example: 09:00 - 17:00')
+      setWorkshopError(t('err_time_range_invalid', language))
       return
     }
-    if (Number(workshopForm.capacity) < 1) { setWorkshopError(language === 'TR' ? 'Kapasite en az 1 olmalıdır.' : 'Capacity must be at least 1.'); return }
+    if (Number(workshopForm.capacity) < 1) { setWorkshopError(t('err_capacity_min', language)); return }
+    setAddWorkshopLoading(true)
     try {
       const result = await addWorkshop({ name: workshopForm.name, description: workshopForm.description, date: workshopForm.date || null, time: workshopForm.time || null, capacity: Number(workshopForm.capacity) || 1, location: workshopForm.location, city_id: cityId, city_name: cityObj?.name || '' })
       if (result.success) {
@@ -62,6 +65,8 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       } else { setWorkshopError(result.error || t('err_generic', language)) }
     } catch {
       setWorkshopError(t('err_generic', language))
+    } finally {
+      setAddWorkshopLoading(false)
     }
   }
 
@@ -76,15 +81,13 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     setWorkshopError('')
     if (!editWorkshopForm.name.trim()) { setWorkshopError(t('workshop_name_required', language)); return }
     if (editWorkshopForm.time && !validateTimeRange(editWorkshopForm.time.trim())) {
-      setWorkshopError(language === 'TR' ? 'Saat formatı geçersiz veya bitiş saati başlangıçtan önce. Örnek: 09:00 - 17:00' : 'Invalid time format or end time is before start. Example: 09:00 - 17:00')
+      setWorkshopError(t('err_time_range_invalid', language))
       return
     }
-    if (Number(editWorkshopForm.capacity) < 1) { setWorkshopError(language === 'TR' ? 'Kapasite en az 1 olmalıdır.' : 'Capacity must be at least 1.'); return }
+    if (Number(editWorkshopForm.capacity) < 1) { setWorkshopError(t('err_capacity_min', language)); return }
     const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(editingWorkshopId)).length
     if (Number(editWorkshopForm.capacity) < regCount) {
-      setWorkshopError(language === 'TR'
-        ? `Kapasite en az ${regCount} olmalıdır (${regCount} kayıtlı katılımcı var).`
-        : `Capacity must be at least ${regCount} (${regCount} already registered).`)
+      setWorkshopError(t('err_capacity_min_n', language).replace(/\{n\}/g, regCount))
       return
     }
     setEditWorkshopLoading(true)
@@ -93,7 +96,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       if (result.success) {
         setEditingWorkshopId(null)
         setWorkshopError('')
-        setWorkshopSuccess(language === 'TR' ? 'Kayıt güncellendi' : 'Record updated')
+        setWorkshopSuccess(t('workshop_updated', language))
         clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setWorkshopSuccess(''), 3000)
       } else { setWorkshopError(result.error || t('err_generic', language)) }
     } catch {
@@ -107,7 +110,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
     const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(id)).length
     const base = t('workshop_delete_confirm', language)
     const label = regCount > 0
-      ? `${base} (${regCount} ${language === 'TR' ? 'kayıtlı katılımcı silinecek' : 'registered participants will be removed'})`
+      ? `${base} (${regCount} ${t('workshop_delete_suffix', language)})`
       : base
     onRequestConfirm(label, async () => {
       setProcessingId(id)
@@ -130,16 +133,16 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
       </div>
 
       {isGlobal && (
-        <select className={`${inputClass} w-full mb-3`} value={workshopCityFilter} onChange={e => setWorkshopCityFilter(e.target.value)}>
+        <select aria-label={t('filter_all_provinces', language)} className={`${inputClass} w-full mb-3`} value={workshopCityFilter} onChange={e => setWorkshopCityFilter(e.target.value)}>
           <option value="">{t('filter_all_provinces', language)}</option>
           {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       )}
 
-      {workshopSuccess && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{workshopSuccess}</div>}
+      {workshopSuccess && <div role="status" aria-live="polite" className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{workshopSuccess}</div>}
       {workshopError && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-3">
-          {workshopError} <button onClick={() => setWorkshopError('')} className="ml-2 text-red-400"><X className="w-3.5 h-3.5 inline" /></button>
+        <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-3">
+          {workshopError} <button onClick={() => setWorkshopError('')} aria-label={t('btn_close', language)} className="ml-2 text-red-400"><X className="w-3.5 h-3.5 inline" aria-hidden="true" /></button>
         </div>
       )}
 
@@ -171,11 +174,11 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_date_label', language)}</label>
-              <input type="date" min={todayStr} max={maxDate} className={`${inputClass} w-full`} value={workshopForm.date} onChange={e => setWorkshopForm(p => ({ ...p, date: e.target.value }))} />
+              <input type="date" aria-label={t('workshop_date_label', language)} min={todayStr} max={maxDate} className={`${inputClass} w-full`} value={workshopForm.date} onChange={e => setWorkshopForm(p => ({ ...p, date: e.target.value }))} />
             </div>
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_time_label', language)}</label>
-              <input type="text" className={`${inputClass} w-full`} placeholder="09:00 - 17:00" value={workshopForm.time} onChange={e => setWorkshopForm(p => ({ ...p, time: e.target.value }))} />
+              <input type="text" aria-label={t('workshop_time_label', language)} className={`${inputClass} w-full`} placeholder={t('slot_placeholder', language)} value={workshopForm.time} onChange={e => setWorkshopForm(p => ({ ...p, time: e.target.value }))} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -189,7 +192,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
             </div>
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl">{t('btn_save', language)}</button>
+            <button type="submit" disabled={addWorkshopLoading} className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60">{addWorkshopLoading ? '...' : t('btn_save', language)}</button>
             <button type="button" onClick={() => { setShowAddWorkshop(false); setWorkshopError('') }} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">{t('btn_nevermind', language)}</button>
           </div>
         </form>
@@ -206,8 +209,8 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                 {editingWorkshopId === ws.id ? (
                   <form onSubmit={handleUpdateWorkshop} className="space-y-3">
                     <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Atölyeyi Düzenle' : 'Edit Workshop'}</h4>
-                      <button type="button" onClick={() => setEditingWorkshopId(null)} className="text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{t('workshop_edit_title', language)}</h4>
+                      <button type="button" onClick={() => setEditingWorkshopId(null)} aria-label={t('btn_close', language)} title={t('btn_close', language)} className="text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" aria-hidden="true" /></button>
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_name_label', language)} *</label>
@@ -220,11 +223,11 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_date_label', language)}</label>
-                        <input type="date" min={todayStr} max={maxDate} className={`${inputClass} w-full`} value={editWorkshopForm.date} onChange={e => setEditWorkshopForm(p => ({ ...p, date: e.target.value }))} />
+                        <input type="date" aria-label={t('workshop_date_label', language)} min={todayStr} max={maxDate} className={`${inputClass} w-full`} value={editWorkshopForm.date} onChange={e => setEditWorkshopForm(p => ({ ...p, date: e.target.value }))} />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('workshop_time_label', language)}</label>
-                        <input type="text" className={`${inputClass} w-full`} placeholder="09:00 - 17:00" value={editWorkshopForm.time} onChange={e => setEditWorkshopForm(p => ({ ...p, time: e.target.value }))} />
+                        <input type="text" aria-label={t('workshop_time_label', language)} className={`${inputClass} w-full`} placeholder={t('slot_placeholder', language)} value={editWorkshopForm.time} onChange={e => setEditWorkshopForm(p => ({ ...p, time: e.target.value }))} />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -257,8 +260,8 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                         <p className="text-xs text-gray-500 dark:text-gray-400">{city?.name || ws.city_name}{ws.location ? ` • ${ws.location}` : ''}</p>
                         {ws.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{ws.description}</p>}
                         <div className="flex flex-wrap gap-3 mt-1.5">
-                          {ws.date && <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Calendar className="w-3 h-3 inline" />{formatDate(ws.date)}</span>}
-                          {ws.time && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Clock className="w-3 h-3 inline" />{ws.time}</span>}
+                          {ws.date && <span className="text-xs bg-[#1565C0]/10 dark:bg-[#7DD4FC]/10 text-[#1565C0] dark:text-[#7DD4FC] px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Calendar className="w-3 h-3 inline" aria-hidden="true" />{formatDate(ws.date)}</span>}
+                          {ws.time && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5"><Clock className="w-3 h-3 inline" aria-hidden="true" />{ws.time}</span>}
                           {(() => {
                             const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id)).length
                             return (
@@ -266,33 +269,34 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                                 onClick={() => setExpandedRegistrants(prev => prev === ws.id ? null : ws.id)}
                                 className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-lg font-medium inline-flex items-center gap-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
                               >
-                                <Users className="w-3 h-3 inline" />
+                                <Users className="w-3 h-3 inline" aria-hidden="true" />
                                 {regCount}{ws.capacity ? `/${ws.capacity}` : ''}
-                                {expandedRegistrants === ws.id ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                {expandedRegistrants === ws.id ? <ChevronDown className="w-3 h-3" aria-hidden="true" /> : <ChevronRight className="w-3 h-3" aria-hidden="true" />}
                               </button>
                             )
                           })()}
                         </div>
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
-                        <button onClick={() => startEditWorkshop(ws)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"><Pencil className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => handleDeleteWorkshop(ws.id)} disabled={processingId === ws.id} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => startEditWorkshop(ws)} aria-label={t('btn_edit', language)} title={t('btn_edit', language)} className="text-[#1565C0] dark:text-[#7DD4FC] text-xs p-1.5 hover:bg-[#1565C0]/10 rounded-lg transition"><Pencil className="w-3.5 h-3.5" aria-hidden="true" /></button>
+                        <button onClick={() => handleDeleteWorkshop(ws.id)} disabled={processingId === ws.id} aria-label={t('btn_delete', language)} title={t('btn_delete', language)} className="text-red-500 hover:text-red-700 text-xs p-1.5 disabled:opacity-40"><Trash2 className="w-3.5 h-3.5" aria-hidden="true" /></button>
                       </div>
                     </div>
                     {expandedRegistrants === ws.id && (() => {
                       const regs = workshopRegistrations.filter(r => String(r.workshop_id) === String(ws.id))
+                      const escapeCSV = (v) => { const s = v == null ? '' : String(v); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s }
                       const exportRegs = () => {
-                        const header = language === 'TR'
-                          ? 'Ad,Soyad,E-posta,Kayıt Tarihi,Katıldı'
-                          : 'Name,Surname,Email,Registration Date,Attended'
+                        const header = [t('input_name', language), t('input_surname', language), t('input_email', language), t('lbl_reg_date', language), t('workshop_attendance_attended', language)].join(',')
                         const rows = regs.map(r => {
-                          const regDate = r.created_at ? new Date(r.created_at).toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB') : ''
-                          const attended = r.attended ? (language === 'TR' ? 'Evet' : 'Yes') : (language === 'TR' ? 'Hayır' : 'No')
-                          return `${r.user_name},${r.user_surname},${r.user_email},${regDate},${attended}`
+                          const regDate = r.created_at ? new Date(r.created_at).toLocaleDateString(getLocale(language)) : ''
+                          const attended = r.attended ? t('btn_yes', language) : t('btn_no', language)
+                          return [escapeCSV(r.user_name), escapeCSV(r.user_surname), escapeCSV(r.user_email), regDate, attended].join(',')
                         })
                         const blob = new Blob(['﻿' + [header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' })
-                        const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a'); a.href = url
                         a.download = `${ws.name.replace(/\s+/g, '_')}_kayitlar.csv`; a.click()
+                        URL.revokeObjectURL(url)
                       }
                       return (
                         <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
@@ -300,7 +304,7 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                             <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">{t('workshop_registrants_title', language)}</p>
                             {regs.length > 0 && (
                               <button onClick={exportRegs} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] inline-flex items-center gap-1 hover:underline">
-                                <Download className="w-3 h-3" />{language === 'TR' ? 'CSV İndir' : 'Download CSV'}
+                                <Download className="w-3 h-3" aria-hidden="true" />{t('export_csv', language)}
                               </button>
                             )}
                           </div>
@@ -316,19 +320,22 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
                                   </div>
                                   <div className="flex items-center gap-1 flex-shrink-0">
                                     <button
-                                      onClick={async () => { const res = await toggleWorkshopAttendance(r.id, !r.attended); if (!res.success) setWorkshopError(t('err_generic', language)) }}
-                                      className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition ${r.attended ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-400'}`}
+                                      disabled={processingRegId === r.id}
+                                      onClick={async () => { setProcessingRegId(r.id); const res = await toggleWorkshopAttendance(r.id, !r.attended); setProcessingRegId(null); if (!res.success) setWorkshopError(t('err_generic', language)) }}
+                                      className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition disabled:opacity-50 ${r.attended ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-400'}`}
                                     >
                                       {r.attended
-                                        ? <><CheckCircle2 className="w-3 h-3" />{language === 'TR' ? 'Katıldı' : 'Attended'}</>
-                                        : <><Circle className="w-3 h-3" />{language === 'TR' ? 'Katılmadı' : 'Not yet'}</>}
+                                        ? <><CheckCircle2 className="w-3 h-3" aria-hidden="true" />{t('workshop_attendance_attended', language)}</>
+                                        : <><Circle className="w-3 h-3" aria-hidden="true" />{t('workshop_attendance_not_yet', language)}</>}
                                     </button>
                                     <button
-                                      onClick={async () => { const res = await removeWorkshopRegistration(r.id); if (!res.success) setWorkshopError(t('err_generic', language)) }}
-                                      className="p-0.5 text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition"
-                                      title={language === 'TR' ? 'Kaydı Sil' : 'Remove Registration'}
+                                      disabled={processingRegId === r.id}
+                                      onClick={async () => { setProcessingRegId(r.id); const res = await removeWorkshopRegistration(r.id); setProcessingRegId(null); if (!res.success) setWorkshopError(t('err_generic', language)) }}
+                                      className="p-0.5 text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition disabled:opacity-50"
+                                      aria-label={t('workshop_remove_reg', language)}
+                                      title={t('workshop_remove_reg', language)}
                                     >
-                                      <Trash2 className="w-3 h-3" />
+                                      <Trash2 className="w-3 h-3" aria-hidden="true" />
                                     </button>
                                   </div>
                                 </div>

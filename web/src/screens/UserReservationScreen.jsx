@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate, translations } from '../lib/languages'
 import { X, MapPin, Clock } from 'lucide-react'
@@ -49,6 +49,14 @@ export default function UserReservationScreen() {
   const [dateError, setDateError] = useState('')
   const [waitlistMsg, setWaitlistMsg] = useState('')
   const [waitlistProcessing, setWaitlistProcessing] = useState('')
+  const successTimerRef = useRef(null)
+  useEffect(() => () => clearTimeout(successTimerRef.current), [])
+  useEffect(() => {
+    if (!showConfirm) return
+    const handler = (e) => { if (e.key === 'Escape' && !submitting) setShowConfirm(false) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [showConfirm, submitting])
   const [showConfirm, setShowConfirm] = useState(false)
 
   // User can only see their own city
@@ -157,6 +165,7 @@ export default function UserReservationScreen() {
       })
       if (result.success) {
         setSuccessMsg(t('appointment_success', language))
+        clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 5000)
         setStep(1)
         setSelectedCity(null)
         setSelectedLab(null)
@@ -174,10 +183,10 @@ export default function UserReservationScreen() {
   }
 
   const resetToStep = (s) => {
-    if (s <= 1) { setSelectedCity(null); setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(1); setSuccessMsg('') }
-    else if (s <= 2) { setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(2) }
-    else if (s <= 3) { setSelectedDate(''); setSelectedSlot(null); setStep(3) }
-    else if (s <= 4) { setSelectedSlot(null); setStep(4) }
+    if (s <= 1) { setSelectedCity(null); setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(1); setSuccessMsg(''); setDateError(''); setWaitlistMsg(''); setWaitlistProcessing('') }
+    else if (s <= 2) { setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(2); setDateError(''); setWaitlistMsg(''); setWaitlistProcessing('') }
+    else if (s <= 3) { setSelectedDate(''); setSelectedSlot(null); setStep(3); setDateError(''); setWaitlistMsg(''); setWaitlistProcessing('') }
+    else if (s <= 4) { setSelectedSlot(null); setStep(4); setWaitlistMsg(''); setWaitlistProcessing('') }
   }
 
   const cardClass = "bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4"
@@ -186,9 +195,9 @@ export default function UserReservationScreen() {
     <div className="px-4 py-4">
       {/* Success message */}
       {successMsg && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between items-start">
+        <div role="status" aria-live="polite" className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-4 flex justify-between items-start">
           <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg('')} className="ml-2 text-green-500 hover:text-green-700"><X className="w-4 h-4" /></button>
+          <button onClick={() => setSuccessMsg('')} aria-label={t('btn_close', language)} className="ml-2 text-green-500 hover:text-green-700"><X className="w-4 h-4" aria-hidden="true" /></button>
         </div>
       )}
 
@@ -269,7 +278,7 @@ export default function UserReservationScreen() {
                     {locations.map(loc => (
                       <div key={loc}>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-bold text-[#1565C0] dark:text-[#7DD4FC] uppercase tracking-wide inline-flex items-center gap-0.5"><MapPin className="w-3.5 h-3.5 inline" />{loc}</span>
+                          <span className="text-xs font-bold text-[#1565C0] dark:text-[#7DD4FC] uppercase tracking-wide inline-flex items-center gap-0.5"><MapPin className="w-3.5 h-3.5 inline" aria-hidden="true" />{loc}</span>
                           <div className="flex-1 h-px bg-[#1565C0]/20 dark:bg-[#7DD4FC]/20" />
                         </div>
                         <div className="grid grid-cols-1 gap-3">
@@ -317,7 +326,7 @@ export default function UserReservationScreen() {
             showLegend={false}
           />
           {dateError && (
-            <p className="mt-2 text-xs text-red-600 dark:text-red-400 px-1">{dateError}</p>
+            <p role="status" aria-live="polite" className="mt-2 text-xs text-red-600 dark:text-red-400 px-1">{dateError}</p>
           )}
           <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 px-1">
             {t('date_restriction', language)}
@@ -387,7 +396,7 @@ export default function UserReservationScreen() {
                           try {
                             if (onWaitlist) {
                               const entry = waitlist.find(w => String(w.lab_id) === String(selectedLab?.id) && w.date === selectedDate && w.time_slot === slot.time_range)
-                              if (entry) { const r = await removeFromWaitlist(entry.id); setWaitlistMsg(r.success ? (language === 'TR' ? 'Bekleme listesinden çıkarıldınız.' : 'Removed from waitlist.') : (r.error || (language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.'))) }
+                              if (entry) { const r = await removeFromWaitlist(entry.id); setWaitlistMsg(r.success ? t('waitlist_removed', language) : (r.error || t('err_generic', language))) }
                             } else {
                               const res = await addToWaitlist({
                                 lab_id: selectedLab.id, lab_name: selectedLab.name,
@@ -399,19 +408,19 @@ export default function UserReservationScreen() {
                                 user_work_location: loggedInUser.work_location || '',
                                 user_city: loggedInUser.city_name || '', user_district: loggedInUser.district || '',
                               })
-                              setWaitlistMsg(res.success ? (language === 'TR' ? 'Bekleme listesine eklendiniz. Yer açıldığında bildirim alacaksınız.' : 'Added to waitlist. You will be notified when a slot opens.') : (res.error || ''))
+                              setWaitlistMsg(res.success ? t('waitlist_added', language) : (res.error || t('err_generic', language)))
                             }
                           } catch (err) {
                             console.error('[waitlist]', err)
-                            setWaitlistMsg(language === 'TR' ? 'Bir hata oluştu.' : 'An error occurred.')
+                            setWaitlistMsg(t('err_generic', language))
                           } finally {
                             setWaitlistProcessing('')
                           }
                         }}
                         className={`w-full py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${onWaitlist ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200' : 'border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
                       >
-                        <Clock className="w-3 h-3" />
-                        {onWaitlist ? (language === 'TR' ? '✓ Bekleme Listesinde' : '✓ On Waitlist') : (language === 'TR' ? 'Bekleme Listesine Ekle' : 'Join Waitlist')}
+                        <Clock className="w-3 h-3" aria-hidden="true" />
+                        {onWaitlist ? t('waitlist_on_list', language) : t('waitlist_join', language)}
                       </button>
                     )}
                   </div>
@@ -474,8 +483,9 @@ export default function UserReservationScreen() {
             </div>
 
             {errorMsg && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
-                {errorMsg}
+              <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm flex items-center justify-between">
+                <span>{errorMsg}</span>
+                <button type="button" onClick={() => setErrorMsg('')} aria-label={t('btn_close', language)} className="ml-2 text-red-400 opacity-60 hover:opacity-100"><X className="w-3.5 h-3.5" aria-hidden="true" /></button>
               </div>
             )}
 
@@ -499,7 +509,7 @@ export default function UserReservationScreen() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div role="dialog" aria-modal="true" aria-labelledby="confirm-appt-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 id="confirm-appt-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-3">
-              {language === 'TR' ? 'Randevuyu Onayla' : 'Confirm Appointment'}
+              {t('confirm_appointment_title', language)}
             </h3>
             <div className="bg-gray-50 dark:bg-[#0E1A30] rounded-xl px-4 py-3 mb-4 space-y-1 text-sm">
               <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">{t('province_label', language)}</span><span className="font-medium text-gray-800 dark:text-gray-200">{selectedCity?.name}</span></div>
@@ -510,15 +520,17 @@ export default function UserReservationScreen() {
             <div className="flex gap-3">
               <button
                 onClick={doSubmit}
-                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition"
+                disabled={submitting}
+                autoFocus
+                className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50"
               >
-                {language === 'TR' ? 'Onayla' : 'Confirm'}
+                {submitting ? t('submitting', language) : t('btn_confirm', language)}
               </button>
               <button
                 onClick={() => setShowConfirm(false)}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
-                {language === 'TR' ? 'Geri Dön' : 'Go Back'}
+                {t('btn_go_back', language)}
               </button>
             </div>
           </div>

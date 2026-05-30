@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
-import { t } from '../../lib/languages'
+import { t, getLocale } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { Trash2 } from 'lucide-react'
 
@@ -83,7 +83,7 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
         <form onSubmit={handleCreateNotification} className="space-y-3">
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('notif_lbl_type', language)}</label>
-            <select className={`${inputClass} w-full`} value={notifForm.type} onChange={e => setNotifForm(p => ({ ...p, type: e.target.value }))}>
+            <select aria-label={t('notif_lbl_type', language)} className={`${inputClass} w-full`} value={notifForm.type} onChange={e => setNotifForm(p => ({ ...p, type: e.target.value }))}>
               <option value="SYSTEM">{t('notif_type_system', language)}</option>
               <option value="REMINDER">{t('notif_type_reminder', language)}</option>
               <option value="ALERT">{t('notif_type_alert', language)}</option>
@@ -92,7 +92,7 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
           {isGlobal && (
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('notif_target_city', language)}</label>
-              <select className={`${inputClass} w-full`} value={notifCity} onChange={e => setNotifCity(e.target.value)}>
+              <select aria-label={t('notif_target_city', language)} className={`${inputClass} w-full`} value={notifCity} onChange={e => setNotifCity(e.target.value)}>
                 <option value="">{t('notif_target_all', language)}</option>
                 {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -103,14 +103,14 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
           )}
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('notif_lbl_title', language)} *</label>
-            <input type="text" className={`${inputClass} w-full`} value={notifForm.title} onChange={e => setNotifForm(p => ({ ...p, title: e.target.value }))} required placeholder={t('notif_title_placeholder', language)} />
+            <input type="text" aria-label={t('notif_lbl_title', language)} className={`${inputClass} w-full`} value={notifForm.title} onChange={e => setNotifForm(p => ({ ...p, title: e.target.value }))} required placeholder={t('notif_title_placeholder', language)} />
           </div>
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('notif_lbl_message', language)} *</label>
             <textarea className={`${inputClass} w-full resize-none`} rows={4} value={notifForm.message} onChange={e => setNotifForm(p => ({ ...p, message: e.target.value }))} required placeholder={t('notif_msg_placeholder', language)} />
           </div>
-          {notifError && <p className="text-red-500 dark:text-red-400 text-xs">{notifError}</p>}
-          {notifSuccess && <p className="text-green-600 dark:text-green-400 text-xs font-medium">{notifSuccess}</p>}
+          {notifError && <p role="status" aria-live="polite" className="text-red-500 dark:text-red-400 text-xs">{notifError}</p>}
+          {notifSuccess && <p role="status" aria-live="polite" className="text-green-600 dark:text-green-400 text-xs font-medium">{notifSuccess}</p>}
           <button type="submit" disabled={notifLoading} className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60">
             {notifLoading ? '...' : t('notif_send_btn', language)}
           </button>
@@ -119,12 +119,12 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
 
       <div className="mt-6">
         <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-3">
-          {language === 'TR' ? 'Bildirim Geçmişi' : 'Notification History'}
+          {t('notif_history_title', language)}
           <span className="ml-1.5 text-gray-400 dark:text-gray-500 font-normal">({visibleHistory.length})</span>
         </h3>
         {visibleHistory.length === 0 ? (
           <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
-            {language === 'TR' ? 'Bildirim bulunamadı.' : 'No notifications found.'}
+            {t('notif_history_empty', language)}
           </div>
         ) : (
           <div className="space-y-2">
@@ -136,7 +136,7 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
                       {n.type}
                     </span>
                     <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                      {n.timestamp ? new Date(n.timestamp).toLocaleString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                      {n.timestamp ? new Date(n.timestamp).toLocaleString(getLocale(language), { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                     </span>
                   </div>
                   <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{n.title}</p>
@@ -146,9 +146,10 @@ export default function NotificationsTab({ language, isGlobal, adminCityId }) {
                   onClick={() => handleDeleteNotification(n.id)}
                   disabled={deletingId === n.id}
                   className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition disabled:opacity-40"
-                  title={language === 'TR' ? 'Sil' : 'Delete'}
+                  aria-label={t('btn_delete', language)}
+                  title={t('btn_delete', language)}
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
             ))}

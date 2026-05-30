@@ -40,6 +40,10 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkApproving, setBulkApproving] = useState(false)
 
+  const [opError, setOpError] = useState('')
+  const opErrorTimerRef = useRef(null)
+  const showOpError = (msg) => { clearTimeout(opErrorTimerRef.current); setOpError(msg); opErrorTimerRef.current = setTimeout(() => setOpError(''), 3000) }
+
   const [showAddUser, setShowAddUser] = useState(false)
   const [addUserForm, setAddUserForm] = useState({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
   const [addUserError, setAddUserError] = useState('')
@@ -72,25 +76,26 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       const cityIdx = idxOf(['il', 'city', 'şehir', 'sehir', 'il_id', 'city_id'])
       let ok = 0, fail = 0, errors = []
       for (let i = 1; i < lines.length; i++) {
+        if (errors.length >= 100) { fail += lines.length - i; break }
         const parts = parseCSVLine(lines[i].replace(/\r/g, ''))
         const email = emailIdx >= 0 ? parts[emailIdx]?.trim().toLowerCase() : ''
         const name = nameIdx >= 0 ? parts[nameIdx] : ''
         const surname = surnameIdx >= 0 ? parts[surnameIdx] : ''
-        if (!email || !name || !surname) { fail++; errors.push(`Satır ${i + 1}: eksik alan`); continue }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail++; errors.push(`Satır ${i + 1}: geçersiz e-posta (${email})`); continue }
+        if (!email || !name || !surname) { fail++; errors.push(t('csv_err_missing_field', language).replace('{n}', i + 1)); continue }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail++; errors.push(t('csv_err_invalid_email', language).replace('{n}', i + 1).replace('{email}', email)); continue }
         const cityVal = cityIdx >= 0 ? parts[cityIdx] : ''
         const cityObj = cities.find(c => String(c.id) === cityVal || c.name.toLowerCase() === cityVal.toLowerCase())
         const cityId = cityObj?.id || (!isGlobal ? adminCityId : null)
-        if (!cityId) { fail++; errors.push(`Satır ${i + 1}: il bulunamadı (${cityVal})`); continue }
+        if (!cityId) { fail++; errors.push(t('csv_err_city_not_found', language).replace('{n}', i + 1).replace('{city}', cityVal)); continue }
         const password = generateTempPassword()
         const result = await addUserByAdmin({ name, surname, email, password, phone: phoneIdx >= 0 ? parts[phoneIdx] || '' : '', branch: branchIdx >= 0 ? parts[branchIdx] || '' : '', work_location: workLocIdx >= 0 ? parts[workLocIdx] || '' : '', district: districtIdx >= 0 ? parts[districtIdx] || '' : '', city_id: cityId, city_name: cityObj?.name || '' })
         if (result.success) ok++
-        else { fail++; errors.push(`Satır ${i + 1} (${email}): ${result.error}`) }
+        else { fail++; errors.push(t('csv_err_row_generic', language).replace('{n}', i + 1).replace('{email}', email).replace('{error}', result.error)) }
       }
       setCsvResult({ ok, fail, errors })
     } catch (err) {
       console.error('[csvImport]', err)
-      setCsvResult({ ok: 0, fail: 0, errors: [err.message || 'Dosya okunamadı.'] })
+      setCsvResult({ ok: 0, fail: 0, errors: [err.message || t('csv_err_read_file', language)] })
     } finally {
       setCsvImporting(false)
     }
@@ -103,7 +108,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [resetPwSuccess, setResetPwSuccess] = useState('')
   const resetPwTimerRef = useRef(null)
 
-  useEffect(() => () => { clearTimeout(resetPwTimerRef.current); clearTimeout(addUserTimerRef.current) }, [])
+  useEffect(() => () => { clearTimeout(resetPwTimerRef.current); clearTimeout(addUserTimerRef.current); clearTimeout(opErrorTimerRef.current) }, [])
 
   const pendingUsers = useMemo(() => {
     let base = isGlobal ? users.filter(u => !u.is_approved) : users.filter(u => !u.is_approved && String(u.city_id) === String(adminCityId))
@@ -130,8 +135,8 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     })
   }, [pendingUsers])
 
-  const handleApproveUser = (id) => onRequestConfirm(t('confirm_approve_user', language), async () => { setProcessingId(id); try { const result = await approveUser(id); if (!result.success) setAddUserError(result.error || t('err_generic', language)) } finally { setProcessingId(null) } })
-  const handleBulkApprove = async () => {
+  const handleApproveUser = (id) => onRequestConfirm(t('confirm_approve_user', language), async () => { setProcessingId(id); try { const result = await approveUser(id); if (!result.success) showOpError(result.error || t('err_generic', language)) } finally { setProcessingId(null) } })
+  const execBulkApprove = async () => {
     if (selectedIds.size === 0 || bulkApproving) return
     setBulkApproving(true)
     try {
@@ -143,11 +148,18 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       }
       setSelectedIds(new Set())
       if (failCount > 0) {
-        setAddUserError(language === 'TR' ? `${failCount} üye onaylanamadı.` : `${failCount} users could not be approved.`)
+        showOpError(t('err_bulk_approve_failed', language).replace('{n}', failCount))
       }
     } finally {
       setBulkApproving(false)
     }
+  }
+  const handleBulkApprove = () => {
+    if (selectedIds.size === 0) return
+    onRequestConfirm(
+      t('confirm_bulk_approve', language).replace('{n}', selectedIds.size),
+      execBulkApprove
+    )
   }
   const handleRevokeUser = (id) => {
     const u = users.find(usr => usr.id === id)
@@ -156,9 +168,9 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     ).length
     let label = u ? `${t('confirm_revoke_user', language)} (${u.name} ${u.surname} — ${u.email})` : t('confirm_revoke_user', language)
     if (activeAppts > 0) {
-      label += ` — ${activeAppts} ${language === 'TR' ? 'aktif randevu iptal edilecek' : 'active appointment(s) will be cancelled'}`
+      label += ` — ${activeAppts} ${t('active_appts_will_cancel', language)}`
     }
-    onRequestConfirm(label, async () => { setProcessingId(id); try { const result = await revokeUser(id); if (!result.success) setAddUserError(result.error || t('err_generic', language)) } finally { setProcessingId(null) } })
+    onRequestConfirm(label, async () => { setProcessingId(id); try { const result = await revokeUser(id); if (!result.success) showOpError(result.error || t('err_generic', language)) } finally { setProcessingId(null) } })
   }
 
   const openResetPw = (user) => { setResetPwModal({ userId: user.id, email: user.email, userName: `${user.name} ${user.surname}` }); setResetPwValue(''); setResetPwError(''); setResetPwSuccess('') }
@@ -187,7 +199,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     setAddUserError('')
     const cityId = isGlobal ? addUserForm.city_id : adminCityId
     if (!addUserForm.name.trim() || !addUserForm.surname.trim() || !addUserForm.email.trim() || !addUserForm.password.trim() || !cityId) {
-      setAddUserError(language === 'TR' ? 'Ad, soyad, e-posta, şifre ve il zorunludur.' : 'Name, surname, email, password and province are required.')
+      setAddUserError(t('err_add_user_required_fields', language))
       return
     }
     if (!isPasswordStrong(addUserForm.password)) { setAddUserError(t('err_password_weak', language)); return }
@@ -199,7 +211,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       if (result.success) {
         setShowAddUser(false)
         setAddUserForm({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' })
-        setAddUserSuccess(language === 'TR' ? 'Üye eklendi.' : 'Member added.')
+        setAddUserSuccess(t('user_added', language))
         clearTimeout(addUserTimerRef.current); addUserTimerRef.current = setTimeout(() => setAddUserSuccess(''), 3000)
       } else {
         const errKey = result.error
@@ -213,9 +225,11 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   }
 
   const handleCsvExport = () => {
-    const headers = language === 'TR'
-      ? ['Ad', 'Soyad', 'E-posta', 'Telefon', 'Branş', 'Kurum', 'İlçe', 'İl']
-      : ['Name', 'Surname', 'Email', 'Phone', 'Branch', 'Institution', 'District', 'Province']
+    const headers = [
+      t('input_name', language), t('input_surname', language), t('input_email', language),
+      t('lbl_phone', language), t('lbl_branch', language), t('lbl_institution', language),
+      t('lbl_district', language), t('lbl_province', language),
+    ]
     const escape = (v) => {
       const s = v == null ? '' : String(v)
       return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
@@ -240,48 +254,49 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       <div className="mb-4 flex flex-col gap-2">
         <div className="flex items-center justify-between">
           {isGlobal ? (
-            <select className={`${inputClass} flex-1 mr-2`} value={userCityFilter} onChange={e => { setUserCityFilter(e.target.value); setVisibleApprovedCount(PAGE_SIZE) }}>
+            <select aria-label={t('filter_all_provinces', language)} className={`${inputClass} flex-1 mr-2`} value={userCityFilter} onChange={e => { setUserCityFilter(e.target.value); setVisibleApprovedCount(PAGE_SIZE) }}>
               <option value="">{t('filter_all_provinces', language)}</option>
               {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           ) : <div />}
           <div className="flex gap-2 flex-shrink-0">
             <label className="py-2 px-3 border border-[#1565C0]/40 dark:border-[#7DD4FC]/40 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition cursor-pointer flex items-center gap-1">
-              {csvImporting ? '...' : (language === 'TR' ? 'CSV İçe Aktar' : 'Import CSV')}
+              {csvImporting ? '...' : t('csv_import', language)}
               <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={csvImporting} />
             </label>
             <button onClick={handleCsvExport} className="py-2 px-3 border border-[#1565C0]/40 dark:border-[#7DD4FC]/40 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition flex items-center gap-1">
-              <Download size={14} />
-              {language === 'TR' ? 'CSV İndir' : 'Export CSV'}
+              <Download size={14} aria-hidden="true" />
+              {t('export_csv', language)}
             </button>
             <button onClick={() => { setShowAddUser(p => !p); setAddUserError(''); setAddUserSuccess(''); setAddUserForm({ name: '', surname: '', email: '', password: '', confirmPassword: '', branch: '', work_location: '', phone: '', city_id: '', district: '' }) }} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition">
-              + {language === 'TR' ? 'Üye Ekle' : 'Add Member'}
+              + {t('btn_add_member', language)}
             </button>
           </div>
         </div>
-        <input type="text" placeholder={t('search_user_placeholder', language)} className={`${inputClass} w-full`} value={userSearch} onChange={e => { setUserSearch(e.target.value); setVisibleApprovedCount(PAGE_SIZE) }} />
+        <input type="text" aria-label={t('search_user_placeholder', language)} placeholder={t('search_user_placeholder', language)} className={`${inputClass} w-full`} value={userSearch} onChange={e => { setUserSearch(e.target.value); setVisibleApprovedCount(PAGE_SIZE) }} />
       </div>
 
-      {addUserSuccess && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{addUserSuccess}</div>}
+      {addUserSuccess && <div role="status" aria-live="polite" className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-green-700 dark:text-green-300 text-sm mb-3">{addUserSuccess}</div>}
+      {opError && <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm mb-3 flex items-center justify-between">{opError}<button type="button" onClick={() => { clearTimeout(opErrorTimerRef.current); setOpError('') }} aria-label={t('btn_close', language)} className="text-xs opacity-60 hover:opacity-100 ml-2">✕</button></div>}
       {csvResult && (
-        <div className={`rounded-xl px-4 py-3 text-sm mb-3 ${csvResult.fail === 0 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300' : 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300'}`}>
+        <div role="status" aria-live="polite" className={`rounded-xl px-4 py-3 text-sm mb-3 ${csvResult.fail === 0 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300' : 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300'}`}>
           <div className="flex items-center justify-between">
-            <span>{language === 'TR' ? `${csvResult.ok} eklendi, ${csvResult.fail} başarısız` : `${csvResult.ok} added, ${csvResult.fail} failed`}</span>
-            <button onClick={() => setCsvResult(null)} className="text-xs opacity-60 hover:opacity-100">✕</button>
+            <span>{t('csv_import_result', language).replace('{ok}', csvResult.ok).replace('{fail}', csvResult.fail)}</span>
+            <button type="button" onClick={() => setCsvResult(null)} aria-label={t('btn_close', language)} className="text-xs opacity-60 hover:opacity-100">✕</button>
           </div>
           {csvResult.errors.length > 0 && (
             <ul className="mt-2 space-y-0.5 text-xs">
               {csvResult.errors.slice(0, 5).map((e, i) => <li key={`err-${i}-${e}`}>• {e}</li>)}
-              {csvResult.errors.length > 5 && <li>... ve {csvResult.errors.length - 5} daha</li>}
+              {csvResult.errors.length > 5 && <li>{t('csv_errors_more', language).replace('{n}', csvResult.errors.length - 5)}</li>}
             </ul>
           )}
-          <p className="text-xs mt-1 opacity-70">{language === 'TR' ? 'Her kullanıcıya benzersiz geçici şifre atanır. Kullanıcılar ilk girişte şifre değiştirmek zorunda kalacak.' : 'Each user gets a unique temporary password. Users will be forced to change it on first login.'}</p>
+          <p className="text-xs mt-1 opacity-70">{t('csv_import_pw_hint', language)}</p>
         </div>
       )}
 
       {showAddUser && (
         <form onSubmit={handleAddUserByAdmin} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4 space-y-3">
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{language === 'TR' ? 'Yeni Üye' : 'New Member'}</h4>
+          <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{t('user_new', language)}</h4>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_name', language)} *</label>
@@ -297,14 +312,14 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
             <input type="email" className={`${inputClass} w-full`} value={addUserForm.email} onChange={e => setAddUserForm(p => ({ ...p, email: e.target.value }))} required />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Şifre *' : 'Password *'}</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_password_required', language)}</label>
             <PasswordInput className={`${inputClass} w-full`} value={addUserForm.password} onChange={e => setAddUserForm(p => ({ ...p, password: e.target.value }))} required minLength={8} />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{language === 'TR' ? 'Şifre Tekrar *' : 'Confirm Password *'}</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_confirm_password_required', language)}</label>
             <PasswordInput className={`${inputClass} w-full`} value={addUserForm.confirmPassword} onChange={e => setAddUserForm(p => ({ ...p, confirmPassword: e.target.value }))} required minLength={8} />
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              {language === 'TR' ? 'Kullanıcı ilk girişte bu şifreyi değiştirmek zorunda kalacak.' : 'User will be required to change this password on first login.'}
+              {t('add_user_pw_hint', language)}
             </p>
           </div>
           {isGlobal && (
@@ -336,7 +351,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               <input type="text" className={`${inputClass} w-full`} value={addUserForm.district} onChange={e => setAddUserForm(p => ({ ...p, district: e.target.value }))} />
             </div>
           </div>
-          {addUserError && <p className="text-red-500 dark:text-red-400 text-xs">{addUserError}</p>}
+          {addUserError && <p role="status" aria-live="polite" className="text-red-500 dark:text-red-400 text-xs">{addUserError}</p>}
           <div className="flex gap-2">
             <button type="submit" disabled={addUserLoading} className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60">
               {addUserLoading ? '...' : t('btn_save', language)}
@@ -363,7 +378,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
                   else setSelectedIds(new Set())
                 }}
               />
-              {language === 'TR' ? 'Tümünü Seç' : 'Select All'}
+              {t('select_all', language)}
             </label>
           )}
         </div>
@@ -373,7 +388,7 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
             disabled={bulkApproving}
             className="py-1.5 px-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-60"
           >
-            {bulkApproving ? '...' : (language === 'TR' ? `Seçilenleri Onayla (${selectedIds.size})` : `Approve Selected (${selectedIds.size})`)}
+            {bulkApproving ? '...' : t('approve_selected_n', language).replace('{n}', selectedIds.size)}
           </button>
         )}
       </div>

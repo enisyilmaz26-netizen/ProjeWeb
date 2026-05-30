@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { t } from '../lib/languages'
 
 const STATUS_DOT = {
   PENDING:                'bg-orange-400',
@@ -111,9 +112,10 @@ export default function CalendarView({
         <button
           onClick={prevMonth}
           disabled={!canGoPrev()}
+          aria-label={t('prev_month', language)}
           className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-30"
         >
-          <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" aria-hidden="true" />
         </button>
         <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
           {MONTH_NAMES[language][month]} {year}
@@ -121,9 +123,10 @@ export default function CalendarView({
         <button
           onClick={nextMonth}
           disabled={!canGoNext()}
+          aria-label={t('next_month', language)}
           className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-30"
         >
-          <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" aria-hidden="true" />
         </button>
       </div>
 
@@ -158,6 +161,8 @@ export default function CalendarView({
           return (
             <button
               key={day}
+              aria-label={dateStr}
+              aria-pressed={isSelected || undefined}
               onClick={() => !disabled && onDayClick && onDayClick(dateStr)}
               disabled={disabled}
               className={`relative rounded-lg p-1 flex flex-col items-center min-h-[42px] transition

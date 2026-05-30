@@ -80,7 +80,7 @@ export default function MainAppContainer() {
               aria-label={t('toggle_dark', language)}
               className="text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition"
             >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDarkMode ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
             </button>
             <button
               onClick={logout}
@@ -111,7 +111,7 @@ export default function MainAppContainer() {
                 <span aria-hidden="true">{tab.icon}</span>
                 <span>{tab.label}</span>
                 {tab.key === 'notifications' && unreadCount > 0 && (
-                  <span aria-label={language === 'TR' ? `${unreadCount} okunmamış bildirim` : `${unreadCount} unread notifications`} className="absolute -top-2.5 -right-3 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                  <span aria-label={t('notif_unread_count', language).replace('{n}', unreadCount)} className="absolute -top-2.5 -right-3 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -135,7 +135,7 @@ export default function MainAppContainer() {
 
       {/* Load error banner */}
       {loadError && (
-        <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 px-4 py-2 text-red-700 dark:text-red-300 text-xs flex items-center justify-center gap-3">
+        <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 px-4 py-2 text-red-700 dark:text-red-300 text-xs flex items-center justify-center gap-3">
           <span>{t('data_load_failed', language)}</span>
           <button
             onClick={() => loadAllData()}

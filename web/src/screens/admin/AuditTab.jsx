@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { PAGE_SIZE } from '../../lib/adminHelpers'
-import { t } from '../../lib/languages'
+import { t, getLocale } from '../../lib/languages'
 import { ShieldCheck, RefreshCw, Search, Download } from 'lucide-react'
 
 const ACTION_LABELS = {
@@ -47,7 +47,7 @@ const ACTION_COLORS = {
 function formatDateTime(iso, language) {
   if (!iso) return '-'
   const d = new Date(iso)
-  const locale = language === 'TR' ? 'tr-TR' : 'en-GB'
+  const locale = getLocale(language)
   return d.toLocaleString(locale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
@@ -101,9 +101,10 @@ export default function AuditTab({ language }) {
       }
       return str
     }
-    const headers = language === 'TR'
-      ? ['Tarih', 'İşlem', 'Detay', 'Yetkili', 'Rol', 'E-posta']
-      : ['Date', 'Action', 'Details', 'Actor', 'Role', 'Email']
+    const headers = [
+      t('lbl_date', language), t('lbl_action', language), t('lbl_details', language),
+      t('lbl_actor', language), t('lbl_role', language), t('input_email', language),
+    ]
     const rows = filtered.map(l => [
       formatDateTime(l.created_at, language),
       ACTION_LABELS[l.action]?.[language] || l.action,
@@ -126,9 +127,9 @@ export default function AuditTab({ language }) {
     <div>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" />
+          <ShieldCheck className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" aria-hidden="true" />
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
-            {language === 'TR' ? 'Denetim Kaydı' : 'Audit Log'}
+            {t('lbl_audit_log', language)}
           </h3>
           <span className="text-xs text-gray-400 dark:text-gray-500">({filtered.length})</span>
         </div>
@@ -138,35 +139,37 @@ export default function AuditTab({ language }) {
             disabled={filtered.length === 0}
             className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download className="w-3.5 h-3.5" />
-            {language === 'TR' ? 'CSV İndir' : 'Download CSV'}
+            <Download className="w-3.5 h-3.5" aria-hidden="true" />
+            {t('export_csv', language)}
           </button>
           <button
             onClick={load}
             disabled={loading}
             className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1 disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            {language === 'TR' ? 'Yenile' : 'Refresh'}
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+            {t('btn_refresh', language)}
           </button>
         </div>
       </div>
 
       <select
+        aria-label={t('filter_all_actions', language)}
         className="w-full mb-3 px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0D1E3D] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC]"
         value={filterAction}
         onChange={e => { setFilterAction(e.target.value); setVisibleCount(PAGE_SIZE) }}
       >
-        <option value="">{language === 'TR' ? 'Tüm İşlemler' : 'All Actions'}</option>
+        <option value="">{t('filter_all_actions', language)}</option>
         {Object.entries(ACTION_LABELS).map(([key, label]) => (
           <option key={key} value={key}>{label[language]}</option>
         ))}
       </select>
 
       <div className="flex flex-wrap gap-2 mb-3 items-center">
-        <span className="text-xs text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Tarih:' : 'Date:'}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{t('lbl_date_colon', language)}</span>
         <input
           type="date"
+          aria-label={t('filter_date_from', language)}
           value={dateFrom}
           max={dateTo || undefined}
           onChange={e => { setDateFrom(e.target.value); setVisibleCount(PAGE_SIZE) }}
@@ -175,6 +178,7 @@ export default function AuditTab({ language }) {
         <span className="text-xs text-gray-400">—</span>
         <input
           type="date"
+          aria-label={t('filter_date_to', language)}
           value={dateTo}
           min={dateFrom || undefined}
           onChange={e => { setDateTo(e.target.value); setVisibleCount(PAGE_SIZE) }}
@@ -182,15 +186,16 @@ export default function AuditTab({ language }) {
         />
         {(dateFrom || dateTo) && (
           <button onClick={() => { setDateFrom(''); setDateTo(''); setVisibleCount(PAGE_SIZE) }} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
-            {language === 'TR' ? 'Temizle' : 'Clear'}
+            {t('btn_clear', language)}
           </button>
         )}
       </div>
 
       <div className="relative mb-3">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
         <input
           type="text"
+          aria-label={t('audit_search_placeholder', language)}
           placeholder={t('audit_search_placeholder', language)}
           value={searchText}
           onChange={e => { setSearchText(e.target.value); setVisibleCount(PAGE_SIZE) }}
@@ -200,11 +205,11 @@ export default function AuditTab({ language }) {
 
       {loading ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-8 text-center text-gray-400 text-sm">
-          {language === 'TR' ? 'Yükleniyor...' : 'Loading...'}
+          {t('loading', language)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-8 text-center text-gray-400 dark:text-gray-500 text-sm">
-          {language === 'TR' ? 'Kayıt bulunamadı.' : 'No records found.'}
+          {t('no_records_found', language)}
         </div>
       ) : (
         <>

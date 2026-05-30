@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
-import { t } from '../../lib/languages'
+import { t, getLocale } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { statusLabel, exportToCSV } from '../../lib/adminHelpers'
 import { Printer, Download } from 'lucide-react'
@@ -46,7 +46,7 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      const label = d.toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { month: 'short', year: '2-digit' })
+      const label = d.toLocaleDateString(getLocale(language), { month: 'short', year: '2-digit' })
       months[key] = { label, count: 0 }
     }
     scopedAppointments.forEach(a => {
@@ -98,7 +98,7 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
     <div className="space-y-4">
       {isGlobal && (
         <div className="flex items-center gap-3">
-          <select className={`${inputClass} flex-1`} value={statsCity} onChange={e => setStatsCity(e.target.value)}>
+          <select aria-label={t('filter_all_provinces', language)} className={`${inputClass} flex-1`} value={statsCity} onChange={e => setStatsCity(e.target.value)}>
             <option value="">{t('filter_all_provinces', language)}</option>
             {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
@@ -110,10 +110,10 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
         </div>
       )}
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs text-gray-500 dark:text-gray-400">{language === 'TR' ? 'Tarih:' : 'Date:'}</span>
-        <input type="date" className={inputClass} value={statsDateFrom} max={statsDateTo || undefined} onChange={e => setStatsDateFrom(e.target.value)} />
+        <span className="text-xs text-gray-500 dark:text-gray-400">{t('filter_date', language)}</span>
+        <input type="date" aria-label={t('filter_date_from', language)} className={inputClass} value={statsDateFrom} max={statsDateTo || undefined} onChange={e => setStatsDateFrom(e.target.value)} />
         <span className="text-xs text-gray-400">-</span>
-        <input type="date" className={inputClass} value={statsDateTo} min={statsDateFrom || undefined} onChange={e => setStatsDateTo(e.target.value)} />
+        <input type="date" aria-label={t('filter_date_to', language)} className={inputClass} value={statsDateTo} min={statsDateFrom || undefined} onChange={e => setStatsDateTo(e.target.value)} />
         {(statsDateFrom || statsDateTo) && (
           <button onClick={() => { setStatsDateFrom(''); setStatsDateTo('') }} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
             {t('clear', language)}
@@ -125,13 +125,13 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
           onClick={() => exportToCSV(scopedAppointments, language)}
           className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 transition inline-flex items-center gap-1"
         >
-          <Download className="w-3.5 h-3.5" />{language === 'TR' ? 'CSV İndir' : 'Download CSV'}
+          <Download className="w-3.5 h-3.5" aria-hidden="true" />{t('export_csv', language)}
         </button>
         <button
           onClick={() => window.print()}
           className="text-xs text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition inline-flex items-center gap-1"
         >
-          <Printer className="w-3.5 h-3.5" />{language === 'TR' ? 'Yazdır / PDF' : 'Print / PDF'}
+          <Printer className="w-3.5 h-3.5" aria-hidden="true" />{t('btn_print_pdf', language)}
         </button>
       </div>
 
@@ -140,14 +140,14 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{t('stats_studio_usage', language)}</h3>
           {studioStats.length > 10 && (
             <button onClick={() => setShowAllStudios(p => !p)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
-              {showAllStudios ? (language === 'TR' ? 'Daha az' : 'Show less') : `${language === 'TR' ? 'Tümünü gör' : 'Show all'} (${studioStats.length})`}
+              {showAllStudios ? t('show_less', language) : t('show_all_n', language).replace('{n}', studioStats.length)}
             </button>
           )}
         </div>
         {studioStats.length === 0 ? <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p> : (
           <div className="space-y-2">
             {(showAllStudios ? studioStats : studioStats.slice(0, 10)).map((item, i) => {
-              const pct = Math.round((item.count / studioStats[0].count) * 100)
+              const pct = Math.round((item.count / (studioStats[0]?.count || 1)) * 100)
               return (
                 <div key={item.name}>
                   <div className="flex justify-between text-xs text-gray-700 dark:text-gray-300 mb-0.5">
@@ -169,7 +169,7 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
         {statusStats.length === 0 ? <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p> : (
           <div className="space-y-2">
             {statusStats.map(item => {
-              const max = Math.max(...statusStats.map(x => x.count))
+              const max = Math.max(...statusStats.map(x => x.count), 1)
               const pct = Math.round((item.count / max) * 100)
               return (
                 <div key={item.status}>
@@ -193,18 +193,18 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
       <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
-            {language === 'TR' ? 'En Çok Randevu Alan Kullanıcılar' : 'Top Booking Users'}
+            {t('stats_top_users', language)}
           </h3>
           {userStats.length > 10 && (
             <button onClick={() => setShowAllUsers(p => !p)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
-              {showAllUsers ? (language === 'TR' ? 'Daha az' : 'Show less') : `${language === 'TR' ? 'Tümünü gör' : 'Show all'} (${userStats.length})`}
+              {showAllUsers ? t('show_less', language) : t('show_all_n', language).replace('{n}', userStats.length)}
             </button>
           )}
         </div>
         {userStats.length === 0 ? <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p> : (
           <div className="space-y-2">
             {(showAllUsers ? userStats : userStats.slice(0, 10)).map((item, i) => {
-              const pct = Math.round((item.count / userStats[0].count) * 100)
+              const pct = Math.round((item.count / (userStats[0]?.count || 1)) * 100)
               return (
                 <div key={item.email}>
                   <div className="flex justify-between text-xs text-gray-700 dark:text-gray-300 mb-0.5">
@@ -249,10 +249,10 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
         {workshopStats.total === 0 ? <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p> : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: language === 'TR' ? 'Toplam' : 'Total', value: workshopStats.total, color: 'text-gray-800 dark:text-gray-100' },
-              { label: language === 'TR' ? 'Yaklaşan' : 'Upcoming', value: workshopStats.upcoming, color: 'text-green-600 dark:text-green-400' },
-              { label: language === 'TR' ? 'Geçmiş' : 'Past', value: workshopStats.past, color: 'text-gray-500 dark:text-gray-400' },
-              { label: language === 'TR' ? 'Tarifsiz' : 'No Date', value: workshopStats.noDate, color: 'text-orange-500 dark:text-orange-400' },
+              { label: t('stat_total', language), value: workshopStats.total, color: 'text-gray-800 dark:text-gray-100' },
+              { label: t('stat_upcoming', language), value: workshopStats.upcoming, color: 'text-green-600 dark:text-green-400' },
+              { label: t('stat_past', language), value: workshopStats.past, color: 'text-gray-500 dark:text-gray-400' },
+              { label: t('stat_no_date', language), value: workshopStats.noDate, color: 'text-orange-500 dark:text-orange-400' },
             ].map(s => (
               <div key={s.label} className="bg-gray-50 dark:bg-[#0E1A30] rounded-xl px-3 py-3 text-center">
                 <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
@@ -268,14 +268,14 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{t('stats_slots', language)}</h3>
           {slotStats.length > 8 && (
             <button onClick={() => setShowAllSlots(p => !p)} className="text-xs text-[#1565C0] dark:text-[#7DD4FC] hover:underline">
-              {showAllSlots ? (language === 'TR' ? 'Daha az' : 'Show less') : `${language === 'TR' ? 'Tümünü gör' : 'Show all'} (${slotStats.length})`}
+              {showAllSlots ? t('show_less', language) : t('show_all_n', language).replace('{n}', slotStats.length)}
             </button>
           )}
         </div>
         {slotStats.length === 0 ? <p className="text-xs text-gray-400">{t('stats_no_data', language)}</p> : (
           <div className="space-y-2">
             {(showAllSlots ? slotStats : slotStats.slice(0, 8)).map(item => {
-              const pct = Math.round((item.count / slotStats[0].count) * 100)
+              const pct = Math.round((item.count / (slotStats[0]?.count || 1)) * 100)
               return (
                 <div key={item.slot}>
                   <div className="flex justify-between text-xs text-gray-700 dark:text-gray-300 mb-0.5">

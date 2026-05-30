@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase, supabaseUrl } from '../lib/supabase'
+import { t, getLocale } from '../lib/languages'
 
 const AppContext = createContext(null)
 
@@ -46,6 +47,16 @@ function clearAttempts(email) {
   const all = loadRateLimits()
   delete all[email]
   saveRateLimits(all)
+}
+
+function generateTempPassword() {
+  const pool = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%'
+  let raw = 'ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 22)]
+          + 'abcdefghjkmnpqrstuvwxyz'[Math.floor(Math.random() * 22)]
+          + '23456789'[Math.floor(Math.random() * 8)]
+          + '!@#$%'[Math.floor(Math.random() * 5)]
+  for (let i = 0; i < 4; i++) raw += pool[Math.floor(Math.random() * pool.length)]
+  return raw.split('').sort(() => Math.random() - 0.5).join('')
 }
 
 export function AppProvider({ children }) {
@@ -177,6 +188,7 @@ export function AppProvider({ children }) {
   }, [])
 
   useEffect(() => { loadAllData() }, [loadAllData])
+  useEffect(() => { if (loggedInUser?.email) loadWaitlist(loggedInUser.email) }, [loggedInUser?.email])
 
 
   useEffect(() => {
@@ -294,7 +306,6 @@ export function AppProvider({ children }) {
     // RPC may not return all columns — fetch extras explicitly
     const { data: extraFields } = await supabase.from('users').select('must_change_password,avatar_url').eq('id', user.id).single()
     setLoggedInUser({ ...user, must_change_password: extraFields?.must_change_password ?? false, avatar_url: extraFields?.avatar_url ?? user.avatar_url ?? '' })
-    loadWaitlist(email)
 
     // Yaklaşan randevular için hatırlatma bildirimi oluştur (2 gün içinde)
     const today = new Date()
@@ -309,25 +320,24 @@ export function AppProvider({ children }) {
       .gte('date', todayStr)
       .lte('date', in2daysStr)
     if (upcoming && upcoming.length > 0) {
-      const reminderTitle = language === 'TR' ? 'Yaklaşan Randevu Hatırlatması' : 'Upcoming Appointment Reminder'
       const toInsert = []
       for (const appt of upcoming) {
         const { data: existing } = await supabase.from('notifications')
           .select('id').eq('type', 'REMINDER').ilike('message', `%${appt.id}%`).maybeSingle()
         if (!existing) {
-          const reminderMsg = language === 'TR'
-            ? `${appt.lab_name} - ${appt.date} ${appt.time_slot} tarihli randevunuz yaklaşıyor.`
-            : `Your appointment at ${appt.lab_name} on ${appt.date} ${appt.time_slot} is coming up.`
           toInsert.push({
-            title: reminderTitle,
-            message: `[${appt.id}] ${reminderMsg}`,
+            title: t('notif_reminder_title', language),
+            message: `[${appt.id}] ${t('notif_reminder_msg', language).replace('{lab}', appt.lab_name).replace('{date}', appt.date).replace('{slot}', appt.time_slot)}`,
             type: 'REMINDER',
             timestamp: Date.now(),
             is_read: false,
           })
         }
       }
-      if (toInsert.length > 0) await supabase.from('notifications').insert(toInsert)
+      if (toInsert.length > 0) {
+        const { data: inserted, error: insertErr } = await supabase.from('notifications').insert(toInsert).select()
+        if (!insertErr && inserted) setNotifications(prev => [...inserted, ...prev])
+      }
     }
 
     return { success: true }
@@ -374,11 +384,9 @@ export function AppProvider({ children }) {
     if (error) return { success: false, error: error.message }
 
     await supabase.from('notifications').insert([{
-      title: `[${formData.city_name}] ${language === 'TR' ? 'Yeni Üye Başvurusu' : 'New Member Request'}`,
-      message: language === 'TR'
-        ? `${formData.name} ${formData.surname} (${formData.email}) kayıt talebinde bulundu.`
-        : `${formData.name} ${formData.surname} (${formData.email}) has submitted a registration request.`,
-      type: 'SYSTEM',
+      title: `[${formData.city_name}] ${t('notif_new_member_title', language)}`,
+      message: t('notif_new_member_msg', language).replace('{name}', `${formData.name} ${formData.surname}`).replace('{email}', formData.email),
+      type: 'ADMIN_ONLY',
       timestamp: Date.now(),
       is_read: false,
     }])
@@ -415,22 +423,14 @@ export function AppProvider({ children }) {
       const fullName = `${formData.name || ''} ${formData.surname || ''}`.trim()
       sendAutoEmail(
         email, fullName,
-        language === 'TR' ? 'Hesabınız Oluşturuldu – MEB ÖGEDEP' : 'Account Created – MEB ÖGEDEP',
-        language === 'TR'
-          ? `<p>Sayın <strong>${fullName}</strong>,</p>
-             <p>MEB ÖGEDEP sistemine yönetici tarafından hesabınız oluşturulmuştur.</p>
-             <p>Giriş bilgileriniz:</p>
-             <p>📧 E-posta: <strong>${email}</strong></p>
-             <p>🔑 Şifre: <strong>${formData.password}</strong></p>
-             <p>Sisteme giriş yaptığınızda yeni bir şifre belirlemeniz istenecektir.</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
-          : `<p>Dear <strong>${fullName}</strong>,</p>
-             <p>An account has been created for you in the MEB ÖGEDEP system by an administrator.</p>
-             <p>Your login credentials:</p>
-             <p>📧 Email: <strong>${email}</strong></p>
-             <p>🔑 Password: <strong>${formData.password}</strong></p>
-             <p>You will be prompted to set a new password upon first login.</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+        t('email_subj_account_created', language),
+        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+         <p>${t('email_p_account_created', language)}</p>
+         <p>${t('email_p_login_credentials', language)}</p>
+         <p>📧 ${t('input_email', language)}: <strong>${email}</strong></p>
+         <p>🔑 ${t('email_lbl_password', language)}: <strong>${formData.password}</strong></p>
+         <p>${t('email_p_must_change_pw', language)}</p>
+         <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
       )
     }
     return { success: true }
@@ -459,18 +459,12 @@ export function AppProvider({ children }) {
       const fullName = `${user.name || ''} ${user.surname || ''}`.trim()
       sendAutoEmail(
         user.email, fullName,
-        language === 'TR' ? 'Şifreniz Güncellendi – MEB ÖGEDEP' : 'Password Updated – MEB ÖGEDEP',
-        language === 'TR'
-          ? `<p>Sayın <strong>${fullName}</strong>,</p>
-             <p>Yönetici tarafından şifreniz sıfırlanmıştır. Yeni geçici şifreniz aşağıda yer almaktadır:</p>
-             <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
-             <p>Sisteme giriş yaptığınızda yeni bir şifre belirlemeniz istenecektir.</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
-          : `<p>Dear <strong>${fullName}</strong>,</p>
-             <p>Your password has been reset by an administrator. Your new temporary password is:</p>
-             <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
-             <p>You will be prompted to set a new password upon logging in.</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+        t('email_subj_password_updated', language),
+        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+         <p>${t('email_p_pw_reset_user', language)}</p>
+         <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
+         <p>${t('email_p_must_change_pw', language)}</p>
+         <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
       )
     }
     return { success: true }
@@ -506,9 +500,9 @@ export function AppProvider({ children }) {
 
   const uploadAvatar = async (file, type, id) => {
     if (!file) return { success: false, error: 'No file' }
-    if (file.size > 1048576) return { success: false, error: language === 'TR' ? 'Dosya 1 MB\'dan büyük olamaz.' : 'File must be under 1 MB.' }
+    if (file.size > 1048576) return { success: false, error: t('err_file_too_large', language) }
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-    if (!allowed.includes(file.type)) return { success: false, error: language === 'TR' ? 'Yalnızca JPEG, PNG, WebP veya GIF yükleyebilirsiniz.' : 'Only JPEG, PNG, WebP or GIF allowed.' }
+    if (!allowed.includes(file.type)) return { success: false, error: t('err_file_type', language) }
     const ext = file.name.split('.').pop().toLowerCase()
     const path = `${type}/${id}.${ext}`
     const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
@@ -526,12 +520,13 @@ export function AppProvider({ children }) {
     return { success: true }
   }
 
-  const logout = () => {
+  const logout = useCallback(() => {
     rtChannelsRef.current.forEach(ch => supabase.removeChannel(ch))
     rtChannelsRef.current = []
     setLoggedInUser(null)
     setLoggedInAdmin(null)
-  }
+    setWaitlist([])
+  }, [])
 
   const toggleLanguage = () => setLanguage(prev => prev === 'TR' ? 'EN' : 'TR')
   const toggleDarkMode = () => setIsDarkMode(prev => !prev)
@@ -624,8 +619,11 @@ export function AppProvider({ children }) {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       if (cityName) {
         const notifData = {
-          title: `[${cityName}] Randevu Onaylandı`,
-          message: `${appt.user_name || appt.user_email || ''} adlı öğretmenin ${appt.lab_name || ''} için ${finalDate} tarihli randevusu onaylandı.`,
+          title: `[${cityName}] ${t('notif_appt_approved_title', language)}`,
+          message: t('notif_appt_approved_msg', language)
+            .replace('{teacher}', appt.user_name || appt.user_email || '')
+            .replace('{lab}', appt.lab_name || '')
+            .replace('{date}', finalDate),
           type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
         }
         const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
@@ -636,19 +634,14 @@ export function AppProvider({ children }) {
       const userName = `${appt.user_name || ''} ${appt.user_surname || ''}`.trim() || appt.user_email
       const finalDate = newDate || appt.date
       const finalSlot = newTimeSlot || appt.time_slot
-      const fmtDate = finalDate ? new Date(finalDate + 'T12:00:00').toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+      const fmtDate = finalDate ? new Date(finalDate + 'T12:00:00').toLocaleDateString(getLocale(language), { day: 'numeric', month: 'long', year: 'numeric' }) : ''
       sendAutoEmail(
         appt.user_email, userName,
-        language === 'TR' ? `Randevunuz Onaylandı – ${appt.lab_name || ''}` : `Appointment Approved – ${appt.lab_name || ''}`,
-        language === 'TR'
-          ? `<p>Sayın <strong>${userName}</strong>,</p>
-             <p><strong>${appt.lab_name || ''}</strong> için randevunuz onaylanmıştır.</p>
-             ${fmtDate ? `<p>📅 Tarih: <strong>${fmtDate}</strong></p>` : ''}
-             ${finalSlot ? `<p>🕐 Saat: <strong>${finalSlot}</strong></p>` : ''}`
-          : `<p>Dear <strong>${userName}</strong>,</p>
-             <p>Your appointment for <strong>${appt.lab_name || ''}</strong> has been approved.</p>
-             ${fmtDate ? `<p>📅 Date: <strong>${fmtDate}</strong></p>` : ''}
-             ${finalSlot ? `<p>🕐 Time: <strong>${finalSlot}</strong></p>` : ''}`
+        t('email_subj_appt_approved', language).replace('{lab}', appt.lab_name || ''),
+        `<p>${t('email_dear', language)} <strong>${userName}</strong>,</p>
+         <p>${t('email_p_appt_approved', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`)}</p>
+         ${fmtDate ? `<p>📅 ${t('email_p_appt_date', language)} <strong>${fmtDate}</strong></p>` : ''}
+         ${finalSlot ? `<p>🕐 ${t('email_p_appt_time', language)} <strong>${finalSlot}</strong></p>` : ''}`
       )
     }
     return { success: true }
@@ -665,8 +658,11 @@ export function AppProvider({ children }) {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       if (cityName) {
         const notifData = {
-          title: `[${cityName}] Randevu İptal Edildi`,
-          message: `${appt.user_name || appt.user_email || ''} adlı öğretmenin ${appt.lab_name || ''} için ${appt.date} tarihli randevusu iptal edildi.`,
+          title: `[${cityName}] ${t('notif_appt_cancelled_title', language)}`,
+          message: t('notif_appt_cancelled_admin_msg', language)
+            .replace('{teacher}', appt.user_name || appt.user_email || '')
+            .replace('{lab}', appt.lab_name || '')
+            .replace('{date}', appt.date),
           type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
         }
         const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
@@ -676,17 +672,16 @@ export function AppProvider({ children }) {
     }
     if (appt?.user_email) {
       const userName = `${appt.user_name || ''} ${appt.user_surname || ''}`.trim() || appt.user_email
-      const fmtDate = appt.date ? new Date(appt.date + 'T12:00:00').toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+      const fmtDate = appt.date ? new Date(appt.date + 'T12:00:00').toLocaleDateString(getLocale(language), { day: 'numeric', month: 'long', year: 'numeric' }) : ''
       sendAutoEmail(
         appt.user_email, userName,
-        language === 'TR' ? `Randevunuz İptal Edildi – ${appt.lab_name || ''}` : `Appointment Cancelled – ${appt.lab_name || ''}`,
-        language === 'TR'
-          ? `<p>Sayın <strong>${userName}</strong>,</p>
-             <p><strong>${appt.lab_name || ''}</strong> için ${fmtDate ? `<strong>${fmtDate}</strong> tarihli ` : ''}randevunuz yönetici tarafından iptal edilmiştir.</p>
-             <p>Yeni randevu almak için sistemi ziyaret edebilirsiniz.</p>`
-          : `<p>Dear <strong>${userName}</strong>,</p>
-             <p>Your appointment for <strong>${appt.lab_name || ''}</strong>${fmtDate ? ` on <strong>${fmtDate}</strong>` : ''} has been cancelled by an administrator.</p>
-             <p>You may book a new appointment through the system.</p>`
+        t('email_subj_appt_cancelled', language).replace('{lab}', appt.lab_name || ''),
+        `<p>${t('email_dear', language)} <strong>${userName}</strong>,</p>
+         <p>${(fmtDate
+           ? t('email_p_appt_cancelled', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`).replace('{date}', `<strong>${fmtDate}</strong>`)
+           : t('email_p_appt_cancelled_nodate', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`)
+         )}</p>
+         <p>${t('email_p_book_new_appt', language)}</p>`
       )
     }
     return { success: true }
@@ -712,12 +707,17 @@ export function AppProvider({ children }) {
     const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
     const userName = `${loggedInUser.name} ${loggedInUser.surname}`
     if (cityName) {
-      await supabase.from('notifications').insert([{
-        title: `[${cityName}] Randevu İptal Edildi`,
-        message: `${userName} adlı öğretmen, ${appt.lab_name || ''} için ${appt.date} tarihli bekleyen randevusunu iptal etti.`,
+      const { data: nd } = await supabase.from('notifications').insert([{
+        title: `[${cityName}] ${t('notif_appt_cancelled_title', language)}`,
+        message: t('notif_appt_cancelled_user_msg', language)
+          .replace('{teacher}', userName)
+          .replace('{lab}', appt.lab_name || '')
+          .replace('{date}', appt.date),
         type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
-      }])
+      }]).select().single()
+      if (nd) setNotifications(prev => [nd, ...prev])
     }
+    notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot)
     return { success: true }
   }
 
@@ -739,11 +739,15 @@ export function AppProvider({ children }) {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       const userName = loggedInUser ? `${loggedInUser.name} ${loggedInUser.surname}` : (appt.user_name || appt.user_email || '')
       if (cityName) {
-        await supabase.from('notifications').insert([{
-          title: `[${cityName}] Randevu İptal Talebi`,
-          message: `${userName} adlı öğretmen, ${appt.lab_name || ''} için ${appt.date} tarihli randevusunu iptal talep etti.`,
+        const { data: nd } = await supabase.from('notifications').insert([{
+          title: `[${cityName}] ${t('notif_cancel_requested_title', language)}`,
+          message: t('notif_cancel_requested_msg', language)
+            .replace('{teacher}', userName)
+            .replace('{lab}', appt.lab_name || '')
+            .replace('{date}', appt.date),
           type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
-        }])
+        }]).select().single()
+        if (nd) setNotifications(prev => [nd, ...prev])
       }
     }
     return { success: true }
@@ -760,8 +764,11 @@ export function AppProvider({ children }) {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       if (cityName) {
         const { data: nd } = await supabase.from('notifications').insert([{
-          title: `[${cityName}] İptal Talebi Reddedildi`,
-          message: `${appt.user_name || ''} ${appt.user_surname || ''} adlı öğretmenin ${appt.lab_name || ''} için ${appt.date} tarihli iptal talebi reddedildi.`,
+          title: `[${cityName}] ${t('notif_cancellation_denied_title', language)}`,
+          message: t('notif_cancellation_denied_msg', language)
+            .replace('{teacher}', `${appt.user_name || ''} ${appt.user_surname || ''}`.trim())
+            .replace('{lab}', appt.lab_name || '')
+            .replace('{date}', appt.date),
           type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
         }]).select().single()
         if (nd) setNotifications(prev => [nd, ...prev])
@@ -769,17 +776,16 @@ export function AppProvider({ children }) {
     }
     if (appt?.user_email) {
       const userName = `${appt.user_name || ''} ${appt.user_surname || ''}`.trim() || appt.user_email
-      const fmtDate = appt.date ? new Date(appt.date + 'T12:00:00').toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+      const fmtDate = appt.date ? new Date(appt.date + 'T12:00:00').toLocaleDateString(getLocale(language), { day: 'numeric', month: 'long', year: 'numeric' }) : ''
       sendAutoEmail(
         appt.user_email, userName,
-        language === 'TR' ? 'İptal Talebiniz Reddedildi – MEB ÖGEDEP' : 'Cancellation Request Denied – MEB ÖGEDEP',
-        language === 'TR'
-          ? `<p>Sayın <strong>${userName}</strong>,</p>
-             <p><strong>${appt.lab_name || ''}</strong> için ${fmtDate ? `<strong>${fmtDate}</strong> tarihli ` : ''}randevunuza ait iptal talebiniz reddedilmiştir.</p>
-             <p>Randevunuz <strong>Onaylı</strong> statüsünde devam etmektedir.</p>`
-          : `<p>Dear <strong>${userName}</strong>,</p>
-             <p>Your cancellation request for the <strong>${appt.lab_name || ''}</strong> appointment${fmtDate ? ` on <strong>${fmtDate}</strong>` : ''} has been denied.</p>
-             <p>Your appointment remains <strong>Approved</strong>.</p>`
+        t('email_subj_cancellation_denied', language),
+        `<p>${t('email_dear', language)} <strong>${userName}</strong>,</p>
+         <p>${(fmtDate
+           ? t('email_p_cancellation_denied', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`).replace('{date}', `<strong>${fmtDate}</strong>`)
+           : t('email_p_cancellation_denied_nd', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`)
+         )}</p>
+         <p>${t('email_p_appt_still_approved', language)}</p>`
       )
     }
     return { success: true }
@@ -812,24 +818,19 @@ export function AppProvider({ children }) {
       const fullName = `${user.name || ''} ${user.surname || ''}`.trim()
       sendAutoEmail(
         user.email, fullName,
-        language === 'TR' ? 'Üyeliğiniz Onaylandı – MEB ÖGEDEP' : 'Membership Approved – MEB ÖGEDEP',
-        language === 'TR'
-          ? `<p>Sayın <strong>${fullName}</strong>,</p>
-             <p>MEB ÖGEDEP Öğretmen Öğrenme Laboratuvarları sistemine üyeliğiniz onaylanmıştır.</p>
-             <p>Artık sisteme giriş yaparak randevu alabilir ve atölye programlarına kayıt olabilirsiniz.</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
-          : `<p>Dear <strong>${fullName}</strong>,</p>
-             <p>Your membership to the MEB ÖGEDEP Teacher Learning Labs system has been approved.</p>
-             <p>You can now log in to book appointments and register for workshop programs.</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+        t('email_subj_membership_approved', language),
+        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+         <p>${t('email_p_membership_approved', language)}</p>
+         <p>${t('email_p_membership_can_book', language)}</p>
+         <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
       )
     }
     if (user) {
       const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name
       if (cityName) {
         const notifData = {
-          title: `[${cityName}] Üyelik Onaylandı`,
-          message: `${user.name || ''} ${user.surname || ''} adlı öğretmenin üyeliği onaylandı.`,
+          title: `[${cityName}] ${t('notif_membership_approved_title', language)}`,
+          message: t('notif_membership_approved_msg', language).replace('{name}', `${user.name || ''} ${user.surname || ''}`),
           type: 'SYSTEM', timestamp: Date.now(), is_read: false,
         }
         const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
@@ -845,8 +846,8 @@ export function AppProvider({ children }) {
     const activeStatuses = ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED']
     const activeAppts = appointments.filter(a => a.user_email === user?.email && activeStatuses.includes(a.status))
     if (activeAppts.length > 0) {
-      await supabase.from('appointments').update({ status: 'CANCELLED' }).in('id', activeAppts.map(a => a.id))
-      setAppointments(prev => prev.map(a => activeAppts.some(aa => aa.id === a.id) ? { ...a, status: 'CANCELLED' } : a))
+      const { error: cancelErr } = await supabase.from('appointments').update({ status: 'CANCELLED' }).in('id', activeAppts.map(a => a.id))
+      if (!cancelErr) setAppointments(prev => prev.map(a => activeAppts.some(aa => aa.id === a.id) ? { ...a, status: 'CANCELLED' } : a))
     }
     const { data: deleted, error } = await supabase.from('users').delete().eq('id', userId).select('id')
     if (error) return { success: false, error: error.message }
@@ -856,9 +857,10 @@ export function AppProvider({ children }) {
     if (user) {
       const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name
       if (cityName) {
+        const teacher = `${user.name || ''} ${user.surname || ''}`.trim()
         const notifData = {
-          title: `[${cityName}] Üyelik İptal Edildi`,
-          message: `${user.name || ''} ${user.surname || ''} adlı öğretmenin üyeliği iptal edildi.`,
+          title: t('notif_revoke_user_title', language).replace('{city}', cityName),
+          message: t('notif_revoke_user_msg', language).replace('{teacher}', teacher),
           type: 'SYSTEM', timestamp: Date.now(), is_read: false,
         }
         const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
@@ -893,7 +895,7 @@ export function AppProvider({ children }) {
     } else {
       setNotifications([])
     }
-    logAudit('CLEAR_NOTIFICATIONS', 'notifications', null, cityName ? `Şehir: ${cityName}` : 'Tüm bildirimler silindi')
+    logAudit('CLEAR_NOTIFICATIONS', 'notifications', null, cityName ? t('audit_detail_city_notifs', language).replace('{city}', cityName) : t('audit_detail_all_notifs', language))
     return { success: true }
   }
 
@@ -995,7 +997,7 @@ export function AppProvider({ children }) {
     const { data: all } = await supabase.from('laboratories').select('*')
     if (all) setLabs(all)
     else setLabs(prev => prev.filter(l => l.id !== id))
-    if (lab) logAudit('DELETE_LAB', 'laboratory', id, `${lab.name} (zorla silindi / force deleted)`)
+    if (lab) logAudit('DELETE_LAB', 'laboratory', id, t('audit_detail_force_deleted', language).replace('{name}', lab.name))
     return { success: true }
   }
 
@@ -1147,20 +1149,15 @@ export function AppProvider({ children }) {
     logAudit('REGISTER_WORKSHOP', 'workshop', workshopId, `${loggedInUser.name} ${loggedInUser.surname} (${loggedInUser.email}) — ${ws.name}`)
     if (loggedInUser?.email && ws) {
       const fullName = `${loggedInUser.name || ''} ${loggedInUser.surname || ''}`.trim()
-      const wsDate = ws.date ? new Date(ws.date + 'T12:00:00').toLocaleDateString(language === 'TR' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+      const wsDate = ws.date ? new Date(ws.date + 'T12:00:00').toLocaleDateString(getLocale(language), { day: 'numeric', month: 'long', year: 'numeric' }) : ''
       sendAutoEmail(
         loggedInUser.email, fullName,
-        language === 'TR' ? `Atölye Kaydınız Oluşturuldu – ${ws.name}` : `Workshop Registration Confirmed – ${ws.name}`,
-        language === 'TR'
-          ? `<p>Sayın <strong>${fullName}</strong>,</p>
-             <p><strong>"${ws.name}"</strong> atölyesine kaydınız başarıyla oluşturulmuştur.</p>
-             ${wsDate ? `<p>📅 Tarih: <strong>${wsDate}</strong></p>` : ''}
-             ${ws.location ? `<p>📍 Konum: <strong>${ws.location}</strong></p>` : ''}
-             <p>Atölye programı hakkında daha fazla bilgi için sistemi ziyaret edebilirsiniz.</p>`
-          : `<p>Dear <strong>${fullName}</strong>,</p>
-             <p>Your registration for <strong>"${ws.name}"</strong> has been confirmed.</p>
-             ${wsDate ? `<p>📅 Date: <strong>${wsDate}</strong></p>` : ''}
-             ${ws.location ? `<p>📍 Location: <strong>${ws.location}</strong></p>` : ''}`
+        t('email_subj_workshop_confirmed', language).replace('{name}', ws.name),
+        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+         <p>${t('email_p_workshop_confirmed', language).replace('{workshop}', ws.name)}</p>
+         ${wsDate ? `<p>📅 ${t('email_p_appt_date', language)} <strong>${wsDate}</strong></p>` : ''}
+         ${ws.location ? `<p>📍 ${t('email_p_appt_location', language)} <strong>${ws.location}</strong></p>` : ''}
+         <p>${t('email_p_workshop_visit', language)}</p>`
       )
     }
     return { success: true }
@@ -1182,14 +1179,10 @@ export function AppProvider({ children }) {
       const fullName = `${loggedInUser.name || ''} ${loggedInUser.surname || ''}`.trim()
       sendAutoEmail(
         loggedInUser.email, fullName,
-        language === 'TR' ? `Atölye Kaydınız İptal Edildi – ${ws.name}` : `Workshop Registration Cancelled – ${ws.name}`,
-        language === 'TR'
-          ? `<p>Sayın <strong>${fullName}</strong>,</p>
-             <p><strong>"${ws.name}"</strong> atölyesine ait kaydınız iptal edilmiştir.</p>
-             <p>Başka bir atölye programına kayıt olmak için sistemi ziyaret edebilirsiniz.</p>`
-          : `<p>Dear <strong>${fullName}</strong>,</p>
-             <p>Your registration for <strong>"${ws.name}"</strong> has been cancelled.</p>
-             <p>You can register for other workshops by visiting the system.</p>`
+        t('email_subj_workshop_cancelled', language).replace('{name}', ws.name),
+        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+         <p>${t('email_p_workshop_cancelled', language).replace('{workshop}', ws.name)}</p>
+         <p>${t('email_p_workshop_other', language)}</p>`
       )
     }
     return { success: true }
@@ -1224,16 +1217,19 @@ export function AppProvider({ children }) {
       .select('id', { count: 'exact', head: true })
       .eq('lab_id', appt.lab_id).eq('date', newDate).eq('time_slot', newTimeSlot)
       .in('status', ['PENDING', 'APPROVED']).neq('id', appointmentId)
-    if (count >= maxCap) return { success: false, error: language === 'TR' ? 'Bu slot dolu.' : 'This slot is full.' }
+    if (count >= maxCap) return { success: false, error: t('err_slot_full', language) }
     const updates = { date: newDate, time_slot: newTimeSlot }
     if (appt.status === 'APPROVED') updates.status = 'PENDING'
     const { data: updated, error } = await supabase.from('appointments').update(updates).eq('id', appointmentId).select('id')
     if (error) return { success: false, error: error.message }
     if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, ...updates } : a))
+    notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot)
     if (appt.status === 'APPROVED') {
+      const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
+      const prefix = cityName ? `[${cityName}] ` : ''
       const msg = `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${newDate} ${newTimeSlot}`
-      createNotification({ title: language === 'TR' ? 'Randevu Yeniden Planlandı' : 'Appointment Rescheduled', message: msg, type: 'SYSTEM' })
+      createNotification({ title: `${prefix}${t('notif_appt_rescheduled_title', language)}`, message: msg, type: 'SYSTEM' })
     }
     return { success: true }
   }
@@ -1256,30 +1252,22 @@ export function AppProvider({ children }) {
     logAudit('ADD_ADMIN', 'admin', data.id, `${name} (${normalizedEmail}) — ${role || 'CITY'}`)
     sendAutoEmail(
       normalizedEmail, name,
-      language === 'TR' ? 'Yönetici Hesabınız Oluşturuldu – MEB ÖGEDEP' : 'Admin Account Created – MEB ÖGEDEP',
-      language === 'TR'
-        ? `<p>Sayın <strong>${name}</strong>,</p>
-           <p>MEB ÖGEDEP sistemine <strong>${role === 'GLOBAL' ? 'Genel Yönetici' : 'İl Yöneticisi'}</strong> olarak hesabınız oluşturulmuştur.</p>
-           <p>Giriş bilgileriniz:</p>
-           <p>📧 E-posta: <strong>${normalizedEmail}</strong></p>
-           <p>🔑 Şifre: <strong>${password}</strong></p>
-           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
-        : `<p>Dear <strong>${name}</strong>,</p>
-           <p>An admin account has been created for you in the MEB ÖGEDEP system as <strong>${role === 'GLOBAL' ? 'Global Admin' : 'Province Admin'}</strong>.</p>
-           <p>Your login credentials:</p>
-           <p>📧 Email: <strong>${normalizedEmail}</strong></p>
-           <p>🔑 Password: <strong>${password}</strong></p>
-           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+      t('email_subj_admin_created', language),
+      `<p>${t('email_dear', language)} <strong>${name}</strong>,</p>
+       <p>${t('email_p_admin_created', language).replace('{role}', `<strong>${role === 'GLOBAL' ? t('email_role_global', language) : t('email_role_city', language)}</strong>`)}</p>
+       <p>${t('email_p_login_credentials', language)}</p>
+       <p>📧 ${t('input_email', language)}: <strong>${normalizedEmail}</strong></p>
+       <p>🔑 ${t('email_lbl_password', language)}: <strong>${password}</strong></p>
+       <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
     )
     const cityObj = city_id ? cities.find(c => String(c.id) === String(city_id)) : null
     const prefix = cityObj ? `[${cityObj.name}] ` : ''
-    await supabase.from('notifications').insert([{
-      title: `${prefix}${language === 'TR' ? 'Yeni Yönetici Eklendi' : 'New Admin Added'}`,
-      message: language === 'TR'
-        ? `${name} (${normalizedEmail}) yönetici olarak eklendi.`
-        : `${name} (${normalizedEmail}) has been added as admin.`,
+    const { data: nd } = await supabase.from('notifications').insert([{
+      title: `${prefix}${t('notif_admin_added_title', language)}`,
+      message: t('notif_admin_added_msg', language).replace('{name}', name).replace('{email}', normalizedEmail),
       type: 'SYSTEM', timestamp: Date.now(), is_read: false,
-    }])
+    }]).select().single()
+    if (nd) setNotifications(prev => [nd, ...prev])
     return { success: true }
   }
 
@@ -1314,26 +1302,19 @@ export function AppProvider({ children }) {
     if (target?.email) {
       sendAutoEmail(
         target.email, target.name,
-        language === 'TR' ? 'Şifreniz Güncellendi – MEB ÖGEDEP' : 'Password Updated – MEB ÖGEDEP',
-        language === 'TR'
-          ? `<p>Sayın <strong>${target.name}</strong>,</p>
-             <p>Genel yönetici tarafından hesabınızın şifresi sıfırlanmıştır. Yeni şifreniz:</p>
-             <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
-          : `<p>Dear <strong>${target.name}</strong>,</p>
-             <p>Your account password has been reset by a global admin. Your new password is:</p>
-             <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+        t('email_subj_password_updated', language),
+        `<p>${t('email_dear', language)} <strong>${target.name}</strong>,</p>
+         <p>${t('email_p_pw_reset_admin', language)}</p>
+         <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
+         <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
       )
     }
     if (target) {
       const cityObj = target.city_id ? cities.find(c => String(c.id) === String(target.city_id)) : null
       const prefix = cityObj ? `[${cityObj.name}] ` : ''
       const { data: nd } = await supabase.from('notifications').insert([{
-        title: `${prefix}${language === 'TR' ? 'Yönetici Şifresi Sıfırlandı' : 'Admin Password Reset'}`,
-        message: language === 'TR'
-          ? `${target.name} (${target.email}) adlı yöneticinin şifresi genel yönetici tarafından sıfırlandı.`
-          : `Admin ${target.name} (${target.email}) had their password reset by a global admin.`,
+        title: `${prefix}${t('notif_admin_pw_reset_title', language)}`,
+        message: t('notif_admin_pw_reset_msg', language).replace('{name}', target.name).replace('{email}', target.email),
         type: 'SYSTEM', timestamp: Date.now(), is_read: false,
       }]).select().single()
       if (nd) setNotifications(prev => [nd, ...prev])
@@ -1362,6 +1343,8 @@ export function AppProvider({ children }) {
 
       // Hide admin-only notifications from regular users
       if (loggedInUser && !loggedInAdmin) {
+        if (n.type === 'ADMIN_ONLY') return false
+        // Legacy: filter old notifications before type was introduced
         const title = n.title || ''
         if (title.includes('Yeni Üye Başvurusu') || title.includes('New Member Request')) return false
       }
@@ -1381,7 +1364,7 @@ export function AppProvider({ children }) {
   const addToWaitlist = async (slotData) => {
     const { data: existing } = await supabase.from('waitlist')
       .select('id').eq('lab_id', slotData.lab_id).eq('date', slotData.date).eq('time_slot', slotData.time_slot).eq('user_email', slotData.user_email).maybeSingle()
-    if (existing) return { success: false, error: language === 'TR' ? 'Zaten bekleme listelesindesiniz.' : 'Already on the waitlist.' }
+    if (existing) return { success: false, error: t('err_already_on_waitlist', language) }
     const { data, error } = await supabase.from('waitlist').insert([{ ...slotData, status: 'WAITING' }]).select().single()
     if (error) return { success: false, error: error.message }
     if (!data) return { success: false, error: 'err_generic' }
@@ -1404,11 +1387,15 @@ export function AppProvider({ children }) {
     if (!next) return
     const { error: wErr } = await supabase.from('waitlist').update({ status: 'NOTIFIED' }).eq('id', next.id)
     if (wErr) return
+    const waitlistLab = labs.find(l => String(l.id) === String(labId))
+    const waitlistCity = waitlistLab?.city_id ? cities.find(c => String(c.id) === String(waitlistLab.city_id)) : null
+    const waitlistPrefix = waitlistCity ? `[${waitlistCity.name}] ` : ''
     const { error: nErr } = await supabase.from('notifications').insert([{
-      title: language === 'TR' ? 'Bekleme Listesi: Slot Açıldı' : 'Waitlist: Slot Available',
-      message: language === 'TR'
-        ? `[${next.id}] ${next.lab_name} - ${next.date} ${next.time_slot} için bir yer açıldı. Lütfen randevu alın.`
-        : `[${next.id}] A slot opened at ${next.lab_name} on ${next.date} ${next.time_slot}. Please book now.`,
+      title: `${waitlistPrefix}${t('notif_waitlist_available_title', language)}`,
+      message: t('notif_waitlist_available_msg', language)
+        .replace('{lab}', next.lab_name)
+        .replace('{date}', next.date)
+        .replace('{slot}', next.time_slot),
       type: 'REMINDER', timestamp: Date.now(), is_read: false,
     }])
     if (nErr) {
@@ -1465,13 +1452,7 @@ export function AppProvider({ children }) {
       .from('admins').select('id,name,surname,email')
       .eq('email', normalizedEmail).maybeSingle()
     if (admin) {
-      const pool = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%'
-      let raw = 'ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 22)]
-              + 'abcdefghjkmnpqrstuvwxyz'[Math.floor(Math.random() * 22)]
-              + '23456789'[Math.floor(Math.random() * 8)]
-              + '!@#$%'[Math.floor(Math.random() * 5)]
-      for (let i = 0; i < 4; i++) raw += pool[Math.floor(Math.random() * pool.length)]
-      const tempPw = raw.split('').sort(() => Math.random() - 0.5).join('')
+      const tempPw = generateTempPassword()
       const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: tempPw })
       if (hashErr || !hashed) return { success: false, error: 'err_generic' }
       const { data: updatedAdmin, error } = await supabase.from('admins').update({ password_hash: hashed, must_change_password: true }).eq('id', admin.id).select('id')
@@ -1480,18 +1461,12 @@ export function AppProvider({ children }) {
       const fullName = `${admin.name || ''} ${admin.surname || ''}`.trim()
       sendAutoEmail(
         admin.email, fullName,
-        language === 'TR' ? 'Geçici Şifreniz – MEB ÖGEDEP' : 'Temporary Password – MEB ÖGEDEP',
-        language === 'TR'
-          ? `<p>Sayın <strong>${fullName}</strong>,</p>
-             <p>Şifre sıfırlama talebiniz alınmıştır. Geçici şifreniz:</p>
-             <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
-             <p>Sisteme giriş yaptığınızda yeni bir şifre belirlemeniz istenecektir.</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
-          : `<p>Dear <strong>${fullName}</strong>,</p>
-             <p>A password reset has been requested. Your temporary password is:</p>
-             <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
-             <p>You will be asked to set a new password upon logging in.</p>
-             <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+        t('email_subj_temp_password', language),
+        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+         <p>${t('email_p_pw_reset_request', language)}</p>
+         <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
+         <p>${t('email_p_pw_reset_prompt', language)}</p>
+         <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
       )
       return { success: true }
     }
@@ -1499,13 +1474,7 @@ export function AppProvider({ children }) {
       .from('users').select('id,name,surname,email')
       .eq('email', normalizedEmail).maybeSingle()
     if (!user) return { success: false, error: 'err_user_not_found' }
-    const pool = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%'
-    let raw = 'ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 22)]
-            + 'abcdefghjkmnpqrstuvwxyz'[Math.floor(Math.random() * 22)]
-            + '23456789'[Math.floor(Math.random() * 8)]
-            + '!@#$%'[Math.floor(Math.random() * 5)]
-    for (let i = 0; i < 4; i++) raw += pool[Math.floor(Math.random() * pool.length)]
-    const tempPw = raw.split('').sort(() => Math.random() - 0.5).join('')
+    const tempPw = generateTempPassword()
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: tempPw })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { data: updatedUser, error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', user.id).select('id')
@@ -1514,18 +1483,12 @@ export function AppProvider({ children }) {
     const fullName = `${user.name || ''} ${user.surname || ''}`.trim()
     sendAutoEmail(
       user.email, fullName,
-      language === 'TR' ? 'Geçici Şifreniz – MEB ÖGEDEP' : 'Temporary Password – MEB ÖGEDEP',
-      language === 'TR'
-        ? `<p>Sayın <strong>${fullName}</strong>,</p>
-           <p>Şifre sıfırlama talebiniz alınmıştır. Geçici şifreniz:</p>
-           <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
-           <p>Sisteme giriş yaptığınızda yeni bir şifre belirlemeniz istenecektir.</p>
-           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Sisteme Giriş Yap</a></p>`
-        : `<p>Dear <strong>${fullName}</strong>,</p>
-           <p>A password reset has been requested. Your temporary password is:</p>
-           <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
-           <p>You will be asked to set a new password upon logging in.</p>
-           <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">Go to System</a></p>`
+      t('email_subj_temp_password', language),
+      `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+       <p>${t('email_p_pw_reset_request', language)}</p>
+       <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
+       <p>${t('email_p_pw_reset_prompt', language)}</p>
+       <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
     )
     return { success: true }
   }
@@ -1537,7 +1500,7 @@ export function AppProvider({ children }) {
       </div>
       ${bodyHtml}
       <div style="border-top:1px solid #e5e7eb;margin-top:32px;padding-top:16px">
-        <p style="font-size:11px;color:#9ca3af;margin:0">Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.</p>
+        <p style="font-size:11px;color:#9ca3af;margin:0">${t('email_footer_auto', language)}</p>
       </div>
     </body></html>`
     sendEmail({ recipients: [{ email: toEmail, name: toName }], subject, html }).catch(err => console.error('[sendAutoEmail] failed:', err))

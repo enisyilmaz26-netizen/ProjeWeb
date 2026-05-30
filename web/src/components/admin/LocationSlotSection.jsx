@@ -9,12 +9,12 @@ export default function LocationSlotSection({ locationName, slots, cityId, proce
 
   const handleAdd = async () => {
     if (!slotTime.trim()) {
-      setError(language === 'TR' ? 'Saat dilimi gereklidir.' : 'Time slot is required.')
+      setError(t('slot_time_required', language))
       return
     }
     const result = await onAddSlot(cityId, slotTime.trim(), locationName)
     if (result.success) { setSlotTime(''); setError('') }
-    else setError(result.error || (language === 'TR' ? 'Hata oluştu.' : 'An error occurred.'))
+    else setError(result.error || t('err_generic', language))
   }
 
   return (
@@ -23,7 +23,7 @@ export default function LocationSlotSection({ locationName, slots, cityId, proce
       <div className="space-y-2 mb-3">
         {slots.length === 0 && (
           <p className="text-xs text-gray-400 dark:text-gray-500 py-1">
-            {language === 'TR' ? 'Henüz saat dilimi eklenmedi.' : 'No time slots yet.'}
+            {t('slot_no_slots_yet', language)}
           </p>
         )}
         {slots.map(slot => (
@@ -42,6 +42,7 @@ export default function LocationSlotSection({ locationName, slots, cityId, proce
       <div className="flex gap-2">
         <input
           type="text"
+          aria-label={t('slot_placeholder', language)}
           placeholder={t('slot_placeholder', language)}
           className={INPUT_BASE + ' flex-1'}
           value={slotTime}
@@ -56,8 +57,8 @@ export default function LocationSlotSection({ locationName, slots, cityId, proce
         </button>
       </div>
       {error && (
-        <p className="text-red-500 text-xs mt-1">
-          {error} <button onClick={() => setError('')} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" /></button>
+        <p role="status" aria-live="polite" className="text-red-500 text-xs mt-1">
+          {error} <button type="button" onClick={() => setError('')} aria-label={t('btn_close', language)} className="ml-1 text-red-400"><X className="w-3.5 h-3.5 inline" aria-hidden="true" /></button>
         </p>
       )}
     </div>

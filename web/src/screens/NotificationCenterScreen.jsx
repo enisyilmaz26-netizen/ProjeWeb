@@ -53,11 +53,11 @@ export default function NotificationCenterScreen() {
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'ALERT': return <AlertTriangle className="w-5 h-5 text-red-500" />
-      case 'REMINDER': return <Clock className="w-5 h-5 text-orange-500" />
-      case 'SYSTEM': return <Lightbulb className="w-5 h-5 text-blue-500" />
-      case 'APPOINTMENT': return <Calendar className="w-5 h-5 text-green-500" />
-      default: return <Bell className="w-5 h-5 text-gray-500" />
+      case 'ALERT': return <AlertTriangle className="w-5 h-5 text-red-500" aria-hidden="true" />
+      case 'REMINDER': return <Clock className="w-5 h-5 text-orange-500" aria-hidden="true" />
+      case 'SYSTEM': return <Lightbulb className="w-5 h-5 text-blue-500" aria-hidden="true" />
+      case 'APPOINTMENT': return <Calendar className="w-5 h-5 text-green-500" aria-hidden="true" />
+      default: return <Bell className="w-5 h-5 text-gray-500" aria-hidden="true" />
     }
   }
 
@@ -65,7 +65,7 @@ export default function NotificationCenterScreen() {
     <div className="px-4 py-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">{t('notifications_header', language)}</h2>
-        {notifications.length > 0 && (
+        {loggedInAdmin && notifications.length > 0 && (
           <button
             onClick={() => setShowClearConfirm(true)}
             className="text-xs text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition font-medium"
@@ -77,9 +77,10 @@ export default function NotificationCenterScreen() {
 
       <div className="flex gap-2 mb-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
           <input
             type="text"
+            aria-label={t('notif_search_placeholder', language)}
             placeholder={t('notif_search_placeholder', language)}
             value={notifSearch}
             onChange={e => setNotifSearch(e.target.value)}
@@ -87,21 +88,22 @@ export default function NotificationCenterScreen() {
           />
         </div>
         <select
+          aria-label={t('notif_filter_all_types', language)}
           value={notifType}
           onChange={e => setNotifType(e.target.value)}
           className="px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0D1E3D] text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC]"
         >
-          <option value="">{language === 'TR' ? 'Tüm Türler' : 'All Types'}</option>
-          <option value="APPOINTMENT">{language === 'TR' ? 'Randevu' : 'Appointment'}</option>
-          <option value="SYSTEM">{language === 'TR' ? 'Sistem' : 'System'}</option>
-          <option value="ALERT">{language === 'TR' ? 'Uyarı' : 'Alert'}</option>
-          <option value="REMINDER">{language === 'TR' ? 'Hatırlatma' : 'Reminder'}</option>
+          <option value="">{t('notif_filter_all_types', language)}</option>
+          <option value="APPOINTMENT">{t('notif_type_appointment', language)}</option>
+          <option value="SYSTEM">{t('notif_type_system', language)}</option>
+          <option value="ALERT">{t('notif_type_alert', language)}</option>
+          <option value="REMINDER">{t('notif_type_reminder', language)}</option>
         </select>
       </div>
 
       {visibleNotifications.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-12 text-center">
-          <div className="mb-3 flex justify-center text-gray-400 dark:text-gray-500"><Bell className="w-10 h-10" /></div>
+          <div className="mb-3 flex justify-center text-gray-400 dark:text-gray-500"><Bell className="w-10 h-10" aria-hidden="true" /></div>
           <p className="text-gray-500 dark:text-gray-400 text-sm">{t('notifications_empty', language)}</p>
         </div>
       ) : (
@@ -130,9 +132,9 @@ export default function NotificationCenterScreen() {
                         onClick={() => handleDelete(notif.id)}
                         disabled={deletingId === notif.id}
                         className="text-gray-400 hover:text-red-500 transition disabled:opacity-50"
-                        title={language === 'TR' ? 'Sil' : 'Delete'}
+                        aria-label={t('btn_delete', language)} title={t('btn_delete', language)}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -155,13 +157,12 @@ export default function NotificationCenterScreen() {
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
               {cityName
-                ? (language === 'TR'
-                    ? `Yalnızca "${cityName}" iline ait bildirimler kalıcı olarak silinecek. Emin misiniz?`
-                    : `Only notifications for "${cityName}" will be permanently deleted. Are you sure?`)
+                ? t('clear_notif_city_confirm', language).replace('{city}', cityName)
                 : t('clear_notifications_confirm', language)}
             </p>
             <div className="flex gap-3">
               <button
+                autoFocus
                 onClick={handleClearAll}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition"
               >

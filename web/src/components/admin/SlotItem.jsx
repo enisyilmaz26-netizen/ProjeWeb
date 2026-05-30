@@ -12,6 +12,7 @@ export default function SlotItem({ slot, processingId, onRemove, language }) {
       <button
         onClick={() => onRemove(slot.id)}
         disabled={processingId === slot.id}
+        aria-label={t('btn_delete', language)}
         className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40"
       >
         {processingId === slot.id ? '...' : t('btn_delete', language)}
