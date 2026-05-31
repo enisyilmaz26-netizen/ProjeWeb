@@ -184,7 +184,25 @@ export function DataProvider({ children }) {
       })
       .subscribe()
 
-    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel, convChannel, certChannel, labsChannel, usersChannel, adminsChannel, citiesChannel]
+    const timeSlotsChannel = supabase
+      .channel('rt-city-time-slots')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'city_time_slots' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setTimeSlots(prev => prev.find(s => s.id === n.id) ? prev : [...prev, n])
+        else if (eventType === 'UPDATE') setTimeSlots(prev => prev.map(s => s.id === n.id ? n : s))
+        else if (eventType === 'DELETE') setTimeSlots(prev => prev.filter(s => s.id !== o.id))
+      })
+      .subscribe()
+
+    const closedDaysChannel = supabase
+      .channel('rt-closed-days')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'closed_days' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setClosedDays(prev => prev.find(d => d.id === n.id) ? prev : [...prev, n].sort((a, b) => a.date.localeCompare(b.date)))
+        else if (eventType === 'UPDATE') setClosedDays(prev => prev.map(d => d.id === n.id ? n : d))
+        else if (eventType === 'DELETE') setClosedDays(prev => prev.filter(d => d.id !== o.id))
+      })
+      .subscribe()
+
+    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel, convChannel, certChannel, labsChannel, usersChannel, adminsChannel, citiesChannel, timeSlotsChannel, closedDaysChannel]
     return () => {
       supabase.removeChannel(apptChannel)
       supabase.removeChannel(notifChannel)
@@ -196,6 +214,8 @@ export function DataProvider({ children }) {
       supabase.removeChannel(usersChannel)
       supabase.removeChannel(adminsChannel)
       supabase.removeChannel(citiesChannel)
+      supabase.removeChannel(timeSlotsChannel)
+      supabase.removeChannel(closedDaysChannel)
       rtChannelsRef.current = []
     }
   }, [])
