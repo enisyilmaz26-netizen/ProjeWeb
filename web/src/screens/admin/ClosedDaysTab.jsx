@@ -2,19 +2,19 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { t, getLocale } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
-import { isTurkishHoliday } from '../../lib/holidays'
+import { isTurkishHoliday, localDateStr } from '../../lib/holidays'
 import { Trash2, Plus, CalendarX } from 'lucide-react'
 
 function getTomorrowDate() {
   const d = new Date()
   d.setDate(d.getDate() + 1)
-  return d.toISOString().split('T')[0]
+  return localDateStr(d)
 }
 
 function getMaxDate() {
   const d = new Date()
   d.setFullYear(d.getFullYear() + 2)
-  return d.toISOString().split('T')[0]
+  return localDateStr(d)
 }
 
 function formatClosedDate(dateStr, language) {

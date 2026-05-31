@@ -6,7 +6,7 @@ import PasswordInput from '../components/PasswordInput'
 import { isPasswordStrong } from '../lib/passwordUtils'
 import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight, CalendarDays, List, RefreshCw, Award } from 'lucide-react'
 import CalendarView from '../components/CalendarView'
-import { isTurkishHoliday, isSunday } from '../lib/holidays'
+import { isTurkishHoliday, isSunday, localDateStr } from '../lib/holidays'
 import CertificateModal from '../components/CertificateModal'
 
 export default function MyProfileScreen() {
@@ -658,8 +658,8 @@ export default function MyProfileScreen() {
         const allCitySlots = timeSlots.filter(s => String(s.city_id) === String(rescheduleTarget.city_id))
         const specificSlots = labLocation ? allCitySlots.filter(s => s.location === labLocation) : []
         const citySlots = specificSlots.length > 0 ? specificSlots : allCitySlots.filter(s => !s.location)
-        const minDate = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0] })()
-        const maxDate = (() => { const d = new Date(); d.setDate(d.getDate() + 60); return d.toISOString().split('T')[0] })()
+        const minDate = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d) })()
+        const maxDate = (() => { const d = new Date(); d.setDate(d.getDate() + 60); return localDateStr(d) })()
         return (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
             <div role="dialog" aria-modal="true" aria-labelledby="reschedule-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">

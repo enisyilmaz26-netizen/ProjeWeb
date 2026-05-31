@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext'
 import { t, getLocale } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { statusLabel, exportToCSV } from '../../lib/adminHelpers'
+import { localDateStr } from '../../lib/holidays'
 import { Printer, Download } from 'lucide-react'
 
 export default function StatsTab({ language, isGlobal, adminCityId }) {
@@ -57,7 +58,7 @@ export default function StatsTab({ language, isGlobal, adminCityId }) {
     return Object.values(months)
   }, [scopedAppointments, language])
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = localDateStr()
 
   const workshopStats = useMemo(() => {
     const scoped = !isGlobal && adminCityId

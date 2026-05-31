@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from '../lib/supabase'
 import { t, getLocale } from '../lib/languages'
 import { AuthContext, generateTempPassword } from './AuthContext'
+import { localDateStr } from '../lib/holidays'
 
 export const DataContext = createContext(null)
 
@@ -254,8 +255,8 @@ export function DataProvider({ children }) {
       const createReminderNotifications = async () => {
         const today = new Date()
         const in2days = new Date(today); in2days.setDate(today.getDate() + 2)
-        const todayStr = today.toISOString().split('T')[0]
-        const in2daysStr = in2days.toISOString().split('T')[0]
+        const todayStr = localDateStr(today)
+        const in2daysStr = localDateStr(in2days)
         const { data: upcoming } = await supabase
           .from('appointments')
           .select('id, lab_name, date, time_slot')

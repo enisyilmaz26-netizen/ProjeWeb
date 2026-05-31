@@ -5,12 +5,12 @@ import { INPUT_BASE } from '../../lib/ui'
 import { PAGE_SIZE, statusLabel, exportToCSV } from '../../lib/adminHelpers'
 import { Download, CalendarDays, List, Pencil, X, MessageSquare } from 'lucide-react'
 import CalendarView from '../../components/CalendarView'
-import { isTurkishHoliday, isSunday } from '../../lib/holidays'
+import { isTurkishHoliday, isSunday, localDateStr } from '../../lib/holidays'
 
 export default function AppointmentsTab({ language, isGlobal, adminCityId, onRequestConfirm, onGoToMessages }) {
   const { appointments, cities, labs, timeSlots, approveAppointment, cancelAppointment, denyCancellationRequest, markAppointmentCompleted, isDateClosed } = useApp()
   const inputClass = INPUT_BASE
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = localDateStr()
 
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')

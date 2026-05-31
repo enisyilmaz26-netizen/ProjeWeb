@@ -29,6 +29,11 @@ const VARIABLE = [
   '2030-04-13','2030-04-14','2030-04-15','2030-04-16',
 ]
 
+// Returns today's date as YYYY-MM-DD in local timezone (avoids UTC midnight bug for TR +3)
+export function localDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function isTurkishHoliday(dateStr) {
   const mmdd = dateStr.slice(5)
   return FIXED_MM_DD.includes(mmdd) || VARIABLE.includes(dateStr)

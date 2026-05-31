@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import { t, formatDate, translations } from '../lib/languages'
 import { X, MapPin, Clock } from 'lucide-react'
 import { getLabIcon } from '../lib/icons'
-import { isTurkishHoliday, isSunday } from '../lib/holidays'
+import { isTurkishHoliday, isSunday, localDateStr } from '../lib/holidays'
 import CalendarView from '../components/CalendarView'
 
 function getMaxCapacity(lab) {
@@ -18,7 +18,7 @@ function getMaxCapacity(lab) {
 function getTomorrowDate() {
   const d = new Date()
   d.setDate(d.getDate() + 1)
-  return d.toISOString().split('T')[0]
+  return localDateStr(d)
 }
 
 const BOOKING_WINDOW_DAYS = 60
@@ -26,7 +26,7 @@ const BOOKING_WINDOW_DAYS = 60
 function getMaxDate() {
   const d = new Date()
   d.setDate(d.getDate() + BOOKING_WINDOW_DAYS)
-  return d.toISOString().split('T')[0]
+  return localDateStr(d)
 }
 
 function normalizeSlot(str) {
@@ -35,7 +35,7 @@ function normalizeSlot(str) {
 
 export default function UserReservationScreen() {
   const { cities, labs, appointments, timeSlots, loggedInUser, submitAppointment, language, isDateClosed, waitlist, addToWaitlist, removeFromWaitlist } = useApp()
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = localDateStr()
 
   const [step, setStep] = useState(1)
   const [selectedCity, setSelectedCity] = useState(null)

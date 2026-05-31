@@ -4,6 +4,7 @@ import { t, formatDate, getLocale } from '../../lib/languages'
 import { INPUT_BASE } from '../../lib/ui'
 import { X, Calendar, Clock, Users, Pencil, Trash2, ChevronDown, ChevronRight, Download, CheckCircle2, Circle } from 'lucide-react'
 import { getLabIcon } from '../../lib/icons'
+import { localDateStr } from '../../lib/holidays'
 
 export default function WorkshopsTab({ language, isGlobal, adminCityId, onRequestConfirm }) {
   const { cities, workshops, addWorkshop, updateWorkshop, deleteWorkshop, workshopRegistrations, toggleWorkshopAttendance, removeWorkshopRegistration } = useApp()
@@ -22,8 +23,8 @@ export default function WorkshopsTab({ language, isGlobal, adminCityId, onReques
   const [workshopCityFilter, setWorkshopCityFilter] = useState('')
   const [processingId, setProcessingId] = useState(null)
   const [processingRegId, setProcessingRegId] = useState(null)
-  const todayStr = new Date().toISOString().split('T')[0]
-  const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().split('T')[0] })()
+  const todayStr = localDateStr()
+  const maxDate = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return localDateStr(d) })()
   const TIME_RANGE_RE = /^([01]\d|2[0-3]):[0-5]\d\s*[-–]\s*([01]\d|2[0-3]):[0-5]\d$/
   const validateTimeRange = (time) => {
     if (!time || !TIME_RANGE_RE.test(time.trim())) return false
