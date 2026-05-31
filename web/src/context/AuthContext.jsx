@@ -123,9 +123,10 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.rpc('login_user', { p_email: email, p_password: password })
 
     if (error || !data || data.length === 0) {
-      const { data: userExists } = await supabase.from('users').select('id').eq('email', email).maybeSingle()
+      const normalizedEmail = email.trim().toLowerCase()
+      const { data: userExists } = await supabase.from('users').select('id').eq('email', normalizedEmail).maybeSingle()
       if (!userExists) return { success: false, error: 'err_email_not_found' }
-      const { data: adminExists } = await supabase.from('admins').select('id').eq('email', email).maybeSingle()
+      const { data: adminExists } = await supabase.from('admins').select('id').eq('email', normalizedEmail).maybeSingle()
       if (adminExists) return { success: false, error: 'err_email_not_found' }
       recordFailedAttempt(email)
       return { success: false, error: 'err_user_not_found' }
@@ -160,8 +161,9 @@ export function AuthProvider({ children }) {
   }
 
   const registerUser = async (formData) => {
+    const normalizedEmail = formData.email.trim().toLowerCase()
     const { data: existing } = await supabase
-      .from('users').select('id').eq('email', formData.email).maybeSingle()
+      .from('users').select('id').eq('email', normalizedEmail).maybeSingle()
     if (existing) return { success: false, error: 'err_email_exists' }
 
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: formData.password })
@@ -169,7 +171,7 @@ export function AuthProvider({ children }) {
     const { error } = await supabase.from('users').insert([{
       name: formData.name,
       surname: formData.surname,
-      email: formData.email,
+      email: normalizedEmail,
       password_hash: hashed,
       branch: formData.branch,
       work_location: formData.work_location,

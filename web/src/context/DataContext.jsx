@@ -1102,6 +1102,7 @@ export function DataProvider({ children }) {
 
   // ADMIN MANAGEMENT
   const addAdmin = async ({ name, email, password, role, city_id, phone }) => {
+    if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
     const normalizedEmail = email.trim().toLowerCase()
     const { data: existing } = await supabase.from('admins').select('id').eq('email', normalizedEmail).maybeSingle()
     if (existing) return { success: false, error: 'err_email_exists' }
@@ -1149,6 +1150,7 @@ export function DataProvider({ children }) {
   }
 
   const updateAdmin = async (adminId, updates) => {
+    if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
     const { data, error } = await supabase.from('admins').update(updates).eq('id', adminId).select('id')
     if (error) return { success: false, error: error.message }
     if (!data || data.length === 0) return { success: false, error: 'err_update_failed' }

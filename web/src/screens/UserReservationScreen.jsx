@@ -161,7 +161,7 @@ export default function UserReservationScreen() {
         user_email: loggedInUser.email,
         user_city: loggedInUser.city_name || selectedCity.name,
         user_district: loggedInUser.district,
-        note: note,
+        note: note.trim(),
       })
       if (result.success) {
         setSuccessMsg(t('appointment_success', language))
