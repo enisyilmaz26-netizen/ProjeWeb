@@ -148,7 +148,43 @@ export function DataProvider({ children }) {
       })
       .subscribe()
 
-    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel, convChannel, certChannel]
+    const labsChannel = supabase
+      .channel('rt-laboratories')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'laboratories' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setLabs(prev => prev.find(l => l.id === n.id) ? prev : [...prev, n].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
+        else if (eventType === 'UPDATE') setLabs(prev => prev.map(l => l.id === n.id ? n : l))
+        else if (eventType === 'DELETE') setLabs(prev => prev.filter(l => l.id !== o.id))
+      })
+      .subscribe()
+
+    const usersChannel = supabase
+      .channel('rt-users')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setUsers(prev => prev.find(u => u.id === n.id) ? prev : [...prev, n].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
+        else if (eventType === 'UPDATE') setUsers(prev => prev.map(u => u.id === n.id ? n : u))
+        else if (eventType === 'DELETE') setUsers(prev => prev.filter(u => u.id !== o.id))
+      })
+      .subscribe()
+
+    const adminsChannel = supabase
+      .channel('rt-admins')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'admins' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setAdmins(prev => prev.find(a => a.id === n.id) ? prev : [...prev, n].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
+        else if (eventType === 'UPDATE') setAdmins(prev => prev.map(a => a.id === n.id ? { ...a, ...n } : a))
+        else if (eventType === 'DELETE') setAdmins(prev => prev.filter(a => a.id !== o.id))
+      })
+      .subscribe()
+
+    const citiesChannel = supabase
+      .channel('rt-cities')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cities' }, ({ eventType, new: n, old: o }) => {
+        if (eventType === 'INSERT') setCities(prev => prev.find(c => c.id === n.id) ? prev : [...prev, n].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
+        else if (eventType === 'UPDATE') setCities(prev => prev.map(c => c.id === n.id ? n : c))
+        else if (eventType === 'DELETE') setCities(prev => prev.filter(c => c.id !== o.id))
+      })
+      .subscribe()
+
+    rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel, convChannel, certChannel, labsChannel, usersChannel, adminsChannel, citiesChannel]
     return () => {
       supabase.removeChannel(apptChannel)
       supabase.removeChannel(notifChannel)
@@ -156,6 +192,10 @@ export function DataProvider({ children }) {
       supabase.removeChannel(wsRegChannel)
       supabase.removeChannel(convChannel)
       supabase.removeChannel(certChannel)
+      supabase.removeChannel(labsChannel)
+      supabase.removeChannel(usersChannel)
+      supabase.removeChannel(adminsChannel)
+      supabase.removeChannel(citiesChannel)
       rtChannelsRef.current = []
     }
   }, [])

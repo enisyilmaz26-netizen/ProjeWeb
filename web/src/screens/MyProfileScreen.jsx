@@ -315,34 +315,34 @@ export default function MyProfileScreen() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>{t('input_name', language)} *</label>
-                <input type="text" className={inputClass} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} required />
+                <input type="text" className={inputClass} value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} required disabled={editLoading} />
               </div>
               <div>
                 <label className={labelClass}>{t('input_surname', language)} *</label>
-                <input type="text" className={inputClass} value={editForm.surname} onChange={e => setEditForm(p => ({ ...p, surname: e.target.value }))} required />
+                <input type="text" className={inputClass} value={editForm.surname} onChange={e => setEditForm(p => ({ ...p, surname: e.target.value }))} required disabled={editLoading} />
               </div>
             </div>
             <div>
               <label className={labelClass}>{t('input_branch', language)} *</label>
-              <input type="text" className={inputClass} value={editForm.branch} onChange={e => setEditForm(p => ({ ...p, branch: e.target.value }))} required />
+              <input type="text" className={inputClass} value={editForm.branch} onChange={e => setEditForm(p => ({ ...p, branch: e.target.value }))} required disabled={editLoading} />
             </div>
             <div>
               <label className={labelClass}>{t('input_work_location', language)} *</label>
-              <input type="text" className={inputClass} value={editForm.work_location} onChange={e => setEditForm(p => ({ ...p, work_location: e.target.value }))} required />
+              <input type="text" className={inputClass} value={editForm.work_location} onChange={e => setEditForm(p => ({ ...p, work_location: e.target.value }))} required disabled={editLoading} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>{t('input_phone', language)} *</label>
-                <input type="tel" className={inputClass} value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} required />
+                <input type="tel" className={inputClass} value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} required disabled={editLoading} />
               </div>
               <div>
                 <label className={labelClass}>{t('input_district', language)} *</label>
-                <input type="text" className={inputClass} value={editForm.district} onChange={e => setEditForm(p => ({ ...p, district: e.target.value }))} required />
+                <input type="text" className={inputClass} value={editForm.district} onChange={e => setEditForm(p => ({ ...p, district: e.target.value }))} required disabled={editLoading} />
               </div>
             </div>
             <div>
               <label className={labelClass}>{t('input_city', language)}</label>
-              <select className={inputClass} value={editForm.city_id} onChange={e => setEditForm(p => ({ ...p, city_id: e.target.value }))}>
+              <select className={inputClass} value={editForm.city_id} onChange={e => setEditForm(p => ({ ...p, city_id: e.target.value }))} disabled={editLoading}>
                 <option value="">{t('select_province', language)}</option>
                 {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -389,15 +389,15 @@ export default function MyProfileScreen() {
           <form onSubmit={handleChangePassword} className="px-5 pb-5 space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
             <div>
               <label className={labelClass}>{t('current_password', language)} *</label>
-              <PasswordInput className={inputClass} value={pwForm.current} onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))} autoComplete="current-password" required />
+              <PasswordInput className={inputClass} value={pwForm.current} onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))} autoComplete="current-password" required disabled={pwLoading} />
             </div>
             <div>
               <label className={labelClass}>{t('new_password', language)} *</label>
-              <PasswordInput className={inputClass} value={pwForm.newPw} onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} autoComplete="new-password" required minLength={8} />
+              <PasswordInput className={inputClass} value={pwForm.newPw} onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))} autoComplete="new-password" required minLength={8} disabled={pwLoading} />
             </div>
             <div>
               <label className={labelClass}>{t('input_confirm_password', language)} *</label>
-              <PasswordInput className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} autoComplete="new-password" required minLength={8} />
+              <PasswordInput className={inputClass} value={pwForm.confirm} onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} autoComplete="new-password" required minLength={8} disabled={pwLoading} />
             </div>
             {pwError && <p role="status" aria-live="polite" className="text-red-600 dark:text-red-400 text-xs">{pwError}</p>}
             <button type="submit" disabled={pwLoading} className="w-full py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60">

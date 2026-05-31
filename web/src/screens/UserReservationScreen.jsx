@@ -183,10 +183,10 @@ export default function UserReservationScreen() {
   }
 
   const resetToStep = (s) => {
-    if (s <= 1) { setSelectedCity(null); setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(1); setSuccessMsg(''); setDateError(''); setWaitlistMsg(''); setWaitlistProcessing('') }
-    else if (s <= 2) { setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(2); setDateError(''); setWaitlistMsg(''); setWaitlistProcessing('') }
-    else if (s <= 3) { setSelectedDate(''); setSelectedSlot(null); setStep(3); setDateError(''); setWaitlistMsg(''); setWaitlistProcessing('') }
-    else if (s <= 4) { setSelectedSlot(null); setStep(4); setWaitlistMsg(''); setWaitlistProcessing('') }
+    if (s <= 1) { setSelectedCity(null); setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(1); setSuccessMsg(''); setErrorMsg(''); setDateError(''); setWaitlistMsg(''); setWaitlistProcessing('') }
+    else if (s <= 2) { setSelectedLab(null); setSelectedDate(''); setSelectedSlot(null); setStep(2); setErrorMsg(''); setDateError(''); setWaitlistMsg(''); setWaitlistProcessing('') }
+    else if (s <= 3) { setSelectedDate(''); setSelectedSlot(null); setStep(3); setErrorMsg(''); setDateError(''); setWaitlistMsg(''); setWaitlistProcessing('') }
+    else if (s <= 4) { setSelectedSlot(null); setStep(4); setErrorMsg(''); setWaitlistMsg(''); setWaitlistProcessing('') }
   }
 
   const cardClass = "bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-4 mb-4"

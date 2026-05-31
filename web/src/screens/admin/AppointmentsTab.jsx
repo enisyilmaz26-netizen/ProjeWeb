@@ -93,17 +93,18 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     setErrorMsg('')
     setBulkProcessing(true)
     const ids = [...selectedIds]
-    let failCount = 0
+    const failedIds = []
     try {
       for (const id of ids) {
         const result = await approveAppointment(id)
-        if (result?.success === false) failCount++
+        if (result?.success === false) failedIds.push(id)
       }
       setSelectedIds(new Set())
-      const successCount = ids.length - failCount
-      showSuccess(failCount > 0
-        ? `${t('action_success_approved', language)} (${successCount}/${ids.length})`
-        : t('action_success_approved', language))
+      if (failedIds.length > 0) {
+        const names = failedIds.map(id => { const a = appointments.find(x => x.id === id); return a ? `${a.user_name} ${a.user_surname}` : `#${id}` }).join(', ')
+        showError(`${failedIds.length} randevu onaylanamadı: ${names}`)
+      }
+      if (failedIds.length < ids.length) showSuccess(`${t('action_success_approved', language)} (${ids.length - failedIds.length}/${ids.length})`)
     } finally {
       setBulkProcessing(false)
     }
@@ -113,17 +114,18 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
     setErrorMsg('')
     setBulkProcessing(true)
     const ids = [...selectedIds]
-    let failCount = 0
+    const failedIds = []
     try {
       for (const id of ids) {
         const result = await cancelAppointment(id)
-        if (result?.success === false) failCount++
+        if (result?.success === false) failedIds.push(id)
       }
       setSelectedIds(new Set())
-      const successCount = ids.length - failCount
-      showSuccess(failCount > 0
-        ? `${t('action_success_cancelled', language)} (${successCount}/${ids.length})`
-        : t('action_success_cancelled', language))
+      if (failedIds.length > 0) {
+        const names = failedIds.map(id => { const a = appointments.find(x => x.id === id); return a ? `${a.user_name} ${a.user_surname}` : `#${id}` }).join(', ')
+        showError(`${failedIds.length} randevu iptal edilemedi: ${names}`)
+      }
+      if (failedIds.length < ids.length) showSuccess(`${t('action_success_cancelled', language)} (${ids.length - failedIds.length}/${ids.length})`)
     } finally {
       setBulkProcessing(false)
     }
