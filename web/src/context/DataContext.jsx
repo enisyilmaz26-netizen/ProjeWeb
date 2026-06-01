@@ -1409,10 +1409,50 @@ export function DataProvider({ children }) {
   const rescheduleAppointment = async (appointmentId, newDate, newTimeSlot) => {
     const appt = appointments.find(a => a.id === appointmentId)
     if (!appt) return { success: false, error: 'err_generic' }
-    // Only the owner, or an admin in the matching city, can reschedule
     const isOwner = loggedInUser && appt.user_email === loggedInUser.email
     const isAuthorizedAdmin = loggedInAdmin && (loggedInAdmin.role === 'GLOBAL' || String(loggedInAdmin.city_id) === String(appt.city_id))
     if (!isOwner && !isAuthorizedAdmin) return { success: false, error: 'err_generic' }
+
+    // Token-aware RPC: server-side yetki ve kapasite kontrolü + date/time UPDATE.
+    // Trigger artık appointments.date/time_slot direct UPDATE'i bloklar; bu yüzden
+    // RPC mecburi. RPC yoksa eski direct UPDATE fallback (trigger uygulanmadan önce).
+    let updates = { date: newDate, time_slot: newTimeSlot }
+    if (appt.status === 'APPROVED') updates.status = 'PENDING'
+
+    if (sessionToken) {
+      const v2 = await supabase.rpc('reschedule_appointment', {
+        p_session_token: sessionToken,
+        p_appt_id: appointmentId,
+        p_new_date: newDate,
+        p_new_time_slot: newTimeSlot,
+      })
+      if (v2.error && (v2.error.code === '42883' || v2.error.code === 'PGRST202')) {
+        // RPC yok — legacy yola düş
+      } else if (v2.error) {
+        const msg = v2.error.message || ''
+        if (msg.includes('err_unauthenticated')) return { success: false, error: 'err_unauthenticated' }
+        if (msg.includes('err_not_authorized')) return { success: false, error: 'err_generic' }
+        if (msg.includes('err_slot_full')) return { success: false, error: t('err_slot_full', language) }
+        if (msg.includes('err_appointment_not_found')) return { success: false, error: 'err_generic' }
+        console.error('reschedule_appointment error:', v2.error)
+        return { success: false, error: 'err_generic' }
+      } else {
+        const row = Array.isArray(v2.data) ? v2.data[0] : v2.data
+        if (row) updates = { date: row.date, time_slot: row.time_slot, status: row.status }
+        setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, ...updates } : a))
+        logAudit('RESCHEDULE_APPOINTMENT', 'appointment', appointmentId, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${newDate} ${newTimeSlot}`)
+        notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot).catch(err => console.error('[rescheduleAppointment] notifyNextOnWaitlist failed:', err))
+        if (appt.status === 'APPROVED') {
+          const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
+          const prefix = cityName ? `[${cityName}] ` : ''
+          const msg = `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${newDate} ${newTimeSlot}`
+          await createNotification({ title: `${prefix}${t('notif_appt_rescheduled_title', language)}`, message: msg, type: 'SYSTEM' })
+        }
+        return { success: true }
+      }
+    }
+
+    // Legacy fallback (RPC deploy edilmeden önce veya session yokken)
     const lab = labs.find(l => String(l.id) === String(appt.lab_id))
     const maxCap = lab?.capacity_per_slot || 1
     const { count, error: countErr } = await supabase.from('appointments')
@@ -1421,8 +1461,6 @@ export function DataProvider({ children }) {
       .in('status', ['PENDING', 'APPROVED']).neq('id', appointmentId)
     if (countErr) return { success: false, error: countErr.message }
     if (count >= maxCap) return { success: false, error: t('err_slot_full', language) }
-    const updates = { date: newDate, time_slot: newTimeSlot }
-    if (appt.status === 'APPROVED') updates.status = 'PENDING'
     const { data: updated, error } = await supabase.from('appointments').update(updates).eq('id', appointmentId).select('id')
     if (error) return { success: false, error: error.message }
     if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }

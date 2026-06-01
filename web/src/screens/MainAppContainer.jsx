@@ -22,11 +22,36 @@ function TabLoader() {
   )
 }
 
+const HELP_SEEN_KEY = 'help_seen_v1'
+
 export default function MainAppContainer() {
   const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, logout, notifications, loading, loadError, loadAllData, realtimeError, idleWarning, dismissIdleWarning, conversations, messagesAvailable } = useApp()
   const isAdmin = loggedInAdmin !== null
-  const [activeTab, setActiveTab] = useState(isAdmin ? 'admin' : 'book')
+  // İlk girişte (per-account) önce "Nasıl Kullanırım" sayfası açılır.
+  const initialTab = (() => {
+    const subjectKey = isAdmin ? `admin:${loggedInAdmin?.id}` : `user:${loggedInUser?.id}`
+    let seen = false
+    try { seen = (JSON.parse(localStorage.getItem(HELP_SEEN_KEY) || '{}'))[subjectKey] === true } catch {}
+    if (!seen) return 'help'
+    return isAdmin ? 'admin' : 'book'
+  })()
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [realtimeBannerDismissed, setRealtimeBannerDismissed] = useState(false)
+
+  // Help sekmesi bir kez görüntülendiğinde flag'i kaydet — bir sonraki girişte
+  // varsayılan tab default'a (book/admin) düşsün.
+  React.useEffect(() => {
+    if (activeTab !== 'help') return
+    const subjectKey = isAdmin ? `admin:${loggedInAdmin?.id}` : `user:${loggedInUser?.id}`
+    if (!subjectKey || subjectKey.endsWith(':undefined')) return
+    try {
+      const seen = JSON.parse(localStorage.getItem(HELP_SEEN_KEY) || '{}')
+      if (!seen[subjectKey]) {
+        seen[subjectKey] = true
+        localStorage.setItem(HELP_SEEN_KEY, JSON.stringify(seen))
+      }
+    } catch {}
+  }, [activeTab, isAdmin, loggedInAdmin?.id, loggedInUser?.id])
 
   const displayName = isAdmin
     ? (loggedInAdmin.name || loggedInAdmin.email)

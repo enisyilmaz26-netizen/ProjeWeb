@@ -57,14 +57,53 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
 
   const [csvImporting, setCsvImporting] = useState(false)
   const [csvResult, setCsvResult] = useState(null)
-
   const [csvProgress, setCsvProgress] = useState({ done: 0, total: 0 })
+  const [csvFailedPayloads, setCsvFailedPayloads] = useState([])
+
+  // Common runner — paylaşılan payload listesini batch'lerle gönderir.
+  const runCsvBatches = async (payloads) => {
+    const BATCH_SIZE = 10
+    let ok = 0
+    const failed = []
+    const errors = []
+    setCsvProgress({ done: 0, total: payloads.length })
+    for (let i = 0; i < payloads.length; i += BATCH_SIZE) {
+      const slice = payloads.slice(i, i + BATCH_SIZE)
+      const results = await Promise.allSettled(slice.map(p => addUserByAdmin(p.payload)))
+      results.forEach((r, idx) => {
+        const item = slice[idx]
+        if (r.status === 'fulfilled' && r.value?.success) {
+          ok++
+        } else {
+          const errMsg = r.status === 'rejected' ? (r.reason?.message || 'unknown') : (r.value?.error || 'unknown')
+          errors.push(t('csv_err_row_generic', language).replace('{n}', item.row).replace('{email}', item.email).replace('{error}', errMsg))
+          failed.push(item)
+        }
+      })
+      setCsvProgress({ done: Math.min(i + BATCH_SIZE, payloads.length), total: payloads.length })
+    }
+    return { ok, failed, errors }
+  }
+
+  const handleCsvRetry = async () => {
+    if (csvImporting || csvFailedPayloads.length === 0) return
+    setCsvImporting(true)
+    setCsvResult(null)
+    try {
+      const { ok, failed, errors } = await runCsvBatches(csvFailedPayloads)
+      setCsvFailedPayloads(failed)
+      setCsvResult({ ok, fail: errors.length, errors: errors.slice(0, 100), retryable: failed.length })
+    } finally {
+      setCsvImporting(false)
+    }
+  }
 
   const handleCsvImport = async (e) => {
     const file = e.target.files[0]
     if (!file) return
     e.target.value = ''
     setCsvResult(null)
+    setCsvFailedPayloads([])
     setCsvImporting(true)
     setCsvProgress({ done: 0, total: 0 })
     try {
@@ -113,27 +152,11 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
         })
       }
 
-      // 2) Paralel batch'lerde RPC çağrısı — 10'lu Promise.allSettled.
-      // ~10x hız (network roundtrip dominant).
-      const BATCH_SIZE = 10
-      let ok = 0
-      setCsvProgress({ done: 0, total: payloads.length })
-      for (let i = 0; i < payloads.length; i += BATCH_SIZE) {
-        const slice = payloads.slice(i, i + BATCH_SIZE)
-        const results = await Promise.allSettled(slice.map(p => addUserByAdmin(p.payload)))
-        results.forEach((r, idx) => {
-          const item = slice[idx]
-          if (r.status === 'fulfilled' && r.value?.success) {
-            ok++
-          } else {
-            const errMsg = r.status === 'rejected' ? (r.reason?.message || 'unknown') : (r.value?.error || 'unknown')
-            errors.push(t('csv_err_row_generic', language).replace('{n}', item.row).replace('{email}', item.email).replace('{error}', errMsg))
-          }
-        })
-        setCsvProgress({ done: Math.min(i + BATCH_SIZE, payloads.length), total: payloads.length })
-      }
-      // errors hem yerel doğrulama hatalarını hem RPC hatalarını içerir.
-      setCsvResult({ ok, fail: errors.length, errors: errors.slice(0, 100) })
+      // 2) Paralel batch'lerde RPC çağrısı — 10'lu Promise.allSettled. ~10x hız.
+      const { ok, failed, errors: rpcErrors } = await runCsvBatches(payloads)
+      const allErrors = [...errors, ...rpcErrors]
+      setCsvFailedPayloads(failed)
+      setCsvResult({ ok, fail: allErrors.length, errors: allErrors.slice(0, 100), retryable: failed.length })
     } catch (err) {
       console.error('[csvImport]', err)
       setCsvResult({ ok: 0, fail: 0, errors: [err.message || t('csv_err_read_file', language)] })
@@ -335,6 +358,20 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
               {csvResult.errors.slice(0, 5).map((e, i) => <li key={`err-${i}-${e}`}>• {e}</li>)}
               {csvResult.errors.length > 5 && <li>{t('csv_errors_more', language).replace('{n}', csvResult.errors.length - 5)}</li>}
             </ul>
+          )}
+          {csvFailedPayloads.length > 0 && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={handleCsvRetry}
+                disabled={csvImporting}
+                className="text-xs px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition active:scale-[0.98] disabled:opacity-60"
+              >
+                {csvImporting
+                  ? (csvProgress.total > 0 ? `${csvProgress.done}/${csvProgress.total}` : '...')
+                  : `Başarısız ${csvFailedPayloads.length} kaydı tekrar dene`}
+              </button>
+            </div>
           )}
           <p className="text-xs mt-1 opacity-70">{t('csv_import_pw_hint', language)}</p>
         </div>

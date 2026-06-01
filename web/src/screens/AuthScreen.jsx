@@ -36,6 +36,7 @@ export default function AuthScreen({ onBack }) {
     name: '', surname: '', email: '', password: '', confirmPassword: '',
     branch: '', work_location: '', phone: '', city_id: '', city_name: '', district: '',
     kvkk: false,
+    confirmInfo: false, // "Bilgilerimi doğruluyorum" beyanı
   })
   const [regError, setRegError] = useState('')
   const [regLoading, setRegLoading] = useState(false)
@@ -86,6 +87,10 @@ export default function AuthScreen({ onBack }) {
       setRegError(t('err_kvkk_required', language))
       return
     }
+    if (!regForm.confirmInfo) {
+      setRegError('Girdiğiniz bilgilerin doğru ve eksiksiz olduğunu beyan etmeniz gerekiyor.')
+      return
+    }
     const phoneDigits = regForm.phone.replace(/\D/g, '')
     if (phoneDigits.length < 10 || phoneDigits.length > 11) {
       setRegError(t('err_phone_invalid', language))
@@ -110,7 +115,7 @@ export default function AuthScreen({ onBack }) {
         setRegForm({
           name: '', surname: '', email: '', password: '', confirmPassword: '',
           branch: '', work_location: '', phone: '', city_id: '', city_name: '', district: '',
-          kvkk: false,
+          kvkk: false, confirmInfo: false,
         })
       } else {
         const errKey = result.error
@@ -391,6 +396,21 @@ export default function AuthScreen({ onBack }) {
                   </label>
                 </div>
 
+                {/* Bilgi doğruluğu beyanı */}
+                <div className="bg-[#1565C0]/5 dark:bg-[#7DD4FC]/5 rounded-xl p-3 border border-[#1565C0]/20 dark:border-[#7DD4FC]/20">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={regForm.confirmInfo}
+                      onChange={e => setRegForm(p => ({ ...p, confirmInfo: e.target.checked }))}
+                      className="mt-0.5 accent-[#1565C0]"
+                    />
+                    <span className="text-xs text-gray-700 dark:text-gray-300">
+                      Girdiğim bilgilerin doğru ve eksiksiz olduğunu beyan ediyorum.
+                    </span>
+                  </label>
+                </div>
+
                 {regError && (
                   <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
                     {regError}
@@ -399,7 +419,7 @@ export default function AuthScreen({ onBack }) {
 
                 <button
                   type="submit"
-                  disabled={regLoading}
+                  disabled={regLoading || !regForm.kvkk || !regForm.confirmInfo}
                   className="w-full py-3 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
                 >
                   {regLoading ? t('loading_registering', language) : t('btn_register', language)}

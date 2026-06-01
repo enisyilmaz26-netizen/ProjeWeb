@@ -77,6 +77,17 @@ export default function MyProfileScreen() {
   const [editError, setEditError] = useState('')
   const [waitlistRemoving, setWaitlistRemoving] = useState(false)
   const [certModalWs, setCertModalWs] = useState(null)
+  const [confirmInfoEdit, setConfirmInfoEdit] = useState(false) // "Bilgilerimi doğruluyorum"
+
+  // Mutex: edit modu açıkken kullanıcı başka bir form/modal açarsa edit kapansın.
+  React.useEffect(() => {
+    if (!editMode) return
+    if (showPwChange || showReschedule || showCancelModal || showCityChangeWarning || showWaitlistRemoveConfirm || certModalWs) {
+      setEditMode(false)
+      setEditError('')
+      setConfirmInfoEdit(false)
+    }
+  }, [showPwChange, showReschedule, showCancelModal, showCityChangeWarning, showWaitlistRemoveConfirm, certModalWs, editMode])
 
   const _d = new Date()
   const todayStr = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`
@@ -242,6 +253,7 @@ export default function MyProfileScreen() {
       if (result.success) {
         setShowCityChangeWarning(false)
         setEditMode(false)
+        setConfirmInfoEdit(false)
         setSuccessMsg(t('profile_updated', language))
         clearTimeout(successTimerRef.current); successTimerRef.current = setTimeout(() => setSuccessMsg(''), 3000)
       } else {
@@ -361,11 +373,20 @@ export default function MyProfileScreen() {
             {editError && (
               <p role="status" aria-live="polite" className="text-red-600 dark:text-red-400 text-xs">{editError}</p>
             )}
+            <label className="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer p-2 rounded-lg bg-[#1565C0]/5 dark:bg-[#7DD4FC]/5">
+              <input
+                type="checkbox"
+                checked={confirmInfoEdit}
+                onChange={e => setConfirmInfoEdit(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-[#1565C0] dark:accent-[#7DD4FC] cursor-pointer flex-shrink-0"
+              />
+              <span>Girdiğim bilgilerin doğru ve eksiksiz olduğunu beyan ediyorum.</span>
+            </label>
             <div className="flex gap-2 pt-1">
-              <button type="submit" disabled={editLoading} className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm disabled:opacity-60 hover:opacity-90 active:scale-[0.98] transition">
+              <button type="submit" disabled={editLoading || !confirmInfoEdit} className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm disabled:opacity-60 hover:opacity-90 active:scale-[0.98] transition">
                 {editLoading ? '...' : t('btn_save', language)}
               </button>
-              <button type="button" onClick={() => setEditMode(false)} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition">
+              <button type="button" onClick={() => { setEditMode(false); setConfirmInfoEdit(false) }} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition">
                 {t('btn_nevermind', language)}
               </button>
             </div>
