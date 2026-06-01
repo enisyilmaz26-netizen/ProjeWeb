@@ -56,11 +56,12 @@ export default function MainAppContainer() {
       {/* Top Navigation Bar */}
       <header className="bg-[#1565C0] dark:bg-[#061A3A] shadow sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
-          {/* Left: user info — click → profil */}
+          {/* Left: user info — user'da profil sekmesine, admin'de yönetim paneline gider */}
           <button
             type="button"
             onClick={() => setActiveTab(isAdmin ? 'admin' : 'profile')}
             aria-label={isAdmin ? t('tab_admin', language) : t('tab_profile', language)}
+            title={isAdmin ? t('tab_admin', language) : t('tab_profile', language)}
             className="flex items-center gap-2 min-w-0 hover:opacity-80 transition active:scale-[0.98]"
           >
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">

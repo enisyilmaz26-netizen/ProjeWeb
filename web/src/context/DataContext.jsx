@@ -123,17 +123,24 @@ export function DataProvider({ children }) {
   }, [realtimeError, loadAllData])
 
   // Realtime subscriptions
+  // Kullanıcı oturumlarında, başkasının verisinin metadata sızdırılmaması için
+  // postgres_changes filter ile sunucu tarafında scope ediyoruz. Admin oturumunda
+  // filter uygulanmaz (mevcut yetki modelinde admin tüm şehre / sistemine bakar).
   useEffect(() => {
     const TERMINAL_APPT_STATUS = new Set(['CANCELLED', 'COMPLETED'])
+    const isUserSession = !!loggedInUser && !loggedInAdmin
+    const userEmail = loggedInUser?.email
+    const userId = loggedInUser?.id
+
+    const apptFilter = isUserSession && userEmail
+      ? { event: '*', schema: 'public', table: 'appointments', filter: `user_email=eq.${userEmail}` }
+      : { event: '*', schema: 'public', table: 'appointments' }
     const apptChannel = supabase
       .channel('rt-appointments')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, ({ eventType, new: n, old: o }) => {
+      .on('postgres_changes', apptFilter, ({ eventType, new: n, old: o }) => {
         if (eventType === 'INSERT') setAppointments(prev => prev.find(a => a.id === n.id) ? prev : [n, ...prev])
         else if (eventType === 'UPDATE') setAppointments(prev => prev.map(a => {
           if (a.id !== n.id) return a
-          // Defensive: do not let a stale event regress a terminal status.
-          // E.g. user cancels own appt locally; a late event from an earlier admin
-          // approve must not silently un-cancel the row.
           if (TERMINAL_APPT_STATUS.has(a.status) && !TERMINAL_APPT_STATUS.has(n.status)) return a
           return n
         }))
@@ -159,18 +166,24 @@ export function DataProvider({ children }) {
       })
       .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
+    const convFilter = isUserSession && userId
+      ? { event: '*', schema: 'public', table: 'conversations', filter: `sender_id=eq.${userId}` }
+      : { event: '*', schema: 'public', table: 'conversations' }
     const convChannel = supabase
       .channel('rt-conversations')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, ({ eventType, new: n, old: o }) => {
+      .on('postgres_changes', convFilter, ({ eventType, new: n, old: o }) => {
         if (eventType === 'INSERT') setConversations(prev => prev.find(c => c.id === n.id) ? prev : [n, ...prev])
         else if (eventType === 'UPDATE') setConversations(prev => prev.map(c => c.id === n.id ? n : c))
         else if (eventType === 'DELETE') setConversations(prev => prev.filter(c => c.id !== o.id))
       })
       .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
+    const wsRegFilter = isUserSession && userEmail
+      ? { event: '*', schema: 'public', table: 'workshop_registrations', filter: `user_email=eq.${userEmail}` }
+      : { event: '*', schema: 'public', table: 'workshop_registrations' }
     const wsRegChannel = supabase
       .channel('rt-workshop-registrations')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'workshop_registrations' }, ({ eventType, new: n, old: o }) => {
+      .on('postgres_changes', wsRegFilter, ({ eventType, new: n, old: o }) => {
         if (eventType === 'INSERT') setWorkshopRegistrations(prev => prev.find(r => r.id === n.id) ? prev : [...prev, n])
         else if (eventType === 'UPDATE') setWorkshopRegistrations(prev => prev.map(r => r.id === n.id ? n : r))
         else if (eventType === 'DELETE') setWorkshopRegistrations(prev => prev.filter(r => r.id !== o.id))
@@ -256,7 +269,9 @@ export function DataProvider({ children }) {
       supabase.removeChannel(closedDaysChannel)
       rtChannelsRef.current = []
     }
-  }, [])
+    // Login/logout sırasında re-subscribe — filter parametreleri kullanıcıya bağlı.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedInUser?.email, loggedInUser?.id, loggedInAdmin?.id])
 
   // Waitlist realtime subscription — scoped to logged-in user
   useEffect(() => {

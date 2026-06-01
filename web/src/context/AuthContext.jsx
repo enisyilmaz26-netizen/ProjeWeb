@@ -124,7 +124,7 @@ export function AuthProvider({ children }) {
     }
   }, [loggedInUser, loggedInAdmin, resetIdleTimer])
 
-  const loginUser = async (email, password) => {
+  const loginUser = useCallback(async (email, password) => {
     const rl = checkRateLimit(email)
     if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
@@ -148,9 +148,9 @@ export function AuthProvider({ children }) {
     setLoggedInUser({ ...user, must_change_password: extraFields?.must_change_password ?? false, avatar_url: extraFields?.avatar_url ?? user.avatar_url ?? '' })
 
     return { success: true }
-  }
+  }, [])
 
-  const loginAdmin = async (email, password) => {
+  const loginAdmin = useCallback(async (email, password) => {
     const rl = checkRateLimit(email)
     if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
@@ -166,9 +166,9 @@ export function AuthProvider({ children }) {
     const { data: adminExtra } = await supabase.from('admins').select('avatar_url,must_change_password').eq('id', admin.id).single()
     setLoggedInAdmin({ ...admin, avatar_url: adminExtra?.avatar_url ?? admin.avatar_url ?? '', must_change_password: adminExtra?.must_change_password ?? false })
     return { success: true }
-  }
+  }, [])
 
-  const registerUser = async (formData) => {
+  const registerUser = useCallback(async (formData) => {
     const normalizedEmail = formData.email.trim().toLowerCase()
     const { data: existing } = await supabase
       .from('users').select('id').eq('email', normalizedEmail).maybeSingle()
@@ -212,9 +212,9 @@ export function AuthProvider({ children }) {
       is_read: false,
     }])
     return { success: true }
-  }
+  }, [language])
 
-  const findUserForReset = async (email) => {
+  const findUserForReset = useCallback(async (email) => {
     // Defense against email enumeration: never reveal whether the email exists.
     // Caller (forgot-password flow) should always show the same generic
     // "if registered, a reset link will be sent" message and trigger the
@@ -226,9 +226,9 @@ export function AuthProvider({ children }) {
       .eq('email', email.trim().toLowerCase())
       .maybeSingle()
     return { success: true, data: data || null }
-  }
+  }, [])
 
-  const changeAdminPassword = async (adminId, email, currentPassword, newPassword) => {
+  const changeAdminPassword = useCallback(async (adminId, email, currentPassword, newPassword) => {
     const { data: ok, error } = await supabase.rpc('change_admin_password', {
       p_admin_id: adminId,
       p_email: email,
@@ -240,9 +240,9 @@ export function AuthProvider({ children }) {
     if (updateErr) return { success: false, error: 'err_generic' }
     setLoggedInAdmin(prev => prev ? { ...prev, must_change_password: false } : prev)
     return { success: true }
-  }
+  }, [])
 
-  const changePassword = async (userId, email, currentPassword, newPassword) => {
+  const changePassword = useCallback(async (userId, email, currentPassword, newPassword) => {
     const { data: ok, error } = await supabase.rpc('change_user_password', {
       p_user_id: userId,
       p_email: email,
@@ -254,9 +254,9 @@ export function AuthProvider({ children }) {
     if (updateErr) return { success: false, error: 'err_generic' }
     setLoggedInUser(prev => prev ? { ...prev, must_change_password: false } : prev)
     return { success: true }
-  }
+  }, [])
 
-  const uploadAvatar = async (file, type, id) => {
+  const uploadAvatar = useCallback(async (file, type, id) => {
     if (!file) return { success: false, error: 'No file' }
     if (file.size > 1048576) return { success: false, error: t('err_file_too_large', language) }
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -267,10 +267,10 @@ export function AuthProvider({ children }) {
     if (upErr) return { success: false, error: upErr.message }
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/avatars/${path}`
     return { success: true, url: publicUrl + '?t=' + Date.now() }
-  }
+  }, [language])
 
-  const toggleLanguage = () => {} // İngilizce desteği kaldırıldı; no-op
-  const toggleDarkMode = () => setIsDarkMode(prev => !prev)
+  const toggleLanguage = useCallback(() => {}, []) // İngilizce desteği kaldırıldı; no-op
+  const toggleDarkMode = useCallback(() => setIsDarkMode(prev => !prev), [])
 
   const value = useMemo(() => ({
     loggedInUser, loggedInAdmin,
@@ -279,7 +279,12 @@ export function AuthProvider({ children }) {
     loginUser, loginAdmin, registerUser, findUserForReset,
     changePassword, changeAdminPassword, uploadAvatar, logout,
     toggleLanguage, toggleDarkMode, dismissIdleWarning,
-  }), [loggedInUser, loggedInAdmin, language, isDarkMode, idleWarning, logout, dismissIdleWarning])
+  }), [
+    loggedInUser, loggedInAdmin, language, isDarkMode, idleWarning,
+    loginUser, loginAdmin, registerUser, findUserForReset,
+    changePassword, changeAdminPassword, uploadAvatar, logout,
+    toggleLanguage, toggleDarkMode, dismissIdleWarning,
+  ])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
