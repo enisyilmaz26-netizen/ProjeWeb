@@ -6,10 +6,10 @@ import { Sun, Moon, MapPin, Calendar, Clock, Mic, Video, Monitor, BookOpen, Grad
 import { getLabIcon } from '../lib/icons'
 
 const NAV_LINKS = [
-  { href: '#proje', label: { TR: 'Proje', EN: 'Project' } },
-  { href: '#sehirler', label: { TR: 'İller', EN: 'Provinces' } },
-  { href: '#atolyeler', label: { TR: 'Atölyeler', EN: 'Workshops' } },
-  { href: '#nasil-calisir', label: { TR: 'Nasıl Çalışır?', EN: 'How It Works' } },
+  { href: '#proje', label: 'Proje' },
+  { href: '#sehirler', label: 'İller' },
+  { href: '#atolyeler', label: 'Atölyeler' },
+  { href: '#nasil-calisir', label: 'Nasıl Çalışır?' },
 ]
 
 function scrollTo(id) {
@@ -17,7 +17,7 @@ function scrollTo(id) {
 }
 
 export default function LandingPage({ onLoginClick }) {
-  const { cities, labs, workshops, timeSlots, language, isDarkMode, toggleLanguage, toggleDarkMode } = useApp()
+  const { cities, labs, workshops, timeSlots, language, isDarkMode, toggleDarkMode } = useApp()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const lang = language
@@ -25,25 +25,25 @@ export default function LandingPage({ onLoginClick }) {
   const statsData = [
     {
       value: cities.length || 7,
-      label: { TR: 'İl', EN: 'Province' },
+      label: 'İl',
       color: '#1565C0',
       icon: <MapPin className="w-6 h-6" />,
     },
     {
       value: 8,
-      label: { TR: 'Laboratuvar', EN: 'Laboratory' },
+      label: 'Laboratuvar',
       color: '#1565C0',
       icon: <FlaskConical className="w-6 h-6" />,
     },
     {
       value: workshops.length || 0,
-      label: { TR: 'Atölye', EN: 'Workshop' },
+      label: 'Atölye',
       color: '#1565C0',
       icon: <GraduationCap className="w-6 h-6" />,
     },
     {
       value: '200K+',
-      label: { TR: 'Hedef Öğretmen', EN: 'Target Teachers' },
+      label: 'Hedef Öğretmen',
       color: '#1565C0',
       icon: <Users className="w-6 h-6" />,
     },
@@ -52,32 +52,32 @@ export default function LandingPage({ onLoginClick }) {
   const features = [
     {
       icon: <Mic className="w-7 h-7" />,
-      title: { TR: 'Podcast & Ses Stüdyosu', EN: 'Podcast & Audio Studio' },
-      desc: { TR: 'Profesyonel ses kayıt ekipmanlarıyla podcast ve sesli içerik üretimi.', EN: 'Podcast and audio content production with professional recording equipment.' },
+      title: 'Podcast & Ses Stüdyosu',
+      desc: 'Profesyonel ses kayıt ekipmanlarıyla podcast ve sesli içerik üretimi.',
     },
     {
       icon: <Video className="w-7 h-7" />,
-      title: { TR: 'Video Kayıt & Yeşil Ekran', EN: 'Video Recording & Green Screen' },
-      desc: { TR: 'Yüksek kaliteli video içerik üretimi için profesyonel yeşil ekran stüdyoları.', EN: 'Professional green screen studios for high-quality video content production.' },
+      title: 'Video Kayıt & Yeşil Ekran',
+      desc: 'Yüksek kaliteli video içerik üretimi için profesyonel yeşil ekran stüdyoları.',
     },
     {
       icon: <Monitor className="w-7 h-7" />,
-      title: { TR: 'Post Prodüksiyon Lab', EN: 'Post-Production Lab' },
-      desc: { TR: 'Video düzenleme ve dijital içerik geliştirme için donanımlı post prodüksiyon laboratuvarları.', EN: 'Equipped post-production labs for video editing and digital content development.' },
+      title: 'Post Prodüksiyon Lab',
+      desc: 'Video düzenleme ve dijital içerik geliştirme için donanımlı post prodüksiyon laboratuvarları.',
     },
     {
       icon: <BookOpen className="w-7 h-7" />,
-      title: { TR: 'Öğretim Tasarımı Atölyesi', EN: 'Instructional Design Workshop' },
-      desc: { TR: 'Eğitim materyali ve senaryo geliştirme için uzman destekli atölye çalışmaları.', EN: 'Expert-supported workshops for developing educational materials and scenarios.' },
+      title: 'Öğretim Tasarımı Atölyesi',
+      desc: 'Eğitim materyali ve senaryo geliştirme için uzman destekli atölye çalışmaları.',
     },
   ]
 
 
   const steps = [
-    { title: { TR: 'Kayıt Ol', EN: 'Register' }, desc: { TR: 'Sisteme üye olun. Branş, kurum ve il bilgilerinizi girin.', EN: 'Register on the system. Enter your branch, institution, and province information.' } },
-    { title: { TR: 'Onay Bekle', EN: 'Wait for Approval' }, desc: { TR: 'İl yöneticiniz üyeliğinizi inceler ve onaylar.', EN: 'Your province administrator reviews and approves your membership.' } },
-    { title: { TR: 'Randevu Al', EN: 'Book a Slot' }, desc: { TR: 'İlinizde bulunan stüdyolardan tarih ve saat seçerek randevunuzu oluşturun.', EN: 'Choose a date and time from studios in your province and create your reservation.' } },
-    { title: { TR: 'Stüdyoyu Kullan', EN: 'Use the Studio' }, desc: { TR: 'Onaylanan randevunuzla stüdyoya gelin, dijital içerik üretin.', EN: 'Come to the studio with your approved reservation and produce digital content.' } },
+    { title: 'Kayıt Ol', desc: 'Sisteme üye olun. Branş, kurum ve il bilgilerinizi girin.' },
+    { title: 'Onay Bekle', desc: 'İl yöneticiniz üyeliğinizi inceler ve onaylar.' },
+    { title: 'Randevu Al', desc: 'İlinizde bulunan stüdyolardan tarih ve saat seçerek randevunuzu oluşturun.' },
+    { title: 'Stüdyoyu Kullan', desc: 'Onaylanan randevunuzla stüdyoya gelin, dijital içerik üretin.' },
   ]
 
   const cityLabCount = (cityId) => labs.filter(l => String(l.city_id) === String(cityId)).length
@@ -110,16 +110,13 @@ export default function LandingPage({ onLoginClick }) {
                 onClick={() => scrollTo(l.href.slice(1))}
                 className="text-sm font-medium text-gray-700 dark:text-gray-300 transition hover:text-[#1565C0] dark:hover:text-[#7DD4FC] active:opacity-70"
               >
-                {l.label[lang]}
+                {l.label}
               </button>
             ))}
           </nav>
 
           {/* Controls */}
           <div className="flex items-center gap-2">
-            <button onClick={toggleLanguage} className="text-xs font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1 transition hover:border-[#1565C0] hover:text-[#1565C0] active:scale-[0.98]">
-              {lang === 'TR' ? 'EN' : 'TR'}
-            </button>
             <button onClick={toggleDarkMode} aria-label={isDarkMode ? t('toggle_light', lang) : t('toggle_dark', lang)} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition active:scale-[0.98]">
               {isDarkMode ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
             </button>
@@ -143,7 +140,7 @@ export default function LandingPage({ onLoginClick }) {
           <div className="md:hidden bg-white dark:bg-[#061A3A] border-t border-gray-100 dark:border-[#102038] px-4 pb-4 pt-2 space-y-1">
             {NAV_LINKS.map(l => (
               <button key={l.href} onClick={() => { scrollTo(l.href.slice(1)); setMenuOpen(false) }} className="block w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
-                {l.label[lang]}
+                {l.label}
               </button>
             ))}
           </div>
@@ -195,7 +192,7 @@ export default function LandingPage({ onLoginClick }) {
               <div key={i} className="rounded-2xl p-5 text-center bg-white/80 dark:bg-white/10 backdrop-blur border" style={{ borderColor: s.color + '50' }}>
                 <div className="flex justify-center mb-2" style={{ color: s.color }} aria-hidden="true">{s.icon}</div>
                 <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">{s.value}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label[lang]}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
@@ -238,8 +235,8 @@ export default function LandingPage({ onLoginClick }) {
                     <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
                   </svg>
                 ),
-                title: { TR: 'Temel Amaç', EN: 'Core Purpose' },
-                desc: { TR: 'Dijital eğitim fikirlerini keşfetme, sınıf ortamına hızla uygulama ve mesleki iş birliği kültürünü güçlendirme.', EN: 'Discover digital education ideas, quickly apply them to the classroom, and strengthen professional collaboration culture.' },
+                title: 'Temel Amaç',
+                desc: 'Dijital eğitim fikirlerini keşfetme, sınıf ortamına hızla uygulama ve mesleki iş birliği kültürünü güçlendirme.',
               },
               {
                 icon: (
@@ -247,8 +244,8 @@ export default function LandingPage({ onLoginClick }) {
                     <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
                   </svg>
                 ),
-                title: { TR: 'Teknik Donanım', EN: 'Technical Equipment' },
-                desc: { TR: 'Ses ve video kayıt cihazları, çekim sonrası içerik düzenleme yazılımları ve ileri teknoloji altyapısı.', EN: 'Audio and video recording equipment, post-production editing software, and advanced technology infrastructure.' },
+                title: 'Teknik Donanım',
+                desc: 'Ses ve video kayıt cihazları, çekim sonrası içerik düzenleme yazılımları ve ileri teknoloji altyapısı.',
               },
               {
                 icon: (
@@ -256,7 +253,7 @@ export default function LandingPage({ onLoginClick }) {
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
                   </svg>
                 ),
-                title: { TR: 'Kapsam', EN: 'Coverage' },
+                title: 'Kapsam',
                 desc: { TR: "Ankara, İstanbul, İzmir, Gaziantep, Mersin, Erzurum ve Rize'de toplam 8 laboratuvar.", EN: '8 laboratories in total across Ankara, Istanbul, Izmir, Gaziantep, Mersin, Erzurum, and Rize.' },
               },
               {
@@ -265,8 +262,8 @@ export default function LandingPage({ onLoginClick }) {
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
                   </svg>
                 ),
-                title: { TR: 'Kazanımlar', EN: 'Outcomes' },
-                desc: { TR: 'Dijital içerik üretimi, materyal geliştirme, teknoloji destekli öğretim uygulamaları ve dijital beceri güçlendirme.', EN: 'Digital content production, material development, technology-supported teaching, and digital skills strengthening.' },
+                title: 'Kazanımlar',
+                desc: 'Dijital içerik üretimi, materyal geliştirme, teknoloji destekli öğretim uygulamaları ve dijital beceri güçlendirme.',
               },
             ].map((item, i) => (
               <div key={i} className="flex gap-3 p-4 bg-gray-50 dark:bg-[#0D1E3D] rounded-2xl border border-gray-100 dark:border-[#162848]">
@@ -274,8 +271,8 @@ export default function LandingPage({ onLoginClick }) {
                   {item.icon}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{item.title[lang]}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc[lang]}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{item.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -305,8 +302,8 @@ export default function LandingPage({ onLoginClick }) {
                 <div className="w-12 h-12 bg-[#1565C0]/10 dark:bg-[#7DD4FC]/15 rounded-xl flex items-center justify-center text-[#1565C0] dark:text-[#7DD4FC] mb-4 group-hover:bg-[#1565C0] group-hover:text-white dark:group-hover:bg-[#1976D2] dark:group-hover:text-white transition-all" aria-hidden="true">
                   {f.icon}
                 </div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2">{f.title[lang]}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-300 leading-relaxed">{f.desc[lang]}</p>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2">{f.title}</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-300 leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -461,8 +458,8 @@ export default function LandingPage({ onLoginClick }) {
                     <span className="text-white/50 text-[9px] font-bold leading-none">{lang === 'TR' ? 'ADIM' : 'STEP'}</span>
                     <span className="text-white font-extrabold text-lg leading-tight">{i + 1}</span>
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2">{s.title[lang]}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{s.desc[lang]}</p>
+                  <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2">{s.title}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{s.desc}</p>
                 </div>
               ))}
             </div>
@@ -497,7 +494,7 @@ export default function LandingPage({ onLoginClick }) {
             <div className="flex gap-4">
               {NAV_LINKS.map(l => (
                 <button key={l.href} onClick={() => scrollTo(l.href.slice(1))} className="text-xs text-gray-500 dark:text-gray-400 hover:text-[#1565C0] dark:hover:text-[#7DD4FC] transition">
-                  {l.label[lang]}
+                  {l.label}
                 </button>
               ))}
             </div>

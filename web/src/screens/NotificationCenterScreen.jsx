@@ -98,18 +98,34 @@ export default function NotificationCenterScreen() {
     }
   }
 
+  const restoreDismissed = () => {
+    setDismissedIds(new Set())
+    try { localStorage.removeItem(DISMISSED_KEY) } catch {}
+  }
+
   return (
     <div className="px-4 py-4">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 gap-2">
         <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">{t('notifications_header', language)}</h2>
-        {visibleNotifications.length > 0 && (
-          <button
-            onClick={() => setShowClearConfirm(true)}
-            className="text-xs text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-[0.98] transition font-medium"
-          >
-            {t('clear_notifications', language)}
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isUser && dismissedIds.size > 0 && (
+            <button
+              onClick={restoreDismissed}
+              className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 active:scale-[0.98] transition font-medium"
+              title={`${dismissedIds.size} gizlenmiş bildirim`}
+            >
+              Geri Al ({dismissedIds.size})
+            </button>
+          )}
+          {visibleNotifications.length > 0 && (
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className="text-xs text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-[0.98] transition font-medium"
+            >
+              {t('clear_notifications', language)}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-2 mb-4">

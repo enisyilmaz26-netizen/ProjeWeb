@@ -8,8 +8,22 @@ import { passwordRequirements, isPasswordStrong } from '../lib/passwordUtils'
 import { Sun, Moon, Check, Circle, X } from 'lucide-react'
 
 export default function AuthScreen({ onBack }) {
-  const { loginUser, loginAdmin, registerUser, language, toggleLanguage, isDarkMode, toggleDarkMode, cities } = useApp()
-  const [activeTab, setActiveTab] = useState('login')
+  const { loginUser, loginAdmin, registerUser, language, isDarkMode, toggleDarkMode, cities } = useApp()
+  const [activeTab, setActiveTabRaw] = useState('login')
+
+  // Tab değişiminde diğer formun hassas alanlarını sıfırla — autofill leak'i
+  // ve hata mesajlarının kalmasını önler.
+  const setActiveTab = (next) => {
+    if (next === activeTab) return
+    if (next === 'login') {
+      setRegForm(prev => ({ ...prev, password: '', confirmPassword: '' }))
+      setRegError('')
+    } else if (next === 'register') {
+      setLoginPassword('')
+      setLoginError('')
+    }
+    setActiveTabRaw(next)
+  }
 
   // Login form
   const [loginEmail, setLoginEmail] = useState('')
@@ -130,12 +144,6 @@ export default function AuthScreen({ onBack }) {
           <p className="text-blue-200 dark:text-[#7DD4FC] text-xs">{t('app_subtitle', language)}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={toggleLanguage}
-            className="text-white border border-white/40 rounded-lg px-2 py-0.5 text-xs font-medium hover:bg-white/20 transition active:scale-[0.98]"
-          >
-            {language === 'TR' ? 'EN' : 'TR'}
-          </button>
           <button
             onClick={toggleDarkMode}
             aria-label={t('toggle_dark', language)}

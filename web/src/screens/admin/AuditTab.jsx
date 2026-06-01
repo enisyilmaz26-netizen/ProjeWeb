@@ -5,35 +5,36 @@ import { t, getLocale } from '../../lib/languages'
 import { ShieldCheck, RefreshCw, Search, Download } from 'lucide-react'
 
 const ACTION_LABELS = {
-  APPROVE_APPOINTMENT:  { TR: 'Randevu Onaylandı',        EN: 'Appointment Approved' },
-  CANCEL_APPOINTMENT:   { TR: 'Randevu İptal Edildi',     EN: 'Appointment Cancelled' },
-  COMPLETE_APPOINTMENT: { TR: 'Randevu Tamamlandı',       EN: 'Appointment Completed' },
-  APPROVE_USER:         { TR: 'Üye Onaylandı',            EN: 'User Approved' },
-  REVOKE_USER:          { TR: 'Üye Silindi',              EN: 'User Revoked' },
-  RESET_USER_PASSWORD:  { TR: 'Kullanıcı Şifresi Sıfırlandı', EN: 'User Password Reset' },
-  ADD_ADMIN:            { TR: 'Yönetici Eklendi',         EN: 'Admin Added' },
-  DELETE_ADMIN:         { TR: 'Yönetici Silindi',         EN: 'Admin Deleted' },
-  RESET_ADMIN_PASSWORD:    { TR: 'Yönetici Şifresi Sıfırlandı', EN: 'Admin Password Reset' },
-  DENY_CANCELLATION:       { TR: 'İptal Talebi Reddedildi',   EN: 'Cancellation Denied' },
-  USER_CANCEL_APPOINTMENT: { TR: 'Kullanıcı Randevu İptal',   EN: 'User Cancelled Appointment' },
-  USER_REQUEST_CANCELLATION: { TR: 'Kullanıcı İptal Talebi',  EN: 'User Requested Cancellation' },
-  CLEAR_NOTIFICATIONS:       { TR: 'Bildirimler Temizlendi',  EN: 'Notifications Cleared' },
-  RESCHEDULE_APPOINTMENT:    { TR: 'Randevu Yeniden Planlandı', EN: 'Appointment Rescheduled' },
-  EDIT_ADMIN:                { TR: 'Yönetici Güncellendi',    EN: 'Admin Updated' },
-  ADD_USER_BY_ADMIN:         { TR: 'Kullanıcı Oluşturuldu (Admin)', EN: 'User Created (Admin)' },
-  ADD_LAB:                   { TR: 'Lab Oluşturuldu',         EN: 'Lab Created' },
-  UPDATE_LAB:                { TR: 'Lab Güncellendi',         EN: 'Lab Updated' },
-  ADD_WORKSHOP:              { TR: 'Atölye Oluşturuldu',      EN: 'Workshop Created' },
-  UPDATE_WORKSHOP:           { TR: 'Atölye Güncellendi',      EN: 'Workshop Updated' },
-  DELETE_WORKSHOP:           { TR: 'Atölye Silindi',          EN: 'Workshop Deleted' },
-  ADD_CLOSED_DAY:            { TR: 'Kapalı Gün Eklendi',      EN: 'Closed Day Added' },
-  REMOVE_CLOSED_DAY:         { TR: 'Kapalı Gün Kaldırıldı',  EN: 'Closed Day Removed' },
-  ADD_TIME_SLOT:             { TR: 'Saat Dilimi Eklendi',     EN: 'Time Slot Added' },
-  REMOVE_TIME_SLOT:          { TR: 'Saat Dilimi Kaldırıldı', EN: 'Time Slot Removed' },
-  REGISTER_WORKSHOP:         { TR: 'Atölye Kaydı Oluşturuldu', EN: 'Workshop Registered' },
-  UNREGISTER_WORKSHOP:       { TR: 'Atölye Kaydı İptal Edildi', EN: 'Workshop Unregistered' },
-  REMOVE_WORKSHOP_REG:       { TR: 'Atölye Kaydı Silindi (Admin)', EN: 'Workshop Reg Removed (Admin)' },
-  DELETE_LAB:                { TR: 'Lab Silindi', EN: 'Lab Deleted' },
+  APPROVE_APPOINTMENT:       'Randevu Onaylandı',
+  CANCEL_APPOINTMENT:        'Randevu İptal Edildi',
+  COMPLETE_APPOINTMENT:      'Randevu Tamamlandı',
+  APPROVE_USER:              'Üye Onaylandı',
+  REVOKE_USER:               'Üye Silindi',
+  RESET_USER_PASSWORD:       'Kullanıcı Şifresi Sıfırlandı',
+  ADD_ADMIN:                 'Yönetici Eklendi',
+  DELETE_ADMIN:              'Yönetici Silindi',
+  RESET_ADMIN_PASSWORD:      'Yönetici Şifresi Sıfırlandı',
+  DENY_CANCELLATION:         'İptal Talebi Reddedildi',
+  USER_CANCEL_APPOINTMENT:   'Kullanıcı Randevu İptal',
+  USER_REQUEST_CANCELLATION: 'Kullanıcı İptal Talebi',
+  CLEAR_NOTIFICATIONS:       'Bildirimler Temizlendi',
+  RESCHEDULE_APPOINTMENT:    'Randevu Yeniden Planlandı',
+  EDIT_ADMIN:                'Yönetici Güncellendi',
+  ADD_USER_BY_ADMIN:         'Kullanıcı Oluşturuldu (Admin)',
+  ADD_LAB:                   'Lab Oluşturuldu',
+  UPDATE_LAB:                'Lab Güncellendi',
+  ADD_WORKSHOP:              'Atölye Oluşturuldu',
+  UPDATE_WORKSHOP:           'Atölye Güncellendi',
+  DELETE_WORKSHOP:           'Atölye Silindi',
+  ADD_CLOSED_DAY:            'Kapalı Gün Eklendi',
+  REMOVE_CLOSED_DAY:         'Kapalı Gün Kaldırıldı',
+  ADD_TIME_SLOT:             'Saat Dilimi Eklendi',
+  REMOVE_TIME_SLOT:          'Saat Dilimi Kaldırıldı',
+  REGISTER_WORKSHOP:         'Atölye Kaydı Oluşturuldu',
+  UNREGISTER_WORKSHOP:       'Atölye Kaydı İptal Edildi',
+  REMOVE_WORKSHOP_REG:       'Atölye Kaydı Silindi (Admin)',
+  DELETE_LAB:                'Lab Silindi',
+  EMAIL_FAILED:              'E-posta Gönderilemedi',
 }
 
 const ACTION_COLORS = {
@@ -153,7 +154,14 @@ export default function AuditTab({ language }) {
 
   const downloadCSV = () => {
     const escapeField = (val) => {
-      const str = val == null ? '' : String(val)
+      let str = val == null ? '' : String(val)
+      // CSV formula injection guard
+      if (str.length > 0) {
+        const first = str.charAt(0)
+        if (first === '=' || first === '+' || first === '-' || first === '@' || first === '\t' || first === '\r') {
+          str = `'${str}`
+        }
+      }
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {
         return '"' + str.replace(/"/g, '""') + '"'
       }
@@ -165,7 +173,7 @@ export default function AuditTab({ language }) {
     ]
     const rows = filtered.map(l => [
       formatDateTime(l.created_at, language),
-      ACTION_LABELS[l.action]?.[language] || l.action,
+      ACTION_LABELS[l.action] || l.action,
       l.details || '',
       l.actor_name || '',
       l.actor_role || '',
@@ -284,7 +292,7 @@ export default function AuditTab({ language }) {
               <div key={log.id} className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow px-4 py-3">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-lg flex-shrink-0 ${ACTION_COLORS[log.action] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
-                    {ACTION_LABELS[log.action]?.[language] || log.action}
+                    {ACTION_LABELS[log.action] || log.action}
                   </span>
                   <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
                     {formatDateTime(log.created_at, language)}
