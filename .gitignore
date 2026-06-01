@@ -1,1 +1,3 @@
 .vercel
+*.pem
+.DS_Store
