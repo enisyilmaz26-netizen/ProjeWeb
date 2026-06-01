@@ -254,7 +254,7 @@ export default function LandingPage({ onLoginClick }) {
                   </svg>
                 ),
                 title: 'Kapsam',
-                desc: { TR: "Ankara, İstanbul, İzmir, Gaziantep, Mersin, Erzurum ve Rize'de toplam 8 laboratuvar.", EN: '8 laboratories in total across Ankara, Istanbul, Izmir, Gaziantep, Mersin, Erzurum, and Rize.' },
+                desc: "Ankara, İstanbul, İzmir, Gaziantep, Mersin, Erzurum ve Rize'de toplam 8 laboratuvar.",
               },
               {
                 icon: (

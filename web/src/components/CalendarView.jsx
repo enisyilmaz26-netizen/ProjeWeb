@@ -10,22 +10,15 @@ const STATUS_DOT = {
   COMPLETED:              'bg-purple-400',
 }
 
-const MONTH_NAMES = {
-  TR: ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'],
-  EN: ['January','February','March','April','May','June','July','August','September','October','November','December'],
-}
-
-const DAY_NAMES = {
-  TR: ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],
-  EN: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-}
+const MONTH_NAMES = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık']
+const DAY_NAMES = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz']
 
 const STATUS_LEGEND = {
-  PENDING:                { TR: 'Bekleyen',     EN: 'Pending' },
-  APPROVED:               { TR: 'Onaylı',       EN: 'Approved' },
-  CANCELLATION_REQUESTED: { TR: 'İptal Talep',  EN: 'Cancel Req.' },
-  CANCELLED:              { TR: 'İptal',        EN: 'Cancelled' },
-  COMPLETED:              { TR: 'Tamamlandı',   EN: 'Completed' },
+  PENDING:                'Bekleyen',
+  APPROVED:               'Onaylı',
+  CANCELLATION_REQUESTED: 'İptal Talep',
+  CANCELLED:              'İptal',
+  COMPLETED:              'Tamamlandı',
 }
 
 export default function CalendarView({
@@ -118,7 +111,7 @@ export default function CalendarView({
           <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" aria-hidden="true" />
         </button>
         <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-          {MONTH_NAMES[language][month]} {year}
+          {MONTH_NAMES[month]} {year}
         </span>
         <button
           onClick={nextMonth}
@@ -131,7 +124,7 @@ export default function CalendarView({
       </div>
 
       <div className="grid grid-cols-7 mb-1">
-        {DAY_NAMES[language].map((d, i) => (
+        {DAY_NAMES.map((d, i) => (
           <div
             key={d}
             className={`text-center text-[10px] font-semibold py-1 uppercase ${
@@ -211,7 +204,7 @@ export default function CalendarView({
           {Object.entries(STATUS_LEGEND).map(([status, label]) => (
             <span key={status} className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[status]}`} />
-              {label[language]}
+              {label}
             </span>
           ))}
         </div>

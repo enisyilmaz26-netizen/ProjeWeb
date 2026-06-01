@@ -257,11 +257,11 @@ export default function AppointmentsTab({ language, isGlobal, adminCityId, onReq
           )}
           <select aria-label={t('filter_all_statuses', language)} className={inputClass} value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setVisibleCount(PAGE_SIZE) }}>
             <option value="">{t('filter_all_statuses', language)}</option>
-            <option value="PENDING">{STATUS_LABELS.PENDING[language]}</option>
-            <option value="APPROVED">{STATUS_LABELS.APPROVED[language]}</option>
-            <option value="COMPLETED">{STATUS_LABELS.COMPLETED[language]}</option>
-            <option value="CANCELLED">{STATUS_LABELS.CANCELLED[language]}</option>
-            <option value="CANCELLATION_REQUESTED">{STATUS_LABELS.CANCELLATION_REQUESTED[language]}</option>
+            <option value="PENDING">{STATUS_LABELS.PENDING}</option>
+            <option value="APPROVED">{STATUS_LABELS.APPROVED}</option>
+            <option value="COMPLETED">{STATUS_LABELS.COMPLETED}</option>
+            <option value="CANCELLED">{STATUS_LABELS.CANCELLED}</option>
+            <option value="CANCELLATION_REQUESTED">{STATUS_LABELS.CANCELLATION_REQUESTED}</option>
           </select>
         </div>
         <div className="flex flex-wrap gap-2 items-center">

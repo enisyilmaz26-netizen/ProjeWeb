@@ -867,7 +867,7 @@ function AppointmentCard({ appt, language, canDirectCancel, canRequestCancel, on
           <p className="text-xs text-gray-500 dark:text-gray-400">{appt.city_name}</p>
         </div>
         <span className={`text-xs font-medium px-2 py-1 rounded-lg flex-shrink-0 ${STATUS_COLORS[appt.status] || ''}`}>
-          {STATUS_LABELS[appt.status]?.[language] || appt.status}
+          {STATUS_LABELS[appt.status] || appt.status}
         </span>
       </div>
       <div className="flex gap-4 text-xs text-gray-600 dark:text-gray-400 mb-2">
