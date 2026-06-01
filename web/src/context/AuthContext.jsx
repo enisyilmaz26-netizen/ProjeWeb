@@ -52,7 +52,9 @@ function clearAttempts(email) {
 export function AuthProvider({ children }) {
   const [loggedInUser, setLoggedInUser] = useState(() => loadFromStorage('session_user'))
   const [loggedInAdmin, setLoggedInAdmin] = useState(() => loadFromStorage('session_admin'))
-  const [language, setLanguage] = useState(() => loadFromStorage('app_language') || 'TR')
+  // İngilizce desteği kaldırıldı — language sabit TR. Tüketici kodu hâlâ
+  // language okuyabiliyor, ama değer her zaman 'TR'.
+  const language = 'TR'
   const [isDarkMode, setIsDarkMode] = useState(() => loadFromStorage('app_dark_mode') || false)
   const [idleWarning, setIdleWarning] = useState(false)
   const idleWarnRef = useRef(null)
@@ -69,7 +71,8 @@ export function AuthProvider({ children }) {
     else localStorage.removeItem('session_admin')
   }, [loggedInAdmin])
 
-  useEffect(() => { localStorage.setItem('app_language', JSON.stringify(language)) }, [language])
+  // Eski 'app_language' kaydını temizle (artık kullanılmıyor)
+  useEffect(() => { try { localStorage.removeItem('app_language') } catch {} }, [])
 
   useEffect(() => {
     localStorage.setItem('app_dark_mode', JSON.stringify(isDarkMode))
@@ -266,7 +269,7 @@ export function AuthProvider({ children }) {
     return { success: true, url: publicUrl + '?t=' + Date.now() }
   }
 
-  const toggleLanguage = () => setLanguage(prev => prev === 'TR' ? 'EN' : 'TR')
+  const toggleLanguage = () => {} // İngilizce desteği kaldırıldı; no-op
   const toggleDarkMode = () => setIsDarkMode(prev => !prev)
 
   const value = useMemo(() => ({

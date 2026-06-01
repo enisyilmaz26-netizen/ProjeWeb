@@ -662,14 +662,16 @@ export const STATUS_LABELS = {
   COMPLETED: { TR: 'Tamamlandı', EN: 'Completed' },
 }
 
-export function t(key, lang = 'TR') {
+// İngilizce dil çevirisi sistemden kaldırıldı; t() artık daima TR döner.
+// `lang` parametresi geriye dönük uyum için bırakıldı; göz ardı edilir.
+export function t(key, _lang) {
   const entry = translations[key]
   if (!entry) return key
-  return entry[lang] || entry['TR'] || key
+  return entry['TR'] || key
 }
 
-export function getLocale(language) {
-  return language === 'TR' ? 'tr-TR' : 'en-GB'
+export function getLocale(_language) {
+  return 'tr-TR'
 }
 
 // Convert YYYY-MM-DD → DD.MM.YYYY

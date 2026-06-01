@@ -20,9 +20,10 @@ function TabLoader() {
 }
 
 export default function MainAppContainer() {
-  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, toggleLanguage, logout, notifications, loading, loadError, loadAllData, idleWarning, dismissIdleWarning, conversations, messagesAvailable } = useApp()
+  const { loggedInUser, loggedInAdmin, language, isDarkMode, toggleDarkMode, logout, notifications, loading, loadError, loadAllData, realtimeError, idleWarning, dismissIdleWarning, conversations, messagesAvailable } = useApp()
   const isAdmin = loggedInAdmin !== null
   const [activeTab, setActiveTab] = useState(isAdmin ? 'admin' : 'book')
+  const [realtimeBannerDismissed, setRealtimeBannerDismissed] = useState(false)
 
   const displayName = isAdmin
     ? (loggedInAdmin.name || loggedInAdmin.email)
@@ -68,13 +69,6 @@ export default function MainAppContainer() {
 
           {/* Right: controls */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button
-              onClick={toggleLanguage}
-              aria-label={t('toggle_lang', language)}
-              className="text-white border border-white/40 rounded-lg px-2 py-0.5 text-xs font-medium hover:bg-white/20 transition active:scale-[0.98]"
-            >
-              {language === 'TR' ? 'EN' : 'TR'}
-            </button>
             <button
               onClick={toggleDarkMode}
               aria-label={t('toggle_dark', language)}
@@ -143,6 +137,20 @@ export default function MainAppContainer() {
             className="underline font-semibold hover:opacity-80 transition"
           >
             {t('btn_retry', language)}
+          </button>
+        </div>
+      )}
+
+      {/* Realtime connection error banner (soft, dismissible) */}
+      {realtimeError && !realtimeBannerDismissed && (
+        <div role="status" aria-live="polite" className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-2 text-yellow-800 dark:text-yellow-200 text-xs flex items-center justify-between gap-3">
+          <span>{t('realtime_error', language)}</span>
+          <button
+            onClick={() => setRealtimeBannerDismissed(true)}
+            aria-label={t('btn_close', language)}
+            className="font-bold hover:opacity-70 transition"
+          >
+            ✕
           </button>
         </div>
       )}

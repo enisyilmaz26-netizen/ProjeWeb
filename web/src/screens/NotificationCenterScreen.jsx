@@ -3,19 +3,38 @@ import { useApp } from '../context/AppContext'
 import { t, formatTimestamp } from '../lib/languages'
 import { AlertTriangle, Clock, Lightbulb, Bell, Calendar, Search, Trash2 } from 'lucide-react'
 
+// User-side "tüm bildirimleri sil" sadece o tarayıcıdaki user için geçerli olmalı —
+// notifications tablosu DB'de paylaşımlı, gerçekten silmek başka kullanıcıları etkiler.
+// Bu yüzden user için "dismiss" listesi localStorage'da tutulur, server'a dokunulmaz.
+const DISMISSED_KEY = 'user_dismissed_notif_ids'
+
+function loadDismissed() {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY)
+    return new Set(raw ? JSON.parse(raw) : [])
+  } catch { return new Set() }
+}
+function saveDismissed(set) {
+  try { localStorage.setItem(DISMISSED_KEY, JSON.stringify(Array.from(set))) } catch {}
+}
+
 export default function NotificationCenterScreen() {
   const { notifications, loggedInAdmin, loggedInUser, clearNotifications, markNotificationsRead, deleteNotification, language, cities } = useApp()
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [notifSearch, setNotifSearch] = useState('')
   const [notifType, setNotifType] = useState('')
+  const [dismissedIds, setDismissedIds] = useState(() => loadDismissed())
 
   // Filtering is handled in AppContext (visibleNotifications); notifications here is already
   // scoped to the current user's city. We only need the city name for the clear action.
   const adminCity = cities.find(c => String(c.id) === String(loggedInAdmin?.city_id))
   const cityName = (loggedInAdmin?.role === 'CITY' && adminCity) ? adminCity.name : null
+  const isUser = !loggedInAdmin && loggedInUser
 
   const visibleNotifications = notifications.filter(n => {
+    // User tarafında client-side dismissed olanları gizle
+    if (isUser && dismissedIds.has(n.id)) return false
     if (notifType && n.type !== notifType) return false
     if (notifSearch.trim()) {
       const q = notifSearch.toLowerCase()
@@ -31,11 +50,29 @@ export default function NotificationCenterScreen() {
   }, [notifications])
 
   const handleClearAll = async () => {
+    if (isUser) {
+      // User: server'da silme, sadece bu tarayıcıda gizle
+      const ids = visibleNotifications.map(n => n.id)
+      const next = new Set(dismissedIds)
+      ids.forEach(id => next.add(id))
+      setDismissedIds(next)
+      saveDismissed(next)
+      setShowClearConfirm(false)
+      return
+    }
     const result = await clearNotifications(cityName)
     if (result.success) setShowClearConfirm(false)
   }
 
   const handleDelete = async (id) => {
+    if (isUser) {
+      // User: server'da silme, dismiss listesine ekle
+      const next = new Set(dismissedIds)
+      next.add(id)
+      setDismissedIds(next)
+      saveDismissed(next)
+      return
+    }
     setDeletingId(id)
     try {
       await deleteNotification(id)
@@ -65,7 +102,7 @@ export default function NotificationCenterScreen() {
     <div className="px-4 py-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-bold text-gray-900 dark:text-gray-100 text-base">{t('notifications_header', language)}</h2>
-        {loggedInAdmin && notifications.length > 0 && (
+        {visibleNotifications.length > 0 && (
           <button
             onClick={() => setShowClearConfirm(true)}
             className="text-xs text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-[0.98] transition font-medium"
