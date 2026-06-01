@@ -8,6 +8,7 @@ import { X, Pencil, Lock, Calendar, Clock, ChevronUp, ChevronDown, ChevronRight,
 import CalendarView from '../components/CalendarView'
 import { isTurkishHoliday, isSunday, localDateStr } from '../lib/holidays'
 import CertificateModal from '../components/CertificateModal'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 export default function MyProfileScreen() {
   const { loggedInUser, appointments, cancelOwnAppointment, submitCancellationRequest, updateUserProfile, changePassword, language, cities, waitlist, removeFromWaitlist, uploadAvatar, rescheduleAppointment, timeSlots, labs, closedDays, workshopRegistrations, workshops, certificateTemplates } = useApp()
@@ -26,6 +27,10 @@ export default function MyProfileScreen() {
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState('')
 
+  // Declared early — referenced in useEffect dependency array below
+  const [showCityChangeWarning, setShowCityChangeWarning] = useState(false)
+  const [showWaitlistRemoveConfirm, setShowWaitlistRemoveConfirm] = useState(null)
+
   // Reschedule
   const [showReschedule, setShowReschedule] = useState(false)
   const [rescheduleTarget, setRescheduleTarget] = useState(null)
@@ -39,6 +44,13 @@ export default function MyProfileScreen() {
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' })
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState('')
+
+  // Focus traps — one per modal so each correctly traps Tab/Shift+Tab within itself
+  const cancelModalRef = useFocusTrap(showCancelModal)
+  const rescheduleModalRef = useFocusTrap(showReschedule)
+  const pwModalRef = useFocusTrap(showPwChange)
+  const cityWarnModalRef = useFocusTrap(showCityChangeWarning)
+  const waitlistRemoveModalRef = useFocusTrap(!!showWaitlistRemoveConfirm)
 
   useEffect(() => () => clearTimeout(successTimerRef.current), [])
 
@@ -63,8 +75,6 @@ export default function MyProfileScreen() {
   const [editForm, setEditForm] = useState({})
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState('')
-  const [showCityChangeWarning, setShowCityChangeWarning] = useState(false)
-  const [showWaitlistRemoveConfirm, setShowWaitlistRemoveConfirm] = useState(null)
   const [waitlistRemoving, setWaitlistRemoving] = useState(false)
   const [certModalWs, setCertModalWs] = useState(null)
 
@@ -662,7 +672,7 @@ export default function MyProfileScreen() {
         const maxDate = (() => { const d = new Date(); d.setDate(d.getDate() + 60); return localDateStr(d) })()
         return (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-            <div role="dialog" aria-modal="true" aria-labelledby="reschedule-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
+            <div ref={rescheduleModalRef} role="dialog" aria-modal="true" aria-labelledby="reschedule-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-1">
                 <h3 id="reschedule-title" className="font-bold text-gray-900 dark:text-gray-100 text-base flex items-center gap-1.5">
                   <RefreshCw className="w-4 h-4 text-[#1565C0] dark:text-[#7DD4FC]" aria-hidden="true" />
@@ -736,7 +746,7 @@ export default function MyProfileScreen() {
       {/* Cancel Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+          <div ref={cancelModalRef} role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 id="cancel-modal-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">
               {cancelType === 'direct' ? t('action_cancel', language) : t('cancel_modal_title', language)}
             </h3>
@@ -783,7 +793,7 @@ export default function MyProfileScreen() {
       {/* Şehir değişikliği uyarı modali */}
       {showCityChangeWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div role="dialog" aria-modal="true" aria-labelledby="city-change-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+          <div ref={cityWarnModalRef} role="dialog" aria-modal="true" aria-labelledby="city-change-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 id="city-change-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
               {t('city_change_title', language)}
             </h3>
@@ -813,7 +823,7 @@ export default function MyProfileScreen() {
       {/* Bekleme listesi çıkış onay modali */}
       {showWaitlistRemoveConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div role="dialog" aria-modal="true" aria-labelledby="waitlist-remove-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
+          <div ref={waitlistRemoveModalRef} role="dialog" aria-modal="true" aria-labelledby="waitlist-remove-title" className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow-xl p-6 max-w-sm w-full">
             <h3 id="waitlist-remove-title" className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
               {t('waitlist_remove_title', language)}
             </h3>

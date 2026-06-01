@@ -114,6 +114,14 @@ export function DataProvider({ children }) {
 
   useEffect(() => { loadAllData() }, [loadAllData])
 
+  // Realtime fallback: when any channel reports an error, poll loadAllData(false)
+  // every 30s until it recovers. Stops as soon as realtimeError clears.
+  useEffect(() => {
+    if (!realtimeError) return
+    const interval = setInterval(() => { loadAllData(false) }, 30000)
+    return () => clearInterval(interval)
+  }, [realtimeError, loadAllData])
+
   // Realtime subscriptions
   useEffect(() => {
     const apptChannel = supabase
@@ -330,16 +338,19 @@ export function DataProvider({ children }) {
   }
 
   function sendAutoEmail(toEmail, toName, subject, bodyHtml) {
-    const html = `<!DOCTYPE html><html><body style="font-family:sans-serif;font-size:14px;color:#1a1a1a;padding:32px;max-width:600px;margin:0 auto">
-      <div style="border-top:4px solid #1565C0;padding-top:20px;margin-bottom:24px">
-        <p style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:0.1em;margin:0">MEB ÖGEDEP</p>
-      </div>
-      ${bodyHtml}
-      <div style="border-top:1px solid #e5e7eb;margin-top:32px;padding-top:16px">
-        <p style="font-size:11px;color:#9ca3af;margin:0">${t('email_footer_auto', language)}</p>
-      </div>
-    </body></html>`
-    sendEmail({ recipients: [{ email: toEmail, name: toName }], subject, html }).catch(err => console.error('[sendAutoEmail] failed:', err))
+    const html = buildEmailHTML(bodyHtml, language, t('email_footer_auto', language))
+    sendEmail({ recipients: [{ email: toEmail, name: toName }], subject, html })
+      .then(res => {
+        if (!res?.success || (res.failed && res.failed > 0)) {
+          console.error('[sendAutoEmail] failed:', { toEmail, subject, res })
+          // Best-effort audit so admins can see email delivery problems
+          logAudit('EMAIL_FAILED', 'email', toEmail, `${subject} — ${res?.error || `failed:${res?.failed ?? '?'}`}`)
+        }
+      })
+      .catch(err => {
+        console.error('[sendAutoEmail] failed:', err)
+        logAudit('EMAIL_FAILED', 'email', toEmail, `${subject} — ${err?.message || 'unknown'}`)
+      })
   }
 
   // AUDIT LOGGER — server-side SECURITY DEFINER RPC; direct INSERT artık revoke edildi.
