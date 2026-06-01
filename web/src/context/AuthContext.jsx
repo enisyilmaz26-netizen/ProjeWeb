@@ -20,7 +20,7 @@ function loadRateLimits() {
   try { return JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{}') } catch { return {} }
 }
 function saveRateLimits(data) {
-  try { localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data)) } catch {}
+  try { localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data)) } catch (err) { console.warn('[saveRateLimits] localStorage unavailable:', err) }
 }
 
 function checkRateLimit(email) {
@@ -46,16 +46,6 @@ function clearAttempts(email) {
   const all = loadRateLimits()
   delete all[email]
   saveRateLimits(all)
-}
-
-export function generateTempPassword() {
-  const pool = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%'
-  let raw = 'ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 22)]
-          + 'abcdefghjkmnpqrstuvwxyz'[Math.floor(Math.random() * 22)]
-          + '23456789'[Math.floor(Math.random() * 8)]
-          + '!@#$%'[Math.floor(Math.random() * 5)]
-  for (let i = 0; i < 4; i++) raw += pool[Math.floor(Math.random() * pool.length)]
-  return raw.split('').sort(() => Math.random() - 0.5).join('')
 }
 
 export function AuthProvider({ children }) {
@@ -168,20 +158,33 @@ export function AuthProvider({ children }) {
 
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: formData.password })
     if (hashErr || !hashed) { console.error('hash_password_bcrypt error:', hashErr); return { success: false, error: hashErr?.message || 'err_generic' } }
-    const { error } = await supabase.from('users').insert([{
-      name: formData.name,
-      surname: formData.surname,
-      email: normalizedEmail,
-      password_hash: hashed,
-      branch: formData.branch,
-      work_location: formData.work_location,
-      phone: formData.phone,
-      city_id: formData.city_id,
-      city_name: formData.city_name,
-      district: formData.district,
-      is_approved: false,
-    }])
-    if (error) return { success: false, error: error.message }
+
+    // SECURITY DEFINER RPC forces is_approved=false; falls back to direct INSERT
+    // (omitting is_approved so DEFAULT false applies) if RPC not yet deployed.
+    const { error: rpcErr } = await supabase.rpc('register_user', {
+      p_name: formData.name, p_surname: formData.surname, p_email: normalizedEmail, p_password_hash: hashed,
+      p_branch: formData.branch, p_work_location: formData.work_location, p_phone: formData.phone,
+      p_city_id: formData.city_id, p_city_name: formData.city_name, p_district: formData.district,
+    })
+    if (rpcErr && rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+      if (rpcErr.code === '23505') return { success: false, error: 'err_email_exists' }
+      return { success: false, error: rpcErr.message }
+    }
+    if (rpcErr) {
+      const { error } = await supabase.from('users').insert([{
+        name: formData.name,
+        surname: formData.surname,
+        email: normalizedEmail,
+        password_hash: hashed,
+        branch: formData.branch,
+        work_location: formData.work_location,
+        phone: formData.phone,
+        city_id: formData.city_id,
+        city_name: formData.city_name,
+        district: formData.district,
+      }])
+      if (error) return { success: false, error: error.message }
+    }
 
     await supabase.from('notifications').insert([{
       title: `[${formData.city_name}] ${t('notif_new_member_title', language)}`,

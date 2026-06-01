@@ -382,21 +382,31 @@ export function DataProvider({ children }) {
     const email = formData.email.trim().toLowerCase()
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: formData.password })
     if (hashErr || !hashed) { console.error('hash_password_bcrypt error:', hashErr); return { success: false, error: hashErr?.message || 'err_generic' } }
-    const { data: newUser, error } = await supabase.from('users').insert([{
-      name: formData.name,
-      surname: formData.surname,
-      email,
-      password_hash: hashed,
-      branch: formData.branch,
-      work_location: formData.work_location,
-      phone: formData.phone,
-      city_id: formData.city_id,
-      city_name: formData.city_name,
-      district: formData.district,
-      is_approved: true,
-      must_change_password: true,
-    }]).select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password').single()
-    if (error) return { success: false, error: error.message }
+
+    // SECURITY DEFINER RPC sets is_approved=true and must_change_password=true atomically.
+    // Falls back to direct INSERT if RPC not deployed (column REVOKE then also absent).
+    let newUser
+    const { data: rpcRows, error: rpcErr } = await supabase.rpc('admin_create_user', {
+      p_name: formData.name, p_surname: formData.surname, p_email: email, p_password_hash: hashed,
+      p_branch: formData.branch, p_work_location: formData.work_location, p_phone: formData.phone,
+      p_city_id: formData.city_id, p_city_name: formData.city_name, p_district: formData.district,
+    })
+    if (rpcErr && rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+      if (rpcErr.code === '23505') return { success: false, error: 'err_email_exists' }
+      return { success: false, error: rpcErr.message }
+    }
+    if (rpcErr) {
+      const { data: legacy, error } = await supabase.from('users').insert([{
+        name: formData.name, surname: formData.surname, email, password_hash: hashed,
+        branch: formData.branch, work_location: formData.work_location, phone: formData.phone,
+        city_id: formData.city_id, city_name: formData.city_name, district: formData.district,
+        is_approved: true, must_change_password: true,
+      }]).select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password').single()
+      if (error) return { success: false, error: error.message }
+      newUser = legacy
+    } else {
+      newUser = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows
+    }
     if (!newUser) return { success: false, error: 'err_generic' }
     setUsers(prev => [...prev, newUser].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
     logAudit('ADD_USER_BY_ADMIN', 'user', newUser.id, `${newUser.name} ${newUser.surname} (${email})`)
@@ -434,9 +444,18 @@ export function DataProvider({ children }) {
     if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-    const { data: updated, error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', userId).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    // SECURITY DEFINER RPC; falls back to direct UPDATE if RPC not yet deployed.
+    const { data: rpcOk, error: rpcErr } = await supabase.rpc('admin_reset_user_password', { p_user_id: userId, p_password_hash: hashed })
+    if (rpcErr && rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+      return { success: false, error: rpcErr.message }
+    }
+    if (rpcErr) {
+      const { data: updated, error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', userId).select('id')
+      if (error) return { success: false, error: error.message }
+      if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    } else if (rpcOk === false) {
+      return { success: false, error: 'err_generic' }
+    }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, must_change_password: true } : u))
     const user = users.find(u => u.id === userId)
     if (user) logAudit('RESET_USER_PASSWORD', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
@@ -464,9 +483,18 @@ export function DataProvider({ children }) {
       const tempPw = generateTempPassword()
       const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: tempPw })
       if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-      const { data: updatedAdmin, error } = await supabase.from('admins').update({ password_hash: hashed, must_change_password: true }).eq('id', admin.id).select('id')
-      if (error) return { success: false, error: error.message }
-      if (!updatedAdmin || updatedAdmin.length === 0) return { success: false, error: 'err_generic' }
+      // SECURITY DEFINER RPC; falls back to direct UPDATE if RPC not yet deployed.
+      const { data: rpcOk, error: rpcErr } = await supabase.rpc('request_password_reset_admin', { p_email: normalizedEmail, p_password_hash: hashed })
+      if (rpcErr && rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+        return { success: false, error: rpcErr.message }
+      }
+      if (rpcErr) {
+        const { data: updatedAdmin, error } = await supabase.from('admins').update({ password_hash: hashed, must_change_password: true }).eq('id', admin.id).select('id')
+        if (error) return { success: false, error: error.message }
+        if (!updatedAdmin || updatedAdmin.length === 0) return { success: false, error: 'err_generic' }
+      } else if (rpcOk === false) {
+        return { success: false, error: 'err_generic' }
+      }
       const fullName = `${admin.name || ''} ${admin.surname || ''}`.trim()
       sendAutoEmail(
         admin.email, fullName,
@@ -486,9 +514,18 @@ export function DataProvider({ children }) {
     const tempPw = generateTempPassword()
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: tempPw })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-    const { data: updatedUser, error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', user.id).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!updatedUser || updatedUser.length === 0) return { success: false, error: 'err_generic' }
+    // SECURITY DEFINER RPC; falls back to direct UPDATE if RPC not yet deployed.
+    const { data: userRpcOk, error: userRpcErr } = await supabase.rpc('request_password_reset_user', { p_email: normalizedEmail, p_password_hash: hashed })
+    if (userRpcErr && userRpcErr.code !== '42883' && userRpcErr.code !== 'PGRST202') {
+      return { success: false, error: userRpcErr.message }
+    }
+    if (userRpcErr) {
+      const { data: updatedUser, error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', user.id).select('id')
+      if (error) return { success: false, error: error.message }
+      if (!updatedUser || updatedUser.length === 0) return { success: false, error: 'err_generic' }
+    } else if (userRpcOk === false) {
+      return { success: false, error: 'err_generic' }
+    }
     const fullName = `${user.name || ''} ${user.surname || ''}`.trim()
     sendAutoEmail(
       user.email, fullName,
@@ -771,9 +808,18 @@ export function DataProvider({ children }) {
     if (loggedInAdmin.role !== 'GLOBAL' && String(user.city_id) !== String(loggedInAdmin.city_id)) {
       return { success: false, error: 'err_generic' }
     }
-    const { data: updated, error } = await supabase.from('users').update({ is_approved: true }).eq('id', userId).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    // SECURITY DEFINER RPC; falls back to direct UPDATE if RPC not yet deployed.
+    const { data: rpcOk, error: rpcErr } = await supabase.rpc('admin_approve_user', { p_user_id: userId })
+    if (rpcErr && rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+      return { success: false, error: rpcErr.message }
+    }
+    if (rpcErr) {
+      const { data: updated, error } = await supabase.from('users').update({ is_approved: true }).eq('id', userId).select('id')
+      if (error) return { success: false, error: error.message }
+      if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    } else if (rpcOk === false) {
+      return { success: false, error: 'err_generic' }
+    }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_approved: true } : u))
     if (user) logAudit('APPROVE_USER', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
     if (user?.email) {
@@ -811,13 +857,27 @@ export function DataProvider({ children }) {
     }
     const activeStatuses = ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED']
     const activeAppts = appointments.filter(a => a.user_email === user?.email && activeStatuses.includes(a.status))
-    if (activeAppts.length > 0) {
-      const { error: cancelErr } = await supabase.from('appointments').update({ status: 'CANCELLED' }).in('id', activeAppts.map(a => a.id))
-      if (!cancelErr) setAppointments(prev => prev.map(a => activeAppts.some(aa => aa.id === a.id) ? { ...a, status: 'CANCELLED' } : a))
+    // SECURITY DEFINER RPC handles both appointment cancellation and user deletion atomically.
+    const { data: rpcOk, error: rpcErr } = await supabase.rpc('admin_revoke_user', { p_user_id: userId })
+    if (rpcErr && rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+      return { success: false, error: rpcErr.message }
     }
-    const { data: deleted, error } = await supabase.from('users').delete().eq('id', userId).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
+    if (rpcErr) {
+      if (activeAppts.length > 0) {
+        const { error: cancelErr } = await supabase.from('appointments').update({ status: 'CANCELLED' }).in('id', activeAppts.map(a => a.id))
+        if (!cancelErr) setAppointments(prev => prev.map(a => activeAppts.some(aa => aa.id === a.id) ? { ...a, status: 'CANCELLED' } : a))
+      }
+      const { data: deleted, error } = await supabase.from('users').delete().eq('id', userId).select('id')
+      if (error) return { success: false, error: error.message }
+      if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
+    } else if (rpcOk === false) {
+      return { success: false, error: 'err_generic' }
+    } else {
+      // RPC succeeded — reflect appointment cancellations locally
+      if (activeAppts.length > 0) {
+        setAppointments(prev => prev.map(a => activeAppts.some(aa => aa.id === a.id) ? { ...a, status: 'CANCELLED' } : a))
+      }
+    }
     setUsers(prev => prev.filter(u => u.id !== userId))
     if (user) logAudit('REVOKE_USER', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
     if (user) {
@@ -1306,12 +1366,28 @@ export function DataProvider({ children }) {
     if (existing) return { success: false, error: 'err_email_exists' }
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: password })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
-    const { data, error } = await supabase.from('admins').insert([{
-      name, email: normalizedEmail, password_hash: hashed, role: role || 'CITY', city_id: city_id || null, phone: phone || ''
-    }]).select('id,name,email,role,city_id,phone').single()
-    if (error) {
-      if (error.code === '23505') return { success: false, error: 'err_email_exists' }
-      return { success: false, error: error.message }
+
+    // SECURITY DEFINER RPC inserts role + city_id (which are anon-revoked after column lockdown).
+    let data
+    const { data: rpcRows, error: rpcErr } = await supabase.rpc('admin_create_admin', {
+      p_name: name, p_email: normalizedEmail, p_password_hash: hashed,
+      p_role: role || 'CITY', p_city_id: city_id || null, p_phone: phone || '',
+    })
+    if (rpcErr && rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+      if (rpcErr.code === '23505') return { success: false, error: 'err_email_exists' }
+      return { success: false, error: rpcErr.message }
+    }
+    if (rpcErr) {
+      const { data: legacy, error } = await supabase.from('admins').insert([{
+        name, email: normalizedEmail, password_hash: hashed, role: role || 'CITY', city_id: city_id || null, phone: phone || ''
+      }]).select('id,name,email,role,city_id,phone').single()
+      if (error) {
+        if (error.code === '23505') return { success: false, error: 'err_email_exists' }
+        return { success: false, error: error.message }
+      }
+      data = legacy
+    } else {
+      data = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows
     }
     if (!data) return { success: false, error: 'err_generic' }
     setAdmins(prev => [...prev, data].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
@@ -1352,15 +1428,37 @@ export function DataProvider({ children }) {
     if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const isSelf = String(loggedInAdmin.id) === String(adminId)
     const isGlobal = loggedInAdmin.role === 'GLOBAL'
-    // Anyone (admin) can update own profile; GLOBAL can update anyone
     if (!isSelf && !isGlobal) return { success: false, error: 'err_generic' }
-    // Non-GLOBAL cannot change role or city_id (only GLOBAL can)
     const allowedFields = isGlobal ? ADMIN_PROFILE_UPDATABLE : new Set(['name', 'email', 'phone', 'avatar_url'])
     const safeUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => allowedFields.has(k)))
     if (Object.keys(safeUpdates).length === 0) return { success: false, error: 'err_generic' }
-    const { data, error } = await supabase.from('admins').update(safeUpdates).eq('id', adminId).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!data || data.length === 0) return { success: false, error: 'err_update_failed' }
+
+    // Split: privileged columns (role, city_id) go via SECURITY DEFINER RPC; the rest direct.
+    const { role: nextRole, city_id: nextCityId, ...directUpdates } = safeUpdates
+    const hasPrivChange = nextRole !== undefined || nextCityId !== undefined
+    if (hasPrivChange) {
+      // Caller is GLOBAL (only allowedFields lets these through for global)
+      const { data: rpcOk, error: rpcErr } = await supabase.rpc('admin_update_admin_privileges', {
+        p_admin_id: adminId,
+        p_role: nextRole ?? null,
+        p_city_id: nextCityId ?? null,
+      })
+      if (rpcErr && rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+        return { success: false, error: rpcErr.message }
+      }
+      if (rpcErr) {
+        // Fallback: direct UPDATE (works only if column REVOKE not yet applied)
+        const { error: legacyErr } = await supabase.from('admins').update({ role: nextRole, city_id: nextCityId }).eq('id', adminId)
+        if (legacyErr) return { success: false, error: legacyErr.message }
+      } else if (rpcOk === false) {
+        return { success: false, error: 'err_update_failed' }
+      }
+    }
+    if (Object.keys(directUpdates).length > 0) {
+      const { data, error } = await supabase.from('admins').update(directUpdates).eq('id', adminId).select('id')
+      if (error) return { success: false, error: error.message }
+      if (!data || data.length === 0) return { success: false, error: 'err_update_failed' }
+    }
     setAdmins(prev => prev.map(a => a.id === adminId ? { ...a, ...safeUpdates } : a))
     if (isSelf) setLoggedInAdmin(prev => ({ ...prev, ...safeUpdates }))
     const target = admins.find(a => a.id === adminId)
