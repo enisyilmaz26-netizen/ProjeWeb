@@ -124,11 +124,19 @@ export function DataProvider({ children }) {
 
   // Realtime subscriptions
   useEffect(() => {
+    const TERMINAL_APPT_STATUS = new Set(['CANCELLED', 'COMPLETED'])
     const apptChannel = supabase
       .channel('rt-appointments')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, ({ eventType, new: n, old: o }) => {
         if (eventType === 'INSERT') setAppointments(prev => prev.find(a => a.id === n.id) ? prev : [n, ...prev])
-        else if (eventType === 'UPDATE') setAppointments(prev => prev.map(a => a.id === n.id ? n : a))
+        else if (eventType === 'UPDATE') setAppointments(prev => prev.map(a => {
+          if (a.id !== n.id) return a
+          // Defensive: do not let a stale event regress a terminal status.
+          // E.g. user cancels own appt locally; a late event from an earlier admin
+          // approve must not silently un-cancel the row.
+          if (TERMINAL_APPT_STATUS.has(a.status) && !TERMINAL_APPT_STATUS.has(n.status)) return a
+          return n
+        }))
         else if (eventType === 'DELETE') setAppointments(prev => prev.filter(a => a.id !== o.id))
       })
       .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })

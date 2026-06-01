@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { supabase, supabaseUrl } from '../lib/supabase'
 import { t } from '../lib/languages'
 
@@ -197,13 +197,17 @@ export function AuthProvider({ children }) {
   }
 
   const findUserForReset = async (email) => {
-    const { data, error } = await supabase
+    // Defense against email enumeration: never reveal whether the email exists.
+    // Caller (forgot-password flow) should always show the same generic
+    // "if registered, a reset link will be sent" message and trigger the
+    // reset RPC unconditionally. We still look up the record so the live
+    // reset path can use it, but we don't expose absence to the caller.
+    const { data } = await supabase
       .from('users')
       .select('id, name, surname, email')
       .eq('email', email.trim().toLowerCase())
       .maybeSingle()
-    if (error || !data) return { success: false, error: 'err_user_not_registered' }
-    return { success: true, data }
+    return { success: true, data: data || null }
   }
 
   const changeAdminPassword = async (adminId, email, currentPassword, newPassword) => {
@@ -255,14 +259,14 @@ export function AuthProvider({ children }) {
   const toggleLanguage = () => setLanguage(prev => prev === 'TR' ? 'EN' : 'TR')
   const toggleDarkMode = () => setIsDarkMode(prev => !prev)
 
-  const value = {
+  const value = useMemo(() => ({
     loggedInUser, loggedInAdmin,
     language, isDarkMode, idleWarning,
     setLoggedInUser, setLoggedInAdmin,
     loginUser, loginAdmin, registerUser, findUserForReset,
     changePassword, changeAdminPassword, uploadAvatar, logout,
     toggleLanguage, toggleDarkMode, dismissIdleWarning,
-  }
+  }), [loggedInUser, loggedInAdmin, language, isDarkMode, idleWarning, logout, dismissIdleWarning])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

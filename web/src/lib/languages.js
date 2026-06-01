@@ -192,6 +192,7 @@ export const translations = {
   notif_email_no_recipients: { TR: 'Bu hedef kitle için onaylı kullanıcı yok.', EN: 'No approved users match this audience.' },
   notif_email_result: { TR: 'Bildirim oluşturuldu — {sent} e-posta gönderildi, {failed} başarısız.', EN: 'Notification created — sent {sent} emails, {failed} failed.' },
   notif_email_sending: { TR: 'E-postalar gönderiliyor...', EN: 'Sending emails...' },
+  audit_fetch_more_from_server: { TR: 'Sunucudan daha eski kayıtları yükle', EN: 'Fetch older records from server' },
   confirm_approve_appt: { TR: 'Bu randevuyu onaylamak istediğinizden emin misiniz?', EN: 'Are you sure you want to approve this appointment?' },
   confirm_cancel_appt: { TR: 'Bu randevuyu iptal etmek istediğinizden emin misiniz?', EN: 'Are you sure you want to cancel this appointment?' },
   confirm_complete_appt: { TR: 'Bu randevuyu tamamlandı olarak işaretlemek istediğinizden emin misiniz?', EN: 'Mark this appointment as completed?' },

@@ -180,4 +180,79 @@ REVOKE INSERT (is_approved)                ON public.users  FROM anon;
 REVOKE UPDATE (role, city_id, password_hash) ON public.admins FROM anon;
 REVOKE INSERT (role)                          ON public.admins FROM anon;
 
+
+-- ─── 4) Foreign-key CASCADE — orphan satırları engelle ───────────────────────
+-- workshop_registrations.user_id ve waitlist.user_id, users.id'ye atıfta bulunmalı.
+-- Kullanıcı silindiğinde bağlı kayıtlar otomatik temizlenir. Mevcut FK'leri
+-- (varsa) önce kaldırıp doğru constraint'i ekle. user_id integer → users.id.
+DO $$
+BEGIN
+  -- workshop_registrations.user_id → users(id) ON DELETE CASCADE
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'workshop_registrations'
+      AND column_name = 'user_id' AND data_type = 'integer'
+  ) THEN
+    -- Önce orphan kayıtları temizle (FK eklemeden önce zorunlu)
+    DELETE FROM public.workshop_registrations
+    WHERE user_id NOT IN (SELECT id FROM public.users);
+
+    -- Mevcut users-referans FK varsa düş (Supabase otomatik naming kullanır)
+    PERFORM 1 FROM pg_constraint
+     WHERE conrelid = 'public.workshop_registrations'::regclass
+       AND contype = 'f'
+       AND pg_get_constraintdef(oid) LIKE '%users%';
+    IF FOUND THEN
+      EXECUTE (
+        SELECT string_agg('ALTER TABLE public.workshop_registrations DROP CONSTRAINT ' || quote_ident(conname) || ';', ' ')
+        FROM pg_constraint
+        WHERE conrelid = 'public.workshop_registrations'::regclass
+          AND contype = 'f'
+          AND pg_get_constraintdef(oid) LIKE '%users%'
+      );
+    END IF;
+
+    -- Önceki run'dan kalmış constraint'i yeniden eklemeden önce kaldır (idempotent)
+    BEGIN
+      ALTER TABLE public.workshop_registrations DROP CONSTRAINT workshop_registrations_user_id_fkey;
+    EXCEPTION WHEN undefined_object THEN NULL;
+    END;
+    ALTER TABLE public.workshop_registrations
+      ADD CONSTRAINT workshop_registrations_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+  END IF;
+
+  -- waitlist.user_id → users(id) ON DELETE CASCADE
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'waitlist'
+      AND column_name = 'user_id' AND data_type = 'integer'
+  ) THEN
+    DELETE FROM public.waitlist
+    WHERE user_id NOT IN (SELECT id FROM public.users);
+
+    PERFORM 1 FROM pg_constraint
+     WHERE conrelid = 'public.waitlist'::regclass
+       AND contype = 'f'
+       AND pg_get_constraintdef(oid) LIKE '%users%';
+    IF FOUND THEN
+      EXECUTE (
+        SELECT string_agg('ALTER TABLE public.waitlist DROP CONSTRAINT ' || quote_ident(conname) || ';', ' ')
+        FROM pg_constraint
+        WHERE conrelid = 'public.waitlist'::regclass
+          AND contype = 'f'
+          AND pg_get_constraintdef(oid) LIKE '%users%'
+      );
+    END IF;
+
+    BEGIN
+      ALTER TABLE public.waitlist DROP CONSTRAINT waitlist_user_id_fkey;
+    EXCEPTION WHEN undefined_object THEN NULL;
+    END;
+    ALTER TABLE public.waitlist
+      ADD CONSTRAINT waitlist_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
 NOTIFY pgrst, 'reload schema';

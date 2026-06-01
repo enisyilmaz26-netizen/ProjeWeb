@@ -75,28 +75,62 @@ function formatDateTime(iso, language) {
   return d.toLocaleString(locale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
+const SERVER_PAGE = 200
+
 export default function AuditTab({ language }) {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [filterAction, setFilterAction] = useState('')
   const [searchText, setSearchText] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [totalCount, setTotalCount] = useState(0)
+  const [fetchingMore, setFetchingMore] = useState(false)
+  const [reachedEnd, setReachedEnd] = useState(false)
 
   const load = async () => {
     setLoading(true)
+    setLoadError(false)
+    setReachedEnd(false)
     try {
-      const { data } = await supabase
+      const { data, error, count } = await supabase
+        .from('audit_logs')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(0, SERVER_PAGE - 1)
+      if (error) { console.error('[AuditTab] load failed:', error); setLoadError(true); return }
+      if (data) {
+        setLogs(data)
+        if (data.length < SERVER_PAGE) setReachedEnd(true)
+      }
+      if (typeof count === 'number') setTotalCount(count)
+    } catch (err) {
+      console.error('[AuditTab] load exception:', err)
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadMoreFromServer = async () => {
+    if (fetchingMore || reachedEnd) return
+    setFetchingMore(true)
+    try {
+      const from = logs.length
+      const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(1000)
-      if (data) setLogs(data)
-    } catch {
-      // loading will reset in finally
+        .range(from, from + SERVER_PAGE - 1)
+      if (error) { console.error('[AuditTab] loadMore failed:', error); return }
+      if (data) {
+        setLogs(prev => [...prev, ...data])
+        if (data.length < SERVER_PAGE) setReachedEnd(true)
+      }
     } finally {
-      setLoading(false)
+      setFetchingMore(false)
     }
   }
 
@@ -155,7 +189,9 @@ export default function AuditTab({ language }) {
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
             {t('lbl_audit_log', language)}
           </h3>
-          <span className="text-xs text-gray-400 dark:text-gray-500">({filtered.length})</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            ({filtered.length}{totalCount > logs.length ? ` / ${totalCount}` : ''})
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -176,6 +212,12 @@ export default function AuditTab({ language }) {
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <p role="alert" className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 mb-3">
+          {t('err_load_audit', language)}
+        </p>
+      )}
 
       <select
         aria-label={t('filter_all_actions', language)}
@@ -265,6 +307,15 @@ export default function AuditTab({ language }) {
               className="w-full mt-3 py-3 border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 text-[#1565C0] dark:text-[#7DD4FC] rounded-xl text-sm font-medium hover:bg-[#1565C0]/5 transition"
             >
               {t('show_more', language)} ({filtered.length - visibleCount} {t('remaining', language)})
+            </button>
+          )}
+          {!reachedEnd && filtered.length === logs.length && (
+            <button
+              onClick={loadMoreFromServer}
+              disabled={fetchingMore}
+              className="w-full mt-2 py-2.5 border border-dashed border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-xl text-xs hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
+            >
+              {fetchingMore ? '...' : t('audit_fetch_more_from_server', language)}
             </button>
           )}
         </>
