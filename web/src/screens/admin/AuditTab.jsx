@@ -235,7 +235,7 @@ export default function AuditTab({ language }) {
       >
         <option value="">{t('filter_all_actions', language)}</option>
         {Object.entries(ACTION_LABELS).map(([key, label]) => (
-          <option key={key} value={key}>{label[language]}</option>
+          <option key={key} value={key}>{label}</option>
         ))}
       </select>
 
