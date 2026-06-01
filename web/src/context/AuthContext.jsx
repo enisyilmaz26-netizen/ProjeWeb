@@ -15,6 +15,7 @@ function loadFromStorage(key) {
 
 const RATE_LIMIT_KEY = 'rl_attempts'
 const IDLE_WARN_MS = 25 * 60 * 1000
+const IDLE_HARD_LOGOUT_MS = 5 * 60 * 1000 // 5 min after warning → forced logout
 
 function loadRateLimits() {
   try { return JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{}') } catch { return {} }
@@ -55,6 +56,7 @@ export function AuthProvider({ children }) {
   const [isDarkMode, setIsDarkMode] = useState(() => loadFromStorage('app_dark_mode') || false)
   const [idleWarning, setIdleWarning] = useState(false)
   const idleWarnRef = useRef(null)
+  const idleLogoutRef = useRef(null)
   const isLoggedInRef = useRef(false)
 
   useEffect(() => {
@@ -79,12 +81,23 @@ export function AuthProvider({ children }) {
     isLoggedInRef.current = !!(loggedInUser || loggedInAdmin)
   }, [loggedInUser, loggedInAdmin])
 
+  const logout = useCallback(() => {
+    setLoggedInUser(null)
+    setLoggedInAdmin(null)
+  }, [])
+
   const resetIdleTimer = useCallback(() => {
     if (!isLoggedInRef.current) return
     clearTimeout(idleWarnRef.current)
+    clearTimeout(idleLogoutRef.current)
     setIdleWarning(false)
-    idleWarnRef.current = setTimeout(() => { setIdleWarning(true) }, IDLE_WARN_MS)
-  }, [])
+    idleWarnRef.current = setTimeout(() => {
+      setIdleWarning(true)
+      // After warning is shown, give the user IDLE_HARD_LOGOUT_MS to respond.
+      // No response → forced logout (covers the stolen-device / closed-tab cases).
+      idleLogoutRef.current = setTimeout(() => { logout() }, IDLE_HARD_LOGOUT_MS)
+    }, IDLE_WARN_MS)
+  }, [logout])
 
   const dismissIdleWarning = useCallback(() => {
     setIdleWarning(false)
@@ -94,6 +107,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!loggedInUser && !loggedInAdmin) {
       clearTimeout(idleWarnRef.current)
+      clearTimeout(idleLogoutRef.current)
       setIdleWarning(false)
       return
     }
@@ -102,6 +116,7 @@ export function AuthProvider({ children }) {
     events.forEach(ev => document.addEventListener(ev, resetIdleTimer, { passive: true }))
     return () => {
       clearTimeout(idleWarnRef.current)
+      clearTimeout(idleLogoutRef.current)
       events.forEach(ev => document.removeEventListener(ev, resetIdleTimer))
     }
   }, [loggedInUser, loggedInAdmin, resetIdleTimer])
@@ -250,11 +265,6 @@ export function AuthProvider({ children }) {
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/avatars/${path}`
     return { success: true, url: publicUrl + '?t=' + Date.now() }
   }
-
-  const logout = useCallback(() => {
-    setLoggedInUser(null)
-    setLoggedInAdmin(null)
-  }, [])
 
   const toggleLanguage = () => setLanguage(prev => prev === 'TR' ? 'EN' : 'TR')
   const toggleDarkMode = () => setIsDarkMode(prev => !prev)
