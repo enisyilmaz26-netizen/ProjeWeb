@@ -58,12 +58,15 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
   const [csvImporting, setCsvImporting] = useState(false)
   const [csvResult, setCsvResult] = useState(null)
 
+  const [csvProgress, setCsvProgress] = useState({ done: 0, total: 0 })
+
   const handleCsvImport = async (e) => {
     const file = e.target.files[0]
     if (!file) return
     e.target.value = ''
     setCsvResult(null)
     setCsvImporting(true)
+    setCsvProgress({ done: 0, total: 0 })
     try {
       const text = await file.text()
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
@@ -78,25 +81,59 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
       const workLocIdx = idxOf(['kurum', 'work_location', 'okul', 'school'])
       const districtIdx = idxOf(['ilçe', 'district', 'ilce'])
       const cityIdx = idxOf(['il', 'city', 'şehir', 'sehir', 'il_id', 'city_id'])
-      let ok = 0, fail = 0, errors = []
+
+      // 1) Önce her satırı sadece YEREL doğrula (network'e gitmeden) ve gönderilecek
+      // payload listesini hazırla. Aynı email'in CSV içinde tekrarını da yakalar.
+      const payloads = []
+      const errors = []
+      const seenEmails = new Set()
       for (let i = 1; i < lines.length; i++) {
-        if (errors.length >= 100) { fail += lines.length - i; break }
         const parts = parseCSVLine(lines[i].replace(/\r/g, ''))
         const email = emailIdx >= 0 ? parts[emailIdx]?.trim().toLowerCase() : ''
         const name = nameIdx >= 0 ? parts[nameIdx] : ''
         const surname = surnameIdx >= 0 ? parts[surnameIdx] : ''
-        if (!email || !name || !surname) { fail++; errors.push(t('csv_err_missing_field', language).replace('{n}', i + 1)); continue }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail++; errors.push(t('csv_err_invalid_email', language).replace('{n}', i + 1).replace('{email}', email)); continue }
+        if (!email || !name || !surname) { errors.push(t('csv_err_missing_field', language).replace('{n}', i + 1)); continue }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errors.push(t('csv_err_invalid_email', language).replace('{n}', i + 1).replace('{email}', email)); continue }
+        if (seenEmails.has(email)) { errors.push(t('csv_err_already_exists', language).replace('{n}', i + 1).replace('{email}', email)); continue }
+        if (users.find(u => u.email === email)) { errors.push(t('csv_err_already_exists', language).replace('{n}', i + 1).replace('{email}', email)); continue }
         const cityVal = cityIdx >= 0 ? parts[cityIdx] : ''
         const cityObj = cities.find(c => String(c.id) === cityVal || c.name.toLowerCase() === cityVal.toLowerCase())
         const cityId = cityObj?.id || (!isGlobal ? adminCityId : null)
-        if (!cityId) { fail++; errors.push(t('csv_err_city_not_found', language).replace('{n}', i + 1).replace('{city}', cityVal)); continue }
-        const password = generateTempPassword()
-        const result = await addUserByAdmin({ name, surname, email, password, phone: phoneIdx >= 0 ? parts[phoneIdx] || '' : '', branch: branchIdx >= 0 ? parts[branchIdx] || '' : '', work_location: workLocIdx >= 0 ? parts[workLocIdx] || '' : '', district: districtIdx >= 0 ? parts[districtIdx] || '' : '', city_id: cityId, city_name: cityObj?.name || '' })
-        if (result.success) ok++
-        else { fail++; errors.push(t('csv_err_row_generic', language).replace('{n}', i + 1).replace('{email}', email).replace('{error}', result.error)) }
+        if (!cityId) { errors.push(t('csv_err_city_not_found', language).replace('{n}', i + 1).replace('{city}', cityVal)); continue }
+        seenEmails.add(email)
+        payloads.push({
+          row: i + 1, email, payload: {
+            name, surname, email, password: generateTempPassword(),
+            phone: phoneIdx >= 0 ? parts[phoneIdx] || '' : '',
+            branch: branchIdx >= 0 ? parts[branchIdx] || '' : '',
+            work_location: workLocIdx >= 0 ? parts[workLocIdx] || '' : '',
+            district: districtIdx >= 0 ? parts[districtIdx] || '' : '',
+            city_id: cityId, city_name: cityObj?.name || '',
+          }
+        })
       }
-      setCsvResult({ ok, fail, errors })
+
+      // 2) Paralel batch'lerde RPC çağrısı — 10'lu Promise.allSettled.
+      // ~10x hız (network roundtrip dominant).
+      const BATCH_SIZE = 10
+      let ok = 0
+      setCsvProgress({ done: 0, total: payloads.length })
+      for (let i = 0; i < payloads.length; i += BATCH_SIZE) {
+        const slice = payloads.slice(i, i + BATCH_SIZE)
+        const results = await Promise.allSettled(slice.map(p => addUserByAdmin(p.payload)))
+        results.forEach((r, idx) => {
+          const item = slice[idx]
+          if (r.status === 'fulfilled' && r.value?.success) {
+            ok++
+          } else {
+            const errMsg = r.status === 'rejected' ? (r.reason?.message || 'unknown') : (r.value?.error || 'unknown')
+            errors.push(t('csv_err_row_generic', language).replace('{n}', item.row).replace('{email}', item.email).replace('{error}', errMsg))
+          }
+        })
+        setCsvProgress({ done: Math.min(i + BATCH_SIZE, payloads.length), total: payloads.length })
+      }
+      // errors hem yerel doğrulama hatalarını hem RPC hatalarını içerir.
+      setCsvResult({ ok, fail: errors.length, errors: errors.slice(0, 100) })
     } catch (err) {
       console.error('[csvImport]', err)
       setCsvResult({ ok: 0, fail: 0, errors: [err.message || t('csv_err_read_file', language)] })
@@ -184,9 +221,10 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
     e.preventDefault()
     setResetPwError('')
     if (!isPasswordStrong(resetPwValue)) { setResetPwError(t('err_password_weak', language)); return }
+    const targetModal = resetPwModal
     setResetPwLoading(true)
     try {
-      const result = await resetPassword(resetPwModal.userId, resetPwModal.email, resetPwValue)
+      const result = await resetPassword(targetModal.userId, targetModal.email, resetPwValue)
       if (result.success) {
         setResetPwSuccess(t('reset_pw_success', language))
         clearTimeout(resetPwTimerRef.current); resetPwTimerRef.current = setTimeout(closeResetPw, 1500)
@@ -267,7 +305,9 @@ export default function UserApprovalsTab({ language, isGlobal, adminCityId, onRe
           ) : <div />}
           <div className="flex gap-2 flex-shrink-0">
             <label className="py-2 px-3 border border-[#1565C0]/40 dark:border-[#7DD4FC]/40 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition cursor-pointer flex items-center gap-1">
-              {csvImporting ? '...' : t('csv_import', language)}
+              {csvImporting
+                ? (csvProgress.total > 0 ? `${csvProgress.done}/${csvProgress.total}` : '...')
+                : t('csv_import', language)}
               <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={csvImporting} />
             </label>
             <button onClick={handleCsvExport} className="py-2 px-3 border border-[#1565C0]/40 dark:border-[#7DD4FC]/40 text-[#1565C0] dark:text-[#7DD4FC] text-xs font-semibold rounded-xl hover:bg-[#1565C0]/5 transition flex items-center gap-1">

@@ -24,8 +24,10 @@ const EmailTab          = lazy(() => import('./admin/EmailTab'))
 
 function TabLoader() {
   return (
-    <div className="flex items-center justify-center py-16">
-      <div className="w-6 h-6 border-4 border-[#1565C0] dark:border-[#7DD4FC] border-t-transparent rounded-full animate-spin" />
+    <div className="space-y-3" role="status" aria-label="Yükleniyor">
+      <div className="h-20 bg-gray-200/70 dark:bg-gray-800/70 rounded-2xl animate-pulse" />
+      <div className="h-32 bg-gray-200/70 dark:bg-gray-800/70 rounded-2xl animate-pulse" />
+      <div className="h-32 bg-gray-200/70 dark:bg-gray-800/70 rounded-2xl animate-pulse" />
     </div>
   )
 }

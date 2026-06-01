@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
-import { Calendar, GraduationCap, User, Bell, Settings, Sun, Moon, MessageSquare } from 'lucide-react'
+import { Calendar, GraduationCap, User, Bell, Settings, Sun, Moon, MessageSquare, HelpCircle } from 'lucide-react'
 import IdleWarningModal from '../components/IdleWarningModal'
 
 const UserReservationScreen = lazy(() => import('./UserReservationScreen'))
@@ -10,11 +10,14 @@ const MyProfileScreen = lazy(() => import('./MyProfileScreen'))
 const NotificationCenterScreen = lazy(() => import('./NotificationCenterScreen'))
 const WorkshopsScreen = lazy(() => import('./WorkshopsScreen'))
 const MessagesScreen = lazy(() => import('./MessagesScreen'))
+const HowToUseScreen = lazy(() => import('./HowToUseScreen'))
 
 function TabLoader() {
   return (
-    <div className="flex items-center justify-center py-16">
-      <div className="w-6 h-6 border-4 border-[#1565C0] dark:border-[#7DD4FC] border-t-transparent rounded-full animate-spin" />
+    <div className="px-4 py-4 space-y-3" role="status" aria-label="Yükleniyor">
+      <div className="h-24 bg-gray-200/70 dark:bg-gray-800/70 rounded-2xl animate-pulse" />
+      <div className="h-32 bg-gray-200/70 dark:bg-gray-800/70 rounded-2xl animate-pulse" />
+      <div className="h-32 bg-gray-200/70 dark:bg-gray-800/70 rounded-2xl animate-pulse" />
     </div>
   )
 }
@@ -39,10 +42,12 @@ export default function MainAppContainer() {
     { key: 'profile', label: t('tab_profile', language), icon: <User className="w-4 h-4" /> },
     { key: 'notifications', label: t('tab_notifications', language), icon: <Bell className="w-4 h-4" /> },
     ...(messagesAvailable ? [{ key: 'messages', label: t('tab_messages', language), icon: <MessageSquare className="w-4 h-4" />, unread: userMsgUnread }] : []),
+    { key: 'help', label: 'Nasıl Kullanırım', icon: <HelpCircle className="w-4 h-4" /> },
   ]
   const adminTabs = [
     { key: 'admin', label: t('tab_admin', language), icon: <Settings className="w-4 h-4" /> },
     { key: 'notifications', label: t('tab_notifications', language), icon: <Bell className="w-4 h-4" /> },
+    { key: 'help', label: 'Nasıl Kullanırım', icon: <HelpCircle className="w-4 h-4" /> },
   ]
   const tabs = isAdmin ? adminTabs : userTabs
 
@@ -51,21 +56,39 @@ export default function MainAppContainer() {
       {/* Top Navigation Bar */}
       <header className="bg-[#1565C0] dark:bg-[#061A3A] shadow sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
-          {/* Left: user info */}
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-sm font-bold">
-                {displayName.charAt(0).toUpperCase()}
-              </span>
+          {/* Left: user info — click → profil */}
+          <button
+            type="button"
+            onClick={() => setActiveTab(isAdmin ? 'admin' : 'profile')}
+            aria-label={isAdmin ? t('tab_admin', language) : t('tab_profile', language)}
+            className="flex items-center gap-2 min-w-0 hover:opacity-80 transition active:scale-[0.98]"
+          >
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {(isAdmin ? loggedInAdmin?.avatar_url : loggedInUser?.avatar_url) ? (
+                <img
+                  src={isAdmin ? loggedInAdmin.avatar_url : loggedInUser.avatar_url}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-white text-sm font-bold">
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
             <span className="text-white text-xs font-medium truncate hidden sm:block max-w-[120px]">{displayName}</span>
-          </div>
+          </button>
 
-          {/* Center: title */}
-          <div className="text-center flex-1 min-w-0">
+          {/* Center: title — click → ana ekran (kullanıcı: randevu al, admin: panel) */}
+          <button
+            type="button"
+            onClick={() => setActiveTab(isAdmin ? 'admin' : 'book')}
+            className="text-center flex-1 min-w-0 hover:opacity-80 transition active:scale-[0.98]"
+            aria-label={t('app_title', language)}
+          >
             <h1 className="text-white font-bold text-sm leading-tight truncate">{t('app_title', language)}</h1>
             <p className="text-blue-200 dark:text-[#7DD4FC] text-xs truncate hidden sm:block">{t('app_subtitle', language)}</p>
-          </div>
+          </button>
 
           {/* Right: controls */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -166,6 +189,7 @@ export default function MainAppContainer() {
               {activeTab === 'admin' && isAdmin && <AdminPanelScreen />}
               {activeTab === 'notifications' && <NotificationCenterScreen />}
               {activeTab === 'messages' && !isAdmin && messagesAvailable && <MessagesScreen />}
+              {activeTab === 'help' && <HowToUseScreen />}
             </Suspense>
           </div>
         </div>
