@@ -1,8 +1,28 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { t, getLocale } from '../lib/languages'
-import { AuthContext, generateTempPassword } from './AuthContext'
+import { AuthContext } from './AuthContext'
+import { generateTempPassword } from '../lib/passwordUtils'
 import { localDateStr } from '../lib/holidays'
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;')
+}
+
+function buildEmailHTML(bodyInnerHtml, language, footerText) {
+  return `<!DOCTYPE html><html><body style="font-family:sans-serif;font-size:14px;color:#1a1a1a;padding:32px;max-width:600px;margin:0 auto">
+    <div style="border-top:4px solid #1565C0;padding-top:20px;margin-bottom:24px">
+      <p style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:0.1em;margin:0">MEB ÖGEDEP</p>
+    </div>
+    ${bodyInnerHtml}
+    <div style="border-top:1px solid #e5e7eb;margin-top:32px;padding-top:16px">
+      <p style="font-size:11px;color:#9ca3af;margin:0">${footerText}</p>
+    </div>
+  </body></html>`
+}
+
+const USER_PROFILE_UPDATABLE = new Set(['name', 'surname', 'branch', 'work_location', 'phone', 'district', 'city_id', 'city_name', 'avatar_url'])
+const ADMIN_PROFILE_UPDATABLE = new Set(['name', 'email', 'phone', 'avatar_url', 'role', 'city_id'])
 
 export const DataContext = createContext(null)
 
@@ -25,6 +45,7 @@ export function DataProvider({ children }) {
   const [closedDays, setClosedDays] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
+  const [realtimeError, setRealtimeError] = useState(false)
   const [waitlist, setWaitlist] = useState([])
   const rtChannelsRef = useRef([])
 
@@ -102,7 +123,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setAppointments(prev => prev.map(a => a.id === n.id ? n : a))
         else if (eventType === 'DELETE') setAppointments(prev => prev.filter(a => a.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const notifChannel = supabase
       .channel('rt-notifications')
@@ -111,7 +132,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setNotifications(prev => prev.map(x => x.id === n.id ? n : x))
         else if (eventType === 'DELETE') setNotifications(prev => prev.filter(x => x.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const workshopChannel = supabase
       .channel('rt-workshops')
@@ -120,7 +141,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setWorkshops(prev => prev.map(w => w.id === n.id ? n : w))
         else if (eventType === 'DELETE') setWorkshops(prev => prev.filter(w => w.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const convChannel = supabase
       .channel('rt-conversations')
@@ -129,7 +150,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setConversations(prev => prev.map(c => c.id === n.id ? n : c))
         else if (eventType === 'DELETE') setConversations(prev => prev.filter(c => c.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const wsRegChannel = supabase
       .channel('rt-workshop-registrations')
@@ -138,7 +159,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setWorkshopRegistrations(prev => prev.map(r => r.id === n.id ? n : r))
         else if (eventType === 'DELETE') setWorkshopRegistrations(prev => prev.filter(r => r.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const certChannel = supabase
       .channel('rt-certificate-templates')
@@ -147,7 +168,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setCertificateTemplates(prev => prev.map(t => t.id === n.id ? n : t))
         else if (eventType === 'DELETE') setCertificateTemplates(prev => prev.filter(t => t.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const labsChannel = supabase
       .channel('rt-laboratories')
@@ -156,7 +177,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setLabs(prev => prev.map(l => l.id === n.id ? n : l))
         else if (eventType === 'DELETE') setLabs(prev => prev.filter(l => l.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const usersChannel = supabase
       .channel('rt-users')
@@ -165,7 +186,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setUsers(prev => prev.map(u => u.id === n.id ? n : u))
         else if (eventType === 'DELETE') setUsers(prev => prev.filter(u => u.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const adminsChannel = supabase
       .channel('rt-admins')
@@ -174,7 +195,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setAdmins(prev => prev.map(a => a.id === n.id ? { ...a, ...n } : a))
         else if (eventType === 'DELETE') setAdmins(prev => prev.filter(a => a.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const citiesChannel = supabase
       .channel('rt-cities')
@@ -183,7 +204,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setCities(prev => prev.map(c => c.id === n.id ? n : c))
         else if (eventType === 'DELETE') setCities(prev => prev.filter(c => c.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const timeSlotsChannel = supabase
       .channel('rt-city-time-slots')
@@ -192,7 +213,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setTimeSlots(prev => prev.map(s => s.id === n.id ? n : s))
         else if (eventType === 'DELETE') setTimeSlots(prev => prev.filter(s => s.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     const closedDaysChannel = supabase
       .channel('rt-closed-days')
@@ -201,7 +222,7 @@ export function DataProvider({ children }) {
         else if (eventType === 'UPDATE') setClosedDays(prev => prev.map(d => d.id === n.id ? n : d))
         else if (eventType === 'DELETE') setClosedDays(prev => prev.filter(d => d.id !== o.id))
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
 
     rtChannelsRef.current = [apptChannel, notifChannel, workshopChannel, wsRegChannel, convChannel, certChannel, labsChannel, usersChannel, adminsChannel, citiesChannel, timeSlotsChannel, closedDaysChannel]
     return () => {
@@ -239,7 +260,7 @@ export function DataProvider({ children }) {
           setWaitlist(prev => prev.filter(w => w.id !== o.id))
         }
       })
-      .subscribe()
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setRealtimeError(true); else if (status === 'SUBSCRIBED') setRealtimeError(false) })
     return () => supabase.removeChannel(waitlistChannel)
   }, [loggedInUser?.email])
 
@@ -264,25 +285,30 @@ export function DataProvider({ children }) {
           .in('status', ['APPROVED'])
           .gte('date', todayStr)
           .lte('date', in2daysStr)
-        if (upcoming && upcoming.length > 0) {
-          const toInsert = []
-          for (const appt of upcoming) {
-            const { data: existing } = await supabase.from('notifications')
-              .select('id').eq('type', 'REMINDER').ilike('message', `%${appt.id}%`).maybeSingle()
-            if (!existing) {
-              toInsert.push({
-                title: t('notif_reminder_title', language),
-                message: `[${appt.id}] ${t('notif_reminder_msg', language).replace('{lab}', appt.lab_name).replace('{date}', appt.date).replace('{slot}', appt.time_slot)}`,
-                type: 'REMINDER',
-                timestamp: Date.now(),
-                is_read: false,
-              })
-            }
-          }
-          if (toInsert.length > 0) {
-            const { data: inserted, error: insertErr } = await supabase.from('notifications').insert(toInsert).select()
-            if (!insertErr && inserted) setNotifications(prev => [...inserted, ...prev])
-          }
+        if (!upcoming || upcoming.length === 0) return
+        // Batch: one query for all existing reminder notifications, filter locally
+        const { data: existingReminders } = await supabase
+          .from('notifications')
+          .select('message')
+          .eq('type', 'REMINDER')
+        const existingIds = new Set()
+        ;(existingReminders || []).forEach(r => {
+          const m = (r.message || '').match(/^\[(\d+)\]/)
+          if (m) existingIds.add(m[1])
+        })
+        const toInsert = upcoming
+          .filter(appt => !existingIds.has(String(appt.id)))
+          .map(appt => ({
+            title: t('notif_reminder_title', language),
+            message: `[${appt.id}] ${t('notif_reminder_msg', language).replace('{lab}', appt.lab_name).replace('{date}', appt.date).replace('{slot}', appt.time_slot)}`,
+            type: 'REMINDER',
+            timestamp: Date.now(),
+            is_read: false,
+          }))
+        if (toInsert.length > 0) {
+          const { data: inserted, error: insertErr } = await supabase.from('notifications').insert(toInsert).select()
+          if (!insertErr && inserted) setNotifications(prev => [...inserted, ...prev])
+          else if (insertErr) console.error('[createReminderNotifications] insert failed:', insertErr)
         }
       }
       createReminderNotifications()
@@ -316,27 +342,28 @@ export function DataProvider({ children }) {
     sendEmail({ recipients: [{ email: toEmail, name: toName }], subject, html }).catch(err => console.error('[sendAutoEmail] failed:', err))
   }
 
-  // AUDIT LOGGER
+  // AUDIT LOGGER — server-side SECURITY DEFINER RPC; direct INSERT artık revoke edildi.
   const logAudit = (action, targetType, targetId, details) => {
     const actor = loggedInAdmin || loggedInUser
     if (!actor) return
     const run = async () => {
-      const { error } = await supabase.from('audit_logs').insert([{
-        actor_email: actor.email,
-        actor_name: loggedInAdmin ? actor.name : `${actor.name} ${actor.surname}`,
-        actor_role: loggedInAdmin ? (actor.role || 'CITY') : 'USER',
-        action,
-        target_type: targetType || null,
-        target_id: targetId || null,
-        details: details || null,
-      }])
+      const { error } = await supabase.rpc('write_audit', {
+        p_actor_email: actor.email,
+        p_actor_name: loggedInAdmin ? actor.name : `${actor.name} ${actor.surname}`,
+        p_actor_role: loggedInAdmin ? (actor.role || 'CITY') : 'USER',
+        p_action: action,
+        p_target_type: targetType || '',
+        p_target_id: targetId ? String(targetId) : '',
+        p_details: details || '',
+      })
       if (error) console.error('[logAudit] failed:', error)
     }
-    run()
+    run().catch(err => console.error('[logAudit] failed:', err))
   }
 
   // AUTH-ADJACENT DATA OPERATIONS
   const addUserByAdmin = async (formData) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const { data: existing } = await supabase
       .from('users').select('id').eq('email', formData.email.trim().toLowerCase()).maybeSingle()
     if (existing) return { success: false, error: 'err_email_exists' }
@@ -368,9 +395,9 @@ export function DataProvider({ children }) {
       sendAutoEmail(
         email, fullName,
         t('email_subj_account_created', language),
-        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+        `<p>${t('email_dear', language)} <strong>${escapeHtml(fullName)}</strong>,</p>
          <p>${t('email_p_account_created', language)}</p>
-         <p>📧 ${t('input_email', language)}: <strong>${email}</strong></p>
+         <p>📧 ${t('input_email', language)}: <strong>${escapeHtml(email)}</strong></p>
          <p>${t('email_p_credentials_shared', language)}</p>
          <p>${t('email_p_must_change_pw', language)}</p>
          <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
@@ -380,15 +407,20 @@ export function DataProvider({ children }) {
   }
 
   const updateUserProfile = async (userId, updates) => {
-    const { data: updated, error } = await supabase.from('users').update(updates).eq('id', userId).select('id')
+    // Only the user themselves can update — and only safe fields
+    if (!loggedInUser || String(loggedInUser.id) !== String(userId)) return { success: false, error: 'err_generic' }
+    const safeUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => USER_PROFILE_UPDATABLE.has(k)))
+    if (Object.keys(safeUpdates).length === 0) return { success: false, error: 'err_generic' }
+    const { data: updated, error } = await supabase.from('users').update(safeUpdates).eq('id', userId).select('id')
     if (error) return { success: false, error: error.message }
     if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
-    setLoggedInUser(prev => ({ ...prev, ...updates }))
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u))
+    setLoggedInUser(prev => ({ ...prev, ...safeUpdates }))
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...safeUpdates } : u))
     return { success: true }
   }
 
   const resetPassword = async (userId, _email, newPassword) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
     if (hashErr || !hashed) return { success: false, error: 'err_generic' }
     const { data: updated, error } = await supabase.from('users').update({ password_hash: hashed, must_change_password: true }).eq('id', userId).select('id')
@@ -402,7 +434,7 @@ export function DataProvider({ children }) {
       sendAutoEmail(
         user.email, fullName,
         t('email_subj_password_updated', language),
-        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+        `<p>${t('email_dear', language)} <strong>${escapeHtml(fullName)}</strong>,</p>
          <p>${t('email_p_pw_reset_user', language)}</p>
          <p style="font-size:20px;font-weight:700;letter-spacing:0.1em;color:#1565C0;padding:12px 20px;background:#f0f4ff;border-radius:8px;display:inline-block">${newPassword}</p>
          <p>${t('email_p_must_change_pw', language)}</p>
@@ -428,7 +460,7 @@ export function DataProvider({ children }) {
       sendAutoEmail(
         admin.email, fullName,
         t('email_subj_temp_password', language),
-        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+        `<p>${t('email_dear', language)} <strong>${escapeHtml(fullName)}</strong>,</p>
          <p>${t('email_p_pw_reset_request', language)}</p>
          <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
          <p>${t('email_p_pw_reset_prompt', language)}</p>
@@ -450,7 +482,7 @@ export function DataProvider({ children }) {
     sendAutoEmail(
       user.email, fullName,
       t('email_subj_temp_password', language),
-      `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+      `<p>${t('email_dear', language)} <strong>${escapeHtml(fullName)}</strong>,</p>
        <p>${t('email_p_pw_reset_request', language)}</p>
        <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1565C0;padding:14px 24px;background:#f0f4ff;border-radius:8px;display:inline-block">${tempPw}</p>
        <p>${t('email_p_pw_reset_prompt', language)}</p>
@@ -510,6 +542,7 @@ export function DataProvider({ children }) {
   }
 
   const markAppointmentCompleted = async (id) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const appt = appointments.find(a => a.id === id)
     const { data: updated, error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id).eq('status', 'APPROVED').select('id')
     if (error) return { success: false, error: error.message }
@@ -532,6 +565,7 @@ export function DataProvider({ children }) {
   }
 
   const approveAppointment = async (id, newDate = null, newTimeSlot = null) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const appt = appointments.find(a => a.id === id)
     const updates = { status: 'APPROVED' }
     if (newDate) updates.date = newDate
@@ -564,8 +598,8 @@ export function DataProvider({ children }) {
       sendAutoEmail(
         appt.user_email, userName,
         t('email_subj_appt_approved', language).replace('{lab}', appt.lab_name || ''),
-        `<p>${t('email_dear', language)} <strong>${userName}</strong>,</p>
-         <p>${t('email_p_appt_approved', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`)}</p>
+        `<p>${t('email_dear', language)} <strong>${escapeHtml(userName)}</strong>,</p>
+         <p>${t('email_p_appt_approved', language).replace('{lab}', `<strong>${escapeHtml(appt.lab_name || '')}</strong>`)}</p>
          ${fmtDate ? `<p>📅 ${t('email_p_appt_date', language)} <strong>${fmtDate}</strong></p>` : ''}
          ${finalSlot ? `<p>🕐 ${t('email_p_appt_time', language)} <strong>${finalSlot}</strong></p>` : ''}`
       )
@@ -574,6 +608,7 @@ export function DataProvider({ children }) {
   }
 
   const cancelAppointment = async (id) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const appt = appointments.find(a => a.id === id)
     const { data: updated, error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id).in('status', ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED']).select('id')
     if (error) return { success: false, error: error.message }
@@ -594,7 +629,7 @@ export function DataProvider({ children }) {
         const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
         if (nd) setNotifications(prev => [nd, ...prev])
       }
-      notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot)
+      notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot).catch(err => console.error('[cancelAppointment] notifyNextOnWaitlist failed:', err))
     }
     if (appt?.user_email) {
       const userName = `${appt.user_name || ''} ${appt.user_surname || ''}`.trim() || appt.user_email
@@ -602,10 +637,10 @@ export function DataProvider({ children }) {
       sendAutoEmail(
         appt.user_email, userName,
         t('email_subj_appt_cancelled', language).replace('{lab}', appt.lab_name || ''),
-        `<p>${t('email_dear', language)} <strong>${userName}</strong>,</p>
+        `<p>${t('email_dear', language)} <strong>${escapeHtml(userName)}</strong>,</p>
          <p>${(fmtDate
-           ? t('email_p_appt_cancelled', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`).replace('{date}', `<strong>${fmtDate}</strong>`)
-           : t('email_p_appt_cancelled_nodate', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`)
+           ? t('email_p_appt_cancelled', language).replace('{lab}', `<strong>${escapeHtml(appt.lab_name || '')}</strong>`).replace('{date}', `<strong>${fmtDate}</strong>`)
+           : t('email_p_appt_cancelled_nodate', language).replace('{lab}', `<strong>${escapeHtml(appt.lab_name || '')}</strong>`)
          )}</p>
          <p>${t('email_p_book_new_appt', language)}</p>`
       )
@@ -642,7 +677,7 @@ export function DataProvider({ children }) {
       }]).select().single()
       if (nd) setNotifications(prev => [nd, ...prev])
     }
-    notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot)
+    notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot).catch(err => console.error('[cancelOwnAppointment] notifyNextOnWaitlist failed:', err))
     return { success: true }
   }
 
@@ -679,6 +714,7 @@ export function DataProvider({ children }) {
   }
 
   const denyCancellationRequest = async (id) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const appt = appointments.find(a => a.id === id)
     const { data: updated, error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id).eq('status', 'CANCELLATION_REQUESTED').select('id')
     if (error) return { success: false, error: error.message }
@@ -705,10 +741,10 @@ export function DataProvider({ children }) {
       sendAutoEmail(
         appt.user_email, userName,
         t('email_subj_cancellation_denied', language),
-        `<p>${t('email_dear', language)} <strong>${userName}</strong>,</p>
+        `<p>${t('email_dear', language)} <strong>${escapeHtml(userName)}</strong>,</p>
          <p>${(fmtDate
-           ? t('email_p_cancellation_denied', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`).replace('{date}', `<strong>${fmtDate}</strong>`)
-           : t('email_p_cancellation_denied_nd', language).replace('{lab}', `<strong>${appt.lab_name || ''}</strong>`)
+           ? t('email_p_cancellation_denied', language).replace('{lab}', `<strong>${escapeHtml(appt.lab_name || '')}</strong>`).replace('{date}', `<strong>${fmtDate}</strong>`)
+           : t('email_p_cancellation_denied_nd', language).replace('{lab}', `<strong>${escapeHtml(appt.lab_name || '')}</strong>`)
          )}</p>
          <p>${t('email_p_appt_still_approved', language)}</p>`
       )
@@ -718,7 +754,12 @@ export function DataProvider({ children }) {
 
   // USER APPROVAL ACTIONS
   const approveUser = async (userId) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const user = users.find(u => u.id === userId)
+    if (!user) return { success: false, error: 'err_generic' }
+    if (loggedInAdmin.role !== 'GLOBAL' && String(user.city_id) !== String(loggedInAdmin.city_id)) {
+      return { success: false, error: 'err_generic' }
+    }
     const { data: updated, error } = await supabase.from('users').update({ is_approved: true }).eq('id', userId).select('id')
     if (error) return { success: false, error: error.message }
     if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
@@ -729,7 +770,7 @@ export function DataProvider({ children }) {
       sendAutoEmail(
         user.email, fullName,
         t('email_subj_membership_approved', language),
-        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
+        `<p>${t('email_dear', language)} <strong>${escapeHtml(fullName)}</strong>,</p>
          <p>${t('email_p_membership_approved', language)}</p>
          <p>${t('email_p_membership_can_book', language)}</p>
          <p style="margin-top:24px"><a href="${window.location.origin}" style="background:#1565C0;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${t('email_link_go_to_system', language)}</a></p>`
@@ -751,7 +792,12 @@ export function DataProvider({ children }) {
   }
 
   const revokeUser = async (userId) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const user = users.find(u => u.id === userId)
+    if (!user) return { success: false, error: 'err_generic' }
+    if (loggedInAdmin.role !== 'GLOBAL' && String(user.city_id) !== String(loggedInAdmin.city_id)) {
+      return { success: false, error: 'err_generic' }
+    }
     const activeStatuses = ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED']
     const activeAppts = appointments.filter(a => a.user_email === user?.email && activeStatuses.includes(a.status))
     if (activeAppts.length > 0) {
@@ -789,9 +835,12 @@ export function DataProvider({ children }) {
   }
 
   const clearNotifications = async (cityName = null) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    if (loggedInAdmin.role !== 'GLOBAL' && !cityName) return { success: false, error: 'err_generic' }
     let query = supabase.from('notifications').delete()
     if (cityName) {
-      query = query.or(`title.ilike.%${cityName}%,message.ilike.%${cityName}%`)
+      const safeName = cityName.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
+      query = query.or(`title.ilike.%${safeName}%,message.ilike.%${safeName}%`)
     } else {
       query = query.neq('id', 0)
     }
@@ -809,9 +858,17 @@ export function DataProvider({ children }) {
   }
 
   const createNotification = async ({ title, message, type }) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    // CITY admin can only post with their own city tag — strip any other [..] and re-add own
+    let finalTitle = String(title || '').trim()
+    if (loggedInAdmin.role !== 'GLOBAL') {
+      const cityName = cities.find(c => String(c.id) === String(loggedInAdmin.city_id))?.name
+      const raw = finalTitle.replace(/\[[^\]]*\]/g, '').trim()
+      finalTitle = cityName ? `[${cityName}] ${raw}` : raw
+    }
     const { data, error } = await supabase
       .from('notifications')
-      .insert([{ title, message, type, timestamp: Date.now(), is_read: false }])
+      .insert([{ title: finalTitle, message, type, timestamp: Date.now(), is_read: false }])
       .select()
       .single()
     if (error) return { success: false, error: error.message }
@@ -821,6 +878,7 @@ export function DataProvider({ children }) {
   }
 
   const deleteNotification = async (id) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const { data: deleted, error } = await supabase.from('notifications').delete().eq('id', id).select('id')
     if (error) return { success: false, error: error.message }
     if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
@@ -830,6 +888,8 @@ export function DataProvider({ children }) {
 
   // TIME SLOT ACTIONS
   const addTimeSlot = async (cityId, timeRange, location = null) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    if (loggedInAdmin.role !== 'GLOBAL' && String(cityId) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
     const row = { city_id: cityId, time_range: timeRange }
     if (location) row.location = location
     const { error } = await supabase.from('city_time_slots').insert([row])
@@ -842,7 +902,9 @@ export function DataProvider({ children }) {
   }
 
   const removeTimeSlot = async (id) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const slot = timeSlots.find(s => s.id === id)
+    if (loggedInAdmin.role !== 'GLOBAL' && slot && String(slot.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
     if (slot) {
       const hasActive = appointments.some(a =>
         String(a.city_id) === String(slot.city_id) &&
@@ -864,6 +926,8 @@ export function DataProvider({ children }) {
 
   // LAB ACTIONS
   const addLab = async (labData) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    if (loggedInAdmin.role !== 'GLOBAL' && String(labData.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
     const { error } = await supabase.from('laboratories').insert([labData])
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('laboratories').select('*')
@@ -873,6 +937,9 @@ export function DataProvider({ children }) {
   }
 
   const updateLab = async (id, updates) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    const existing = labs.find(l => l.id === id)
+    if (loggedInAdmin.role !== 'GLOBAL' && existing && String(existing.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
     const { data, error } = await supabase.from('laboratories').update(updates).eq('id', id).select('id')
     if (error) {
       const { error: e2 } = await supabase.from('laboratories').update(updates).eq('id', id)
@@ -887,13 +954,15 @@ export function DataProvider({ children }) {
   }
 
   const deleteLab = async (id) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    const lab = labs.find(l => l.id === id)
+    if (loggedInAdmin.role !== 'GLOBAL' && lab && String(lab.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
     const hasActive = appointments.some(a =>
       String(a.lab_id) === String(id) &&
       (a.status === 'PENDING' || a.status === 'APPROVED')
     )
     if (hasActive) return { success: false, error: 'err_lab_has_appointments' }
 
-    const lab = labs.find(l => l.id === id)
     const { error } = await supabase.from('laboratories').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('laboratories').select('*')
@@ -908,6 +977,7 @@ export function DataProvider({ children }) {
   }
 
   const forceDeleteLab = async (id) => {
+    if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
     const lab = labs.find(l => l.id === id)
     const { error } = await supabase.from('laboratories').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
@@ -919,6 +989,8 @@ export function DataProvider({ children }) {
   }
 
   const addWorkshop = async (data) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    if (loggedInAdmin.role !== 'GLOBAL' && String(data.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
     const { error } = await supabase.from('workshops').insert([{ ...data, created_at: Date.now() }])
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('workshops').select('*')
@@ -928,6 +1000,9 @@ export function DataProvider({ children }) {
   }
 
   const updateWorkshop = async (id, updates) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    const existing = workshops.find(w => w.id === id)
+    if (loggedInAdmin.role !== 'GLOBAL' && existing && String(existing.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
     const { data: rows, error } = await supabase.from('workshops').update(updates).eq('id', id).select('id')
     if (error) return { success: false, error: error.message }
     if (!rows || rows.length === 0) return { success: false, error: 'err_update_failed' }
@@ -940,7 +1015,9 @@ export function DataProvider({ children }) {
   }
 
   const deleteWorkshop = async (id) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const ws = workshops.find(w => w.id === id)
+    if (loggedInAdmin.role !== 'GLOBAL' && ws && String(ws.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
     const { error } = await supabase.from('workshops').delete().eq('id', id)
     if (error) return { success: false, error: error.message }
     const { data: all } = await supabase.from('workshops').select('*')
@@ -956,6 +1033,10 @@ export function DataProvider({ children }) {
 
   // CLOSED DAYS
   const addClosedDay = async (date, cityId, reason) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    if (loggedInAdmin.role !== 'GLOBAL') {
+      if (!cityId || String(cityId) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
+    }
     const { data, error } = await supabase.from('closed_days').insert([{
       date,
       city_id: cityId || null,
@@ -970,7 +1051,10 @@ export function DataProvider({ children }) {
   }
 
   const removeClosedDay = async (id) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const day = closedDays.find(d => d.id === id)
+    if (loggedInAdmin.role !== 'GLOBAL' && day && day.city_id && String(day.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
+    if (loggedInAdmin.role !== 'GLOBAL' && day && !day.city_id) return { success: false, error: 'err_generic' }
     const { data: deleted, error } = await supabase.from('closed_days').delete().eq('id', id).select('id')
     if (error) return { success: false, error: error.message }
     if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
@@ -1009,11 +1093,12 @@ export function DataProvider({ children }) {
   }
 
   const loadConversationMessages = async (conversationId) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true })
+    if (error) { console.error('[loadConversationMessages] failed:', error); return [] }
     return data || []
   }
 
@@ -1026,15 +1111,22 @@ export function DataProvider({ children }) {
     }]).select().single()
     if (error) return { success: false, error: error.message }
     if (!data) return { success: false, error: 'err_generic' }
-    const conv = conversations.find(c => c.id === conversationId)
-    const unreadField = authoredBy === 'sender' ? 'unread_for_recipient' : 'unread_for_sender'
-    const newUnread = (conv ? conv[unreadField] : 0) + 1
-    const { error: convErr } = await supabase.from('conversations').update({
-      last_message_at: new Date().toISOString(),
-      [unreadField]: newUnread,
-    }).eq('id', conversationId)
-    if (!convErr) {
-      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, last_message_at: new Date().toISOString(), [unreadField]: newUnread } : c))
+    // Atomic unread increment server-side (avoids lost updates under concurrent sends)
+    const recipientSide = authoredBy === 'sender' ? 'recipient' : 'sender'
+    const { data: updatedConv, error: convErr } = await supabase
+      .rpc('increment_conversation_unread', { p_conv_id: conversationId, p_side: recipientSide })
+    if (convErr) {
+      console.warn('[sendMessage] atomic update failed, falling back:', convErr)
+      const conv = conversations.find(c => c.id === conversationId)
+      const unreadField = recipientSide === 'recipient' ? 'unread_for_recipient' : 'unread_for_sender'
+      const fallbackUnread = (conv ? (conv[unreadField] || 0) : 0) + 1
+      await supabase.from('conversations').update({
+        last_message_at: new Date().toISOString(),
+        [unreadField]: fallbackUnread,
+      }).eq('id', conversationId)
+      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, last_message_at: new Date().toISOString(), [unreadField]: fallbackUnread } : c))
+    } else if (updatedConv) {
+      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, ...updatedConv } : c))
     }
     return { success: true, data }
   }
@@ -1042,8 +1134,9 @@ export function DataProvider({ children }) {
   const markConversationRead = async (conversationId, side) => {
     const field = side === 'sender' ? 'unread_for_sender' : 'unread_for_recipient'
     const { error } = await supabase.from('conversations').update({ [field]: 0 }).eq('id', conversationId)
-    if (error) return
+    if (error) { console.error('[markConversationRead] failed:', error); return { success: false } }
     setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, [field]: 0 } : c))
+    return { success: true }
   }
 
   // WORKSHOP ACTIONS
@@ -1051,27 +1144,53 @@ export function DataProvider({ children }) {
     if (!loggedInUser) return { success: false, error: 'err_generic' }
     const ws = workshops.find(w => w.id === workshopId)
     if (!ws) return { success: false, error: 'err_generic' }
-    if (workshopRegistrations.some(r => String(r.workshop_id) === String(workshopId) && String(r.user_id) === String(loggedInUser.id))) {
-      return { success: false, error: 'err_already_registered' }
+    // Server-side advisory lock + capacity check (race-safe). Falls back to direct insert if RPC missing.
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('register_for_workshop', {
+      p_workshop_id: workshopId,
+      p_user_id: loggedInUser.id,
+      p_user_email: loggedInUser.email,
+      p_user_name: loggedInUser.name,
+      p_user_surname: loggedInUser.surname,
+    })
+    let data
+    if (rpcErr) {
+      const msg = rpcErr.message || ''
+      if (msg.includes('err_already_registered')) return { success: false, error: 'err_already_registered' }
+      if (msg.includes('err_workshop_full')) return { success: false, error: 'err_workshop_full' }
+      if (msg.includes('err_workshop_not_found')) return { success: false, error: 'err_generic' }
+      // RPC yoksa fallback: legacy client-side path
+      if (rpcErr.code === '42883' || rpcErr.code === 'PGRST202') {
+        const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(workshopId)).length
+        if (ws.capacity && regCount >= ws.capacity) return { success: false, error: 'err_workshop_full' }
+        const { data: legacy, error: legacyErr } = await supabase.from('workshop_registrations').insert([{
+          workshop_id: workshopId, user_id: loggedInUser.id, user_email: loggedInUser.email,
+          user_name: loggedInUser.name, user_surname: loggedInUser.surname,
+          registered_at: new Date().toISOString(),
+        }]).select().single()
+        if (legacyErr) {
+          if (legacyErr.code === '42P01') { setWorkshopRegistrationsAvailable(false); return { success: false, error: 'err_generic' } }
+          if (legacyErr.code === '23505') return { success: false, error: 'err_already_registered' }
+          return { success: false, error: 'err_generic' }
+        }
+        data = legacy
+      } else {
+        console.error('registerForWorkshop error:', rpcErr)
+        return { success: false, error: 'err_generic' }
+      }
+    } else {
+      const row = Array.isArray(rpcData) ? rpcData[0] : rpcData
+      if (!row) return { success: false, error: 'err_generic' }
+      data = {
+        id: row.id,
+        workshop_id: workshopId,
+        user_id: loggedInUser.id,
+        user_email: loggedInUser.email,
+        user_name: loggedInUser.name,
+        user_surname: loggedInUser.surname,
+        registered_at: row.registered_at,
+      }
     }
-    const regCount = workshopRegistrations.filter(r => String(r.workshop_id) === String(workshopId)).length
-    if (ws.capacity && regCount >= ws.capacity) return { success: false, error: 'err_workshop_full' }
-    const { data, error } = await supabase.from('workshop_registrations').insert([{
-      workshop_id: workshopId,
-      user_id: loggedInUser.id,
-      user_email: loggedInUser.email,
-      user_name: loggedInUser.name,
-      user_surname: loggedInUser.surname,
-      registered_at: new Date().toISOString(),
-    }]).select().single()
-    if (error) {
-      if (error.code === '42P01') { setWorkshopRegistrationsAvailable(false); return { success: false, error: 'err_generic' } }
-      if (error.code === '23505') return { success: false, error: 'err_already_registered' }
-      console.error('registerForWorkshop error:', error)
-      return { success: false, error: 'err_generic' }
-    }
-    if (!data) return { success: false, error: 'err_generic' }
-    setWorkshopRegistrations(prev => [...prev, data])
+    setWorkshopRegistrations(prev => prev.find(r => r.id === data.id) ? prev : [...prev, data])
     logAudit('REGISTER_WORKSHOP', 'workshop', workshopId, `${loggedInUser.name} ${loggedInUser.surname} (${loggedInUser.email}) — ${ws.name}`)
     if (loggedInUser?.email && ws) {
       const fullName = `${loggedInUser.name || ''} ${loggedInUser.surname || ''}`.trim()
@@ -1079,10 +1198,10 @@ export function DataProvider({ children }) {
       sendAutoEmail(
         loggedInUser.email, fullName,
         t('email_subj_workshop_confirmed', language).replace('{name}', ws.name),
-        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
-         <p>${t('email_p_workshop_confirmed', language).replace('{workshop}', ws.name)}</p>
+        `<p>${t('email_dear', language)} <strong>${escapeHtml(fullName)}</strong>,</p>
+         <p>${t('email_p_workshop_confirmed', language).replace('{workshop}', escapeHtml(ws.name))}</p>
          ${wsDate ? `<p>📅 ${t('email_p_appt_date', language)} <strong>${wsDate}</strong></p>` : ''}
-         ${ws.location ? `<p>📍 ${t('email_p_appt_location', language)} <strong>${ws.location}</strong></p>` : ''}
+         ${ws.location ? `<p>📍 ${t('email_p_appt_location', language)} <strong>${escapeHtml(ws.location)}</strong></p>` : ''}
          <p>${t('email_p_workshop_visit', language)}</p>`
       )
     }
@@ -1106,8 +1225,8 @@ export function DataProvider({ children }) {
       sendAutoEmail(
         loggedInUser.email, fullName,
         t('email_subj_workshop_cancelled', language).replace('{name}', ws.name),
-        `<p>${t('email_dear', language)} <strong>${fullName}</strong>,</p>
-         <p>${t('email_p_workshop_cancelled', language).replace('{workshop}', ws.name)}</p>
+        `<p>${t('email_dear', language)} <strong>${escapeHtml(fullName)}</strong>,</p>
+         <p>${t('email_p_workshop_cancelled', language).replace('{workshop}', escapeHtml(ws.name))}</p>
          <p>${t('email_p_workshop_other', language)}</p>`
       )
     }
@@ -1115,6 +1234,7 @@ export function DataProvider({ children }) {
   }
 
   const removeWorkshopRegistration = async (regId) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const reg = workshopRegistrations.find(r => r.id === regId)
     const { data: deleted, error } = await supabase.from('workshop_registrations').delete().eq('id', regId).select('id')
     if (error) return { success: false, error: error.message }
@@ -1128,6 +1248,7 @@ export function DataProvider({ children }) {
   }
 
   const toggleWorkshopAttendance = async (regId, attended) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const { error } = await supabase.rpc('set_workshop_attendance', { p_reg_id: regId, p_attended: attended })
     if (error) return { success: false, error: error.message }
     setWorkshopRegistrations(prev => prev.map(r => r.id === regId ? { ...r, attended } : r))
@@ -1137,12 +1258,17 @@ export function DataProvider({ children }) {
   const rescheduleAppointment = async (appointmentId, newDate, newTimeSlot) => {
     const appt = appointments.find(a => a.id === appointmentId)
     if (!appt) return { success: false, error: 'err_generic' }
+    // Only the owner, or an admin in the matching city, can reschedule
+    const isOwner = loggedInUser && appt.user_email === loggedInUser.email
+    const isAuthorizedAdmin = loggedInAdmin && (loggedInAdmin.role === 'GLOBAL' || String(loggedInAdmin.city_id) === String(appt.city_id))
+    if (!isOwner && !isAuthorizedAdmin) return { success: false, error: 'err_generic' }
     const lab = labs.find(l => String(l.id) === String(appt.lab_id))
     const maxCap = lab?.capacity_per_slot || 1
-    const { count } = await supabase.from('appointments')
+    const { count, error: countErr } = await supabase.from('appointments')
       .select('id', { count: 'exact', head: true })
       .eq('lab_id', appt.lab_id).eq('date', newDate).eq('time_slot', newTimeSlot)
       .in('status', ['PENDING', 'APPROVED']).neq('id', appointmentId)
+    if (countErr) return { success: false, error: countErr.message }
     if (count >= maxCap) return { success: false, error: t('err_slot_full', language) }
     const updates = { date: newDate, time_slot: newTimeSlot }
     if (appt.status === 'APPROVED') updates.status = 'PENDING'
@@ -1151,12 +1277,12 @@ export function DataProvider({ children }) {
     if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
     setAppointments(prev => prev.map(a => a.id === appointmentId ? { ...a, ...updates } : a))
     logAudit('RESCHEDULE_APPOINTMENT', 'appointment', appointmentId, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${newDate} ${newTimeSlot}`)
-    notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot)
+    notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot).catch(err => console.error('[rescheduleAppointment] notifyNextOnWaitlist failed:', err))
     if (appt.status === 'APPROVED') {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       const prefix = cityName ? `[${cityName}] ` : ''
       const msg = `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${newDate} ${newTimeSlot}`
-      createNotification({ title: `${prefix}${t('notif_appt_rescheduled_title', language)}`, message: msg, type: 'SYSTEM' })
+      await createNotification({ title: `${prefix}${t('notif_appt_rescheduled_title', language)}`, message: msg, type: 'SYSTEM' })
     }
     return { success: true }
   }
@@ -1201,6 +1327,7 @@ export function DataProvider({ children }) {
 
   const deleteAdmin = async (adminId) => {
     if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
+    if (loggedInAdmin?.id === adminId) return { success: false, error: 'err_cannot_delete_self' }
     const target = admins.find(a => a.id === adminId)
     const { data: deleted, error } = await supabase.from('admins').delete().eq('id', adminId).select('id')
     if (error) return { success: false, error: error.message }
@@ -1211,18 +1338,27 @@ export function DataProvider({ children }) {
   }
 
   const updateAdmin = async (adminId, updates) => {
-    if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
-    const { data, error } = await supabase.from('admins').update(updates).eq('id', adminId).select('id')
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    const isSelf = String(loggedInAdmin.id) === String(adminId)
+    const isGlobal = loggedInAdmin.role === 'GLOBAL'
+    // Anyone (admin) can update own profile; GLOBAL can update anyone
+    if (!isSelf && !isGlobal) return { success: false, error: 'err_generic' }
+    // Non-GLOBAL cannot change role or city_id (only GLOBAL can)
+    const allowedFields = isGlobal ? ADMIN_PROFILE_UPDATABLE : new Set(['name', 'email', 'phone', 'avatar_url'])
+    const safeUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => allowedFields.has(k)))
+    if (Object.keys(safeUpdates).length === 0) return { success: false, error: 'err_generic' }
+    const { data, error } = await supabase.from('admins').update(safeUpdates).eq('id', adminId).select('id')
     if (error) return { success: false, error: error.message }
     if (!data || data.length === 0) return { success: false, error: 'err_update_failed' }
-    setAdmins(prev => prev.map(a => a.id === adminId ? { ...a, ...updates } : a))
-    if (loggedInAdmin?.id === adminId) setLoggedInAdmin(prev => ({ ...prev, ...updates }))
+    setAdmins(prev => prev.map(a => a.id === adminId ? { ...a, ...safeUpdates } : a))
+    if (isSelf) setLoggedInAdmin(prev => ({ ...prev, ...safeUpdates }))
     const target = admins.find(a => a.id === adminId)
     if (target) logAudit('EDIT_ADMIN', 'admin', adminId, `${target.name} (${target.email})`)
     return { success: true }
   }
 
   const resetAdminPasswordByGlobal = async (adminId, _email, newPassword) => {
+    if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
     const target = admins.find(a => a.id === adminId)
     const { data: hashed, error: hashErr } = await supabase.rpc('hash_password_bcrypt', { p_password: newPassword })
     if (hashErr || !hashed) { console.error('[resetAdminPw] hash error:', hashErr); return { success: false, error: 'err_generic' } }
@@ -1302,12 +1438,14 @@ export function DataProvider({ children }) {
       type: 'REMINDER', timestamp: Date.now(), is_read: false,
     }])
     if (nErr) {
-      await supabase.from('waitlist').update({ status: 'WAITING' }).eq('id', next.id)
+      const { error: revertErr } = await supabase.from('waitlist').update({ status: 'WAITING' }).eq('id', next.id)
+      if (revertErr) console.error('[notifyNextOnWaitlist] revert failed:', revertErr)
     }
   }
 
   // CERTIFICATE TEMPLATES
   const saveCertificateTemplate = async (data) => {
+    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     try {
       const { id, ...fields } = data
       let result, error
@@ -1364,10 +1502,10 @@ export function DataProvider({ children }) {
     })
   }, [notifications, loggedInAdmin, loggedInUser, cities])
 
-  const value = {
+  const value = useMemo(() => ({
     cities, labs, appointments, notifications: visibleNotifications, timeSlots, users, workshops,
     admins, workshopRegistrations, workshopRegistrationsAvailable, conversations, messagesAvailable,
-    closedDays, certificateTemplates, loading, loadError,
+    closedDays, certificateTemplates, loading, loadError, realtimeError,
     loadAllData,
     addUserByAdmin, updateUserProfile, resetPassword, requestPasswordReset,
     submitAppointment, approveAppointment, cancelAppointment, cancelOwnAppointment,
@@ -1385,7 +1523,12 @@ export function DataProvider({ children }) {
     waitlist, loadWaitlist, addToWaitlist, removeFromWaitlist, notifyNextOnWaitlist,
     saveCertificateTemplate,
     sendEmail,
-  }
+  }), [
+    cities, labs, appointments, visibleNotifications, timeSlots, users, workshops,
+    admins, workshopRegistrations, workshopRegistrationsAvailable, conversations, messagesAvailable,
+    closedDays, certificateTemplates, loading, loadError, realtimeError, waitlist, isDateClosed,
+    loggedInUser, loggedInAdmin, language,
+  ])
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }
