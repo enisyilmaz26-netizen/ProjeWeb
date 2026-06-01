@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { supabase, supabaseUrl } from '../lib/supabase'
 import { t } from '../lib/languages'
+import { writeNotification } from '../lib/notifications'
 
 export const AuthContext = createContext(null)
 
@@ -204,13 +205,11 @@ export function AuthProvider({ children }) {
       if (error) return { success: false, error: error.message }
     }
 
-    await supabase.from('notifications').insert([{
+    await writeNotification({
       title: `[${formData.city_name}] ${t('notif_new_member_title', language)}`,
       message: t('notif_new_member_msg', language).replace('{name}', `${formData.name} ${formData.surname}`).replace('{email}', formData.email),
       type: 'ADMIN_ONLY',
-      timestamp: Date.now(),
-      is_read: false,
-    }])
+    })
     return { success: true }
   }, [language])
 

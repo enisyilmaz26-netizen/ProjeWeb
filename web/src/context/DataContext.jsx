@@ -4,6 +4,7 @@ import { t, getLocale } from '../lib/languages'
 import { AuthContext } from './AuthContext'
 import { generateTempPassword } from '../lib/passwordUtils'
 import { localDateStr } from '../lib/holidays'
+import { writeNotification } from '../lib/notifications'
 
 function escapeHtml(str) {
   return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;')
@@ -337,9 +338,14 @@ export function DataProvider({ children }) {
             is_read: false,
           }))
         if (toInsert.length > 0) {
-          const { data: inserted, error: insertErr } = await supabase.from('notifications').insert(toInsert).select()
-          if (!insertErr && inserted) setNotifications(prev => [...inserted, ...prev])
-          else if (insertErr) console.error('[createReminderNotifications] insert failed:', insertErr)
+          // RPC-only INSERT: server-side trigger doğrudan INSERT'i bloklar.
+          // Her satır için sıralı writeNotification — N küçük (max 2-3 reminder).
+          const inserted = []
+          for (const item of toInsert) {
+            const r = await writeNotification({ title: item.title, message: item.message, type: item.type })
+            if (r) inserted.push(r)
+          }
+          if (inserted.length > 0) setNotifications(prev => [...inserted, ...prev])
         }
       }
       createReminderNotifications()
@@ -628,7 +634,7 @@ export function DataProvider({ children }) {
           message: `${appt.user_name || appt.user_email || ''} adlı öğretmenin ${appt.lab_name || ''} için ${appt.date} tarihli randevusu tamamlandı.`,
           type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
         }
-        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        const nd = await writeNotification({ title: notifData.title, message: notifData.message, type: notifData.type })
         if (nd) setNotifications(prev => [nd, ...prev])
       }
     }
@@ -659,7 +665,7 @@ export function DataProvider({ children }) {
             .replace('{date}', finalDate),
           type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
         }
-        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        const nd = await writeNotification({ title: notifData.title, message: notifData.message, type: notifData.type })
         if (nd) setNotifications(prev => [nd, ...prev])
       }
     }
@@ -697,7 +703,7 @@ export function DataProvider({ children }) {
             .replace('{date}', appt.date),
           type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
         }
-        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        const nd = await writeNotification({ title: notifData.title, message: notifData.message, type: notifData.type })
         if (nd) setNotifications(prev => [nd, ...prev])
       }
       notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot).catch(err => console.error('[cancelAppointment] notifyNextOnWaitlist failed:', err))
@@ -738,14 +744,14 @@ export function DataProvider({ children }) {
     const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
     const userName = `${loggedInUser.name} ${loggedInUser.surname}`
     if (cityName) {
-      const { data: nd } = await supabase.from('notifications').insert([{
+      const nd = await writeNotification({
         title: `[${cityName}] ${t('notif_appt_cancelled_title', language)}`,
         message: t('notif_appt_cancelled_user_msg', language)
           .replace('{teacher}', userName)
           .replace('{lab}', appt.lab_name || '')
           .replace('{date}', appt.date),
-        type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
-      }]).select().single()
+        type: 'APPOINTMENT',
+      })
       if (nd) setNotifications(prev => [nd, ...prev])
     }
     notifyNextOnWaitlist(appt.lab_id, appt.date, appt.time_slot).catch(err => console.error('[cancelOwnAppointment] notifyNextOnWaitlist failed:', err))
@@ -770,14 +776,14 @@ export function DataProvider({ children }) {
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       const userName = loggedInUser ? `${loggedInUser.name} ${loggedInUser.surname}` : (appt.user_name || appt.user_email || '')
       if (cityName) {
-        const { data: nd } = await supabase.from('notifications').insert([{
+        const nd = await writeNotification({
           title: `[${cityName}] ${t('notif_cancel_requested_title', language)}`,
           message: t('notif_cancel_requested_msg', language)
             .replace('{teacher}', userName)
             .replace('{lab}', appt.lab_name || '')
             .replace('{date}', appt.date),
-          type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
-        }]).select().single()
+          type: 'APPOINTMENT',
+        })
         if (nd) setNotifications(prev => [nd, ...prev])
       }
     }
@@ -795,14 +801,14 @@ export function DataProvider({ children }) {
       logAudit('DENY_CANCELLATION', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
       const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
       if (cityName) {
-        const { data: nd } = await supabase.from('notifications').insert([{
+        const nd = await writeNotification({
           title: `[${cityName}] ${t('notif_cancellation_denied_title', language)}`,
           message: t('notif_cancellation_denied_msg', language)
             .replace('{teacher}', `${appt.user_name || ''} ${appt.user_surname || ''}`.trim())
             .replace('{lab}', appt.lab_name || '')
             .replace('{date}', appt.date),
-          type: 'APPOINTMENT', timestamp: Date.now(), is_read: false,
-        }]).select().single()
+          type: 'APPOINTMENT',
+        })
         if (nd) setNotifications(prev => [nd, ...prev])
       }
     }
@@ -864,7 +870,7 @@ export function DataProvider({ children }) {
           message: t('notif_membership_approved_msg', language).replace('{name}', `${user.name || ''} ${user.surname || ''}`),
           type: 'SYSTEM', timestamp: Date.now(), is_read: false,
         }
-        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        const nd = await writeNotification({ title: notifData.title, message: notifData.message, type: notifData.type })
         if (nd) setNotifications(prev => [nd, ...prev])
       }
     }
@@ -912,7 +918,7 @@ export function DataProvider({ children }) {
           message: t('notif_revoke_user_msg', language).replace('{teacher}', teacher),
           type: 'SYSTEM', timestamp: Date.now(), is_read: false,
         }
-        const { data: nd } = await supabase.from('notifications').insert([notifData]).select().single()
+        const nd = await writeNotification({ title: notifData.title, message: notifData.message, type: notifData.type })
         if (nd) setNotifications(prev => [nd, ...prev])
       }
     }
@@ -953,15 +959,9 @@ export function DataProvider({ children }) {
 
   const createNotification = async ({ title, message, type }) => {
     // Manuel bildirim oluşturma artık sadece GLOBAL admin için.
-    // Auto-bildirimler (approve/cancel/vb.) doğrudan insert kullanmaya devam eder.
     if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
     const finalTitle = String(title || '').trim()
-    const { data, error } = await supabase
-      .from('notifications')
-      .insert([{ title: finalTitle, message, type, timestamp: Date.now(), is_read: false }])
-      .select()
-      .single()
-    if (error) return { success: false, error: error.message }
+    const data = await writeNotification({ title: finalTitle, message, type })
     if (!data) return { success: false, error: 'err_generic' }
     setNotifications(prev => [data, ...prev])
     return { success: true }
@@ -1421,11 +1421,11 @@ export function DataProvider({ children }) {
     )
     const cityObj = city_id ? cities.find(c => String(c.id) === String(city_id)) : null
     const prefix = cityObj ? `[${cityObj.name}] ` : ''
-    const { data: nd } = await supabase.from('notifications').insert([{
+    const nd = await writeNotification({
       title: `${prefix}${t('notif_admin_added_title', language)}`,
       message: t('notif_admin_added_msg', language).replace('{name}', name).replace('{email}', normalizedEmail),
-      type: 'SYSTEM', timestamp: Date.now(), is_read: false,
-    }]).select().single()
+      type: 'SYSTEM',
+    })
     if (nd) setNotifications(prev => [nd, ...prev])
     return { success: true, password }
   }
@@ -1510,11 +1510,11 @@ export function DataProvider({ children }) {
     if (target) {
       const cityObj = target.city_id ? cities.find(c => String(c.id) === String(target.city_id)) : null
       const prefix = cityObj ? `[${cityObj.name}] ` : ''
-      const { data: nd } = await supabase.from('notifications').insert([{
+      const nd = await writeNotification({
         title: `${prefix}${t('notif_admin_pw_reset_title', language)}`,
         message: t('notif_admin_pw_reset_msg', language).replace('{name}', target.name).replace('{email}', target.email),
-        type: 'SYSTEM', timestamp: Date.now(), is_read: false,
-      }]).select().single()
+        type: 'SYSTEM',
+      })
       if (nd) setNotifications(prev => [nd, ...prev])
     }
     return { success: true }
@@ -1556,15 +1556,16 @@ export function DataProvider({ children }) {
     const waitlistLab = labs.find(l => String(l.id) === String(labId))
     const waitlistCity = waitlistLab?.city_id ? cities.find(c => String(c.id) === String(waitlistLab.city_id)) : null
     const waitlistPrefix = waitlistCity ? `[${waitlistCity.name}] ` : ''
-    const { error: nErr } = await supabase.from('notifications').insert([{
+    const nd = await writeNotification({
       title: `${waitlistPrefix}${t('notif_waitlist_available_title', language)}`,
       message: t('notif_waitlist_available_msg', language)
         .replace('{lab}', next.lab_name)
         .replace('{date}', next.date)
         .replace('{slot}', next.time_slot),
-      type: 'REMINDER', timestamp: Date.now(), is_read: false,
-    }])
-    if (nErr) {
+      type: 'REMINDER',
+    })
+    if (!nd) {
+      // notification write failed — revert waitlist state so user retries later
       const { error: revertErr } = await supabase.from('waitlist').update({ status: 'WAITING' }).eq('id', next.id)
       if (revertErr) console.error('[notifyNextOnWaitlist] revert failed:', revertErr)
     }
