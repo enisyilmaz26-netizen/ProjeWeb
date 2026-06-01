@@ -150,7 +150,7 @@ export default function AdminPanelScreen() {
     { key: 'notifications', label: t('tab_send_notif', language) },
     { key: 'stats', label: t('tab_stats', language) },
     ...(messagesAvailable ? [{ key: 'messages', label: t('tab_messages', language), unread: adminCityConvUnread }] : []),
-    { key: 'certificates', label: t('tab_certificate', language) },
+    ...(isGlobal ? [{ key: 'certificates', label: t('tab_certificate', language) }] : []),
     ...(isGlobal ? [{ key: 'admins', label: t('tab_admins', language) }] : []),
     ...(isGlobal ? [{ key: 'audit', label: t('tab_audit', language) }] : []),
     ...(isGlobal ? [{ key: 'email', label: t('tab_email', language) }] : []),
@@ -323,7 +323,7 @@ export default function AdminPanelScreen() {
         {activeTab === 'stats' && <StatsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
         {activeTab === 'closed_days' && <ClosedDaysTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
         {activeTab === 'messages' && messagesAvailable && <AdminMessagesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
-        {activeTab === 'certificates' && <CertificatesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
+        {activeTab === 'certificates' && isGlobal && <CertificatesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
         {activeTab === 'admins' && isGlobal && <AdminManagementTab language={language} loggedInAdmin={loggedInAdmin} onRequestConfirm={onRequestConfirm} />}
         {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
         {activeTab === 'email' && isGlobal && <EmailTab language={language} />}
