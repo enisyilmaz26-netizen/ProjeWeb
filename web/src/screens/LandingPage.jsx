@@ -124,7 +124,7 @@ export default function LandingPage({ onLoginClick }) {
               onClick={onLoginClick}
               className="ml-1 px-4 py-2 rounded-xl text-sm font-semibold bg-[#1565C0] hover:bg-[#0D47A1] text-white transition shadow-sm active:scale-[0.98]"
             >
-              {lang === 'TR' ? 'Giriş Yap' : 'Sign In'}
+              {'Giriş Yap'}
             </button>
             {/* Mobile hamburger */}
             <button className="md:hidden ml-1 text-gray-700 dark:text-gray-200" onClick={() => setMenuOpen(p => !p)} aria-label={menuOpen ? t('menu_close', lang) : t('menu_open', lang)}>
@@ -156,16 +156,13 @@ export default function LandingPage({ onLoginClick }) {
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-20 text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight mb-6">
-            {lang === 'TR'
-              ? <>Öğretmenler<br /><span className="text-[#1565C0] dark:text-[#7DD4FC]">Dijital Dönüşümün</span><br />Öncüsüdür</>
-              : <>Teachers Are the<br /><span className="text-[#1565C0] dark:text-[#7DD4FC]">Pioneers of</span><br />Digital Transformation</>
-            }
+            Öğretmenler<br />
+            <span className="text-[#1565C0] dark:text-[#7DD4FC]">Dijital Dönüşümün</span><br />
+            Öncüsüdür
           </h1>
 
           <p className="max-w-2xl mx-auto text-gray-500 dark:text-gray-400 text-base sm:text-lg leading-relaxed mb-10">
-            {lang === 'TR'
-              ? 'Türkiye genelinde 7 ilde kurulan Öğretmen Öğrenme Laboratuvarları\'nda podcast, video ve dijital içerik alanlarına randevu alın.'
-              : 'Book appointments at Teacher Learning Labs across 7 provinces in Turkey, featuring podcast, video and digital content areas.'
+            {'Türkiye genelinde 7 ilde kurulan Öğretmen Öğrenme Laboratuvarları\'nda podcast, video ve dijital içerik alanlarına randevu alın.'
             }
           </p>
 
@@ -174,13 +171,13 @@ export default function LandingPage({ onLoginClick }) {
               onClick={onLoginClick}
               className="px-8 py-3.5 bg-[#1565C0] hover:bg-[#0D47A1] text-white font-bold rounded-2xl text-sm transition shadow-xl hover:shadow-blue-200 active:scale-95"
             >
-              {lang === 'TR' ? 'Hemen Randevu Al' : 'Book Now'}
+              {'Hemen Randevu Al'}
             </button>
             <button
               onClick={() => scrollTo('proje')}
               className="px-8 py-3.5 border-2 border-[#1565C0]/40 text-[#1565C0] dark:text-[#7DD4FC] dark:border-[#7DD4FC]/40 font-semibold rounded-2xl text-sm hover:bg-[#1565C0]/10 transition active:scale-95"
             >
-              {lang === 'TR' ? 'Proje Hakkında' : 'About Project'}
+              {'Proje Hakkında'}
             </button>
           </div>
         </div>
@@ -207,23 +204,19 @@ export default function LandingPage({ onLoginClick }) {
         <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
-              {lang === 'TR' ? 'Proje Hakkında' : 'About the Project'}
+              {'Proje Hakkında'}
             </span>
             <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] text-gray-900 dark:text-white">
-              {lang === 'TR' ? 'Neden Öğretmen Öğrenme Laboratuvarları?' : 'Why Teacher Learning Labs?'}
+              {'Neden Öğretmen Öğrenme Laboratuvarları?'}
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-gray-500 dark:text-gray-400 leading-relaxed">
-              {lang === 'TR'
-                ? 'MEB ÖGEDEP kapsamında hayata geçirilen bu proje, öğretmenlerin dijital yetkinliklerini geliştirmek ve özgün eğitim içeriği üretmelerini desteklemek amacıyla kurulmuştur.'
-                : 'This project, implemented within the scope of MEB ÖGEDEP, was established to develop teachers\' digital competencies and support them in producing authentic educational content.'}
+              {'MEB ÖGEDEP kapsamında hayata geçirilen bu proje, öğretmenlerin dijital yetkinliklerini geliştirmek ve özgün eğitim içeriği üretmelerini desteklemek amacıyla kurulmuştur.'}
             </p>
           </div>
 
           {/* ÖÖL Açıklama Paragrafı */}
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-7 max-w-3xl mx-auto text-center">
-            {lang === 'TR'
-              ? 'MEB ÖGEDEP bünyesinde kurulan laboratuvarlar, öğretmenlerin dijital eğitim ekosistemiyle ilgili kapasitelerini geliştirmek amacıyla tasarlanmıştır. 7 ilde 8 laboratuvarda öğretmenler; yeni dijital öğretim fikirlerini keşfedebilir, bu fikirleri sınıf ortamına hızla uygulayabilir ve mesleki iş birliği kültürünü güçlendirebilir.'
-              : 'Established within MEB ÖGEDEP, the labs are designed to develop teachers\' capacity in the digital education ecosystem. Across 8 labs in 7 provinces, teachers can discover new digital teaching ideas, quickly apply them to classroom settings, and strengthen professional collaboration culture.'}
+            {'MEB ÖGEDEP bünyesinde kurulan laboratuvarlar, öğretmenlerin dijital eğitim ekosistemiyle ilgili kapasitelerini geliştirmek amacıyla tasarlanmıştır. 7 ilde 8 laboratuvarda öğretmenler; yeni dijital öğretim fikirlerini keşfedebilir, bu fikirleri sınıf ortamına hızla uygulayabilir ve mesleki iş birliği kültürünü güçlendirebilir.'}
           </p>
 
           {/* Genel Bilgi Kartları */}
@@ -286,7 +279,7 @@ export default function LandingPage({ onLoginClick }) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-7 py-3 bg-[#1565C0] hover:bg-[#0D47A1] dark:bg-[#7DD4FC] dark:hover:bg-[#4DC8FA] text-white dark:text-[#060E26] font-semibold rounded-2xl text-sm transition shadow-lg hover:shadow-blue-200/40 active:scale-[0.98]"
             >
-              {lang === 'TR' ? 'Daha Fazla Detay' : 'Learn More'}
+              {'Daha Fazla Detay'}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0" aria-hidden="true">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                 <polyline points="15 3 21 3 21 9"/>
@@ -319,15 +312,13 @@ export default function LandingPage({ onLoginClick }) {
         <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
-              {lang === 'TR' ? 'Kapsam' : 'Coverage'}
+              {'Kapsam'}
             </span>
             <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] text-gray-900 dark:text-white">
-              {lang === 'TR' ? 'Türkiye Genelinde 7 İl' : '7 Provinces Across Turkey'}
+              {'Türkiye Genelinde 7 İl'}
             </h2>
             <p className="mt-3 text-gray-500 dark:text-gray-400 text-sm max-w-xl mx-auto">
-              {lang === 'TR'
-                ? 'Her ilde birden fazla alanla öğretmenler dijital içerik üretim olanaklarına kolayca erişebilir.'
-                : 'With multiple areas in each province, teachers can easily access digital content production facilities.'}
+              {'Her ilde birden fazla alanla öğretmenler dijital içerik üretim olanaklarına kolayca erişebilir.'}
             </p>
           </div>
 
@@ -339,9 +330,9 @@ export default function LandingPage({ onLoginClick }) {
                 </div>
                 <p className="font-bold text-gray-900 dark:text-white text-sm">{city.name}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
-                  {cityStudioCount(city.id)} {lang === 'TR' ? 'stüdyo' : 'studio'}
-                  {cityLabCount(city.id) > 0 && ` · ${cityLabCount(city.id)} ${lang === 'TR' ? 'alan' : 'area'}`}
-                  {cityWorkshopCount(city.id) > 0 && ` · ${cityWorkshopCount(city.id)} ${lang === 'TR' ? 'atölye' : 'workshop'}`}
+                  {cityStudioCount(city.id)} {'stüdyo'}
+                  {cityLabCount(city.id) > 0 && ` · ${cityLabCount(city.id)} ${'alan'}`}
+                  {cityWorkshopCount(city.id) > 0 && ` · ${cityWorkshopCount(city.id)} ${'atölye'}`}
                 </p>
                 <div className="mt-3 flex gap-1 flex-wrap">
                   {labs.filter(l => String(l.city_id) === String(city.id)).slice(0, 2).map(lab => (
@@ -373,28 +364,26 @@ export default function LandingPage({ onLoginClick }) {
         <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
-              {lang === 'TR' ? 'Eğitim Programı' : 'Training Program'}
+              {'Eğitim Programı'}
             </span>
             <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] text-gray-900 dark:text-white">
-              {lang === 'TR' ? 'Öğretim Tasarımı Atölyeleri' : 'Instructional Design Workshops'}
+              {'Öğretim Tasarımı Atölyeleri'}
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-              {lang === 'TR'
-                ? 'Her ilde düzenlenen atölye çalışmalarıyla öğretmenler eğitim materyali geliştirme ve senaryo yazma konularında uzman desteği alır.'
-                : 'Through workshops held in each province, teachers receive expert support on developing educational materials and writing scenarios.'}
+              {'Her ilde düzenlenen atölye çalışmalarıyla öğretmenler eğitim materyali geliştirme ve senaryo yazma konularında uzman desteği alır.'}
             </p>
           </div>
 
           {workshops.length === 0 ? (
             <div className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">
-              {lang === 'TR' ? 'Yakında atölye duyuruları yayınlanacak.' : 'Workshop announcements coming soon.'}
+              {'Yakında atölye duyuruları yayınlanacak.'}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {[...workshops].sort((a, b) => {
                 const ca = cities.find(c => String(c.id) === String(a.city_id))?.name || ''
                 const cb = cities.find(c => String(c.id) === String(b.city_id))?.name || ''
-                return ca.localeCompare(cb, lang === 'TR' ? 'tr' : 'en')
+                return ca.localeCompare(cb, 'tr')
               }).map(ws => {
                 const city = cities.find(c => String(c.id) === String(ws.city_id))
                 return (
@@ -440,10 +429,10 @@ export default function LandingPage({ onLoginClick }) {
         <div className="relative max-w-4xl mx-auto">
           <div className="text-center mb-14">
             <span className="text-xs font-bold tracking-widest text-[#1565C0] dark:text-[#7DD4FC] uppercase">
-              {lang === 'TR' ? 'Nasıl Çalışır?' : 'How It Works'}
+              {'Nasıl Çalışır?'}
             </span>
             <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] text-gray-900 dark:text-white">
-              {lang === 'TR' ? '4 Adımda Stüdyona Ulaş' : 'Reach the Studio in 4 Steps'}
+              {'4 Adımda Stüdyona Ulaş'}
             </h2>
           </div>
 
@@ -455,7 +444,7 @@ export default function LandingPage({ onLoginClick }) {
               {steps.map((s, i) => (
                 <div key={i} className="text-center relative">
                   <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#1565C0] to-[#00AEEF] rounded-2xl flex flex-col items-center justify-center mb-4 shadow-lg shadow-blue-200 dark:shadow-blue-900/30">
-                    <span className="text-white/50 text-[9px] font-bold leading-none">{lang === 'TR' ? 'ADIM' : 'STEP'}</span>
+                    <span className="text-white/50 text-[9px] font-bold leading-none">{'ADIM'}</span>
                     <span className="text-white font-extrabold text-lg leading-tight">{i + 1}</span>
                   </div>
                   <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2">{s.title}</h3>
@@ -470,10 +459,10 @@ export default function LandingPage({ onLoginClick }) {
               onClick={onLoginClick}
               className="px-10 py-4 bg-[#1565C0] hover:bg-[#0D47A1] dark:bg-[#7DD4FC] dark:hover:bg-[#4DC8FA] text-white dark:text-[#060E26] font-bold rounded-2xl text-sm transition shadow-xl hover:shadow-blue-200 dark:hover:shadow-blue-900 active:scale-95"
             >
-              {lang === 'TR' ? 'Hemen Başla' : 'Get Started'}
+              {'Hemen Başla'}
             </button>
             <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
-              {lang === 'TR' ? 'Ücretsiz kayıt · yalnızca MEB bünyesindeki öğretmenler için' : 'Free registration · exclusively for MEB teachers'}
+              {'Ücretsiz kayıt · yalnızca MEB bünyesindeki öğretmenler için'}
             </p>
           </div>
         </div>
@@ -505,9 +494,7 @@ export default function LandingPage({ onLoginClick }) {
         <div className="px-4 sm:px-6 py-6">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <p className="text-xs text-white/60 max-w-lg leading-relaxed">
-              {lang === 'TR'
-                ? 'Bu proje AB ve Türkiye Cumhuriyeti tarafından ortaklaşa finanse edilmektedir. Burada ifade edilen görüşler Avrupa Birliği\'nin, T.C. Milli Eğitim Bakanlığı\'nın veya UNICEF\'in resmi tutumunu yansıtmaz.'
-                : 'This project is co-funded by the EU and the Republic of Turkey. The views expressed here do not necessarily reflect the official positions of the European Union, the Turkish Ministry of National Education, or UNICEF.'}
+              {'Bu proje AB ve Türkiye Cumhuriyeti tarafından ortaklaşa finanse edilmektedir. Burada ifade edilen görüşler Avrupa Birliği\'nin, T.C. Milli Eğitim Bakanlığı\'nın veya UNICEF\'in resmi tutumunu yansıtmaz.'}
             </p>
             <p className="text-xs text-white/40 whitespace-nowrap">© {new Date().getFullYear()} MEB ÖGEDEP</p>
           </div>

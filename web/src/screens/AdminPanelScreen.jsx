@@ -286,8 +286,23 @@ export default function AdminPanelScreen() {
         <StatCard label={t('stat_cancelled_status', language)} value={stats.cancelled + stats.cancelRequested} color="text-red-600 dark:text-red-400" />
       </div>
 
-      {/* Tab Bar */}
-      <div role="tablist" className="flex flex-wrap bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-4 gap-1">
+      {/* Tab Bar — mobil: dropdown, sm+: yatay sekme listesi */}
+      <div className="mb-4 sm:hidden">
+        <label htmlFor="admin-tab-select" className="sr-only">{t('tab_admin', language)}</label>
+        <select
+          id="admin-tab-select"
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value)}
+          className="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0E1A30] text-gray-900 dark:text-gray-100 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#1565C0] dark:focus:ring-[#7DD4FC]"
+        >
+          {tabs.map(tab => (
+            <option key={tab.key} value={tab.key}>
+              {tab.label}{tab.unread > 0 ? ` (${tab.unread > 9 ? '9+' : tab.unread})` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div role="tablist" className="hidden sm:flex flex-wrap bg-gray-100 dark:bg-[#0E1A30] rounded-xl p-1 mb-4 gap-1">
         {tabs.map(tab => (
           <button
             key={tab.key}
