@@ -33,7 +33,11 @@ export default function MessagesScreen() {
     if (!selectedConvId || !t) return
     if (lastKnownAt.current && t > lastKnownAt.current) {
       lastKnownAt.current = t
-      loadConversationMessages(selectedConvId).then(msgs => setMessages(msgs))
+      let mounted = true
+      loadConversationMessages(selectedConvId)
+        .then(msgs => { if (mounted) setMessages(msgs) })
+        .catch(err => { console.error('[messages] reload failed:', err) })
+      return () => { mounted = false }
     }
   }, [selectedConv?.last_message_at])
 
@@ -61,7 +65,7 @@ export default function MessagesScreen() {
     try {
       const msgs = await loadConversationMessages(conv.id)
       setMessages(msgs)
-      if (conv.unread_for_sender > 0) markConversationRead(conv.id, 'sender')
+      if (conv.unread_for_sender > 0) markConversationRead(conv.id, 'sender').catch(err => console.error('[messages] markRead failed:', err))
     } catch (err) {
       console.error('[messages] load failed:', err)
       setConvError(t('err_msgs_load', language))
@@ -184,8 +188,9 @@ export default function MessagesScreen() {
             className="flex-1 bg-transparent resize-none text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none min-h-[36px] max-h-[120px]"
             placeholder={t('msg_placeholder', language)}
             value={msgInput}
-            onChange={e => setMsgInput(e.target.value)}
+            onChange={e => setMsgInput(e.target.value.slice(0, 4000))}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+            maxLength={4000}
             rows={1}
           />
           <button
@@ -197,6 +202,11 @@ export default function MessagesScreen() {
             <Send className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
+        {msgInput.length > 3500 && (
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 text-right mt-1 pr-1">
+            {msgInput.length}/4000
+          </p>
+        )}
       </div>
     </div>
   )

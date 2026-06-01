@@ -1,4 +1,5 @@
-import { lazy, Suspense, useState, useMemo, useEffect, useRef } from 'react'
+import React, { lazy, Suspense, useState, useMemo, useEffect, useRef } from 'react'
+import ErrorBoundary from '../components/ErrorBoundary'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 import { Settings, Lock, X, RefreshCw, Pencil } from 'lucide-react'
@@ -328,8 +329,9 @@ export default function AdminPanelScreen() {
         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content — her admin tab kendi ErrorBoundary'sinde */}
       <div id={`admin-tabpanel-${activeTab}`} role="tabpanel">
+      <ErrorBoundary key={activeTab}>
       <Suspense fallback={<TabLoader />}>
         {activeTab === 'appointments' && <AppointmentsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} onGoToMessages={messagesAvailable ? () => setActiveTab('messages') : null} />}
         {activeTab === 'workshops' && <WorkshopsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
@@ -345,6 +347,7 @@ export default function AdminPanelScreen() {
         {activeTab === 'audit' && isGlobal && <AuditTab language={language} />}
         {activeTab === 'email' && isGlobal && <EmailTab language={language} />}
       </Suspense>
+      </ErrorBoundary>
       </div>
 
       <ConfirmModal confirmModal={confirmModal} onClose={() => setConfirmModal(null)} language={language} />

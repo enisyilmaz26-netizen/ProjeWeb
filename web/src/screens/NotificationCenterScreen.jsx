@@ -112,9 +112,9 @@ export default function NotificationCenterScreen() {
             <button
               onClick={restoreDismissed}
               className="text-xs text-[#1565C0] dark:text-[#7DD4FC] border border-[#1565C0]/30 dark:border-[#7DD4FC]/30 rounded-lg px-3 py-1.5 hover:bg-[#1565C0]/5 active:scale-[0.98] transition font-medium"
-              title={`${dismissedIds.size} gizlenmiş bildirim`}
+              title={t('restore_notifications_hint', language).replace('{n}', dismissedIds.size)}
             >
-              Geri Al ({dismissedIds.size})
+              {t('restore_notifications', language)} ({dismissedIds.size})
             </button>
           )}
           {visibleNotifications.length > 0 && (

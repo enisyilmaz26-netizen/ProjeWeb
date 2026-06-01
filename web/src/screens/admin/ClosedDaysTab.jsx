@@ -37,7 +37,9 @@ export default function ClosedDaysTab({ language, isGlobal, adminCityId }) {
   useEffect(() => () => clearTimeout(successTimerRef.current), [])
 
   const visibleDays = useMemo(() => {
-    let list = isGlobal ? closedDays : closedDays.filter(d => !d.city_id || String(d.city_id) === String(adminCityId))
+    // CITY admin GLOBAL kapalı günleri (city_id NULL) görmesin — yetkisi yok ve UI confusion yaratır.
+    // GLOBAL admin'in filter'ı seçili şehir + GLOBAL kapalı günleri birlikte gösterir.
+    let list = isGlobal ? closedDays : closedDays.filter(d => String(d.city_id) === String(adminCityId))
     if (isGlobal && filterCity) list = list.filter(d => !d.city_id || String(d.city_id) === String(filterCity))
     return list
   }, [closedDays, isGlobal, adminCityId, filterCity])

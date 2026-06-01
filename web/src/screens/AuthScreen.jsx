@@ -92,7 +92,9 @@ export default function AuthScreen({ onBack }) {
       return
     }
     const phoneDigits = regForm.phone.replace(/\D/g, '')
-    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+    // Türk telefon numarası: 05XXXXXXXXX (11 hane) veya 5XXXXXXXXX (10 hane)
+    // MyProfileScreen ile aynı strict regex — kayıt'ta girilen telefon edit'te de geçerli olmalı.
+    if (!/^(0?5\d{9})$/.test(phoneDigits)) {
       setRegError(t('err_phone_invalid', language))
       return
     }

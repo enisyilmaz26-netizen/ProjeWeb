@@ -716,6 +716,11 @@ export default function MyProfileScreen() {
                 language={language}
               />
 
+              {rescheduleDate && citySlots.length === 0 && (
+                <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-4 py-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl">
+                  Bu tarih için tanımlı saat dilimi bulunmuyor. Lütfen başka bir tarih seçin.
+                </p>
+              )}
               {rescheduleDate && citySlots.length > 0 && (
                 <>
                   <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2">{t('reschedule_step2', language)}</p>

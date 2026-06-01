@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 import { Calendar, GraduationCap, User, Bell, Settings, Sun, Moon, MessageSquare, HelpCircle } from 'lucide-react'
 import IdleWarningModal from '../components/IdleWarningModal'
+import ErrorBoundary from '../components/ErrorBoundary'
 
 const UserReservationScreen = lazy(() => import('./UserReservationScreen'))
 const AdminPanelScreen = lazy(() => import('./AdminPanelScreen'))
@@ -204,19 +205,22 @@ export default function MainAppContainer() {
         </div>
       )}
 
-      {/* Screen Content */}
+      {/* Screen Content — her tab kendi ErrorBoundary'sinde, bir tab hata verse
+          tüm app çökmesin (key={activeTab} sayesinde tab değişiminde boundary reset). */}
       <main className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto w-full">
           <div id={`tabpanel-${activeTab}`} role="tabpanel">
-            <Suspense fallback={<TabLoader />}>
-              {activeTab === 'book' && !isAdmin && <UserReservationScreen />}
-              {activeTab === 'workshops' && !isAdmin && <WorkshopsScreen />}
-              {activeTab === 'profile' && !isAdmin && <MyProfileScreen />}
-              {activeTab === 'admin' && isAdmin && <AdminPanelScreen />}
-              {activeTab === 'notifications' && <NotificationCenterScreen />}
-              {activeTab === 'messages' && !isAdmin && messagesAvailable && <MessagesScreen />}
-              {activeTab === 'help' && <HowToUseScreen />}
-            </Suspense>
+            <ErrorBoundary key={activeTab}>
+              <Suspense fallback={<TabLoader />}>
+                {activeTab === 'book' && !isAdmin && <UserReservationScreen />}
+                {activeTab === 'workshops' && !isAdmin && <WorkshopsScreen />}
+                {activeTab === 'profile' && !isAdmin && <MyProfileScreen />}
+                {activeTab === 'admin' && isAdmin && <AdminPanelScreen />}
+                {activeTab === 'notifications' && <NotificationCenterScreen />}
+                {activeTab === 'messages' && !isAdmin && messagesAvailable && <MessagesScreen />}
+                {activeTab === 'help' && <HowToUseScreen />}
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </div>
       </main>

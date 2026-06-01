@@ -934,17 +934,15 @@ export function DataProvider({ children }) {
     setUsers(prev => prev.filter(u => u.id !== userId))
     if (user) logAudit('REVOKE_USER', 'user', userId, `${user.name} ${user.surname} (${user.email})`)
     if (user) {
-      const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name
-      if (cityName) {
-        const teacher = `${user.name || ''} ${user.surname || ''}`.trim()
-        const notifData = {
-          title: t('notif_revoke_user_title', language).replace('{city}', cityName),
-          message: t('notif_revoke_user_msg', language).replace('{teacher}', teacher),
-          type: 'SYSTEM', timestamp: Date.now(), is_read: false,
-        }
-        const nd = await writeNotification({ title: notifData.title, message: notifData.message, type: notifData.type })
-        if (nd) setNotifications(prev => [nd, ...prev])
-      }
+      const cityName = user.city_name || cities.find(c => String(c.id) === String(user.city_id))?.name || t('filter_all_provinces', language)
+      const teacher = `${user.name || ''} ${user.surname || ''}`.trim()
+      // city prefix mandatory — CITY admin visibleNotifications filter only matches [CityName] prefix
+      const nd = await writeNotification({
+        title: `[${cityName}] ${t('notif_revoke_user_title', language).replace('{city}', cityName)}`,
+        message: t('notif_revoke_user_msg', language).replace('{teacher}', teacher),
+        type: 'SYSTEM',
+      })
+      if (nd) setNotifications(prev => [nd, ...prev])
     }
     return { success: true }
   }
