@@ -988,9 +988,8 @@ export function DataProvider({ children }) {
       )
       if (hasActive) return { success: false, error: 'err_slot_has_appointments' }
     }
-    const { data: deleted, error } = await supabase.from('city_time_slots').delete().eq('id', id).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
+    const r = await deleteViaRpcOrDirect('admin_delete_time_slot', 'p_id', id, 'city_time_slots')
+    if (!r.success) return r
     setTimeSlots(prev => prev.filter(s => s.id !== id))
     if (slot) {
       const cityName = cities.find(c => String(c.id) === String(slot.city_id))?.name || slot.city_id
@@ -1028,6 +1027,21 @@ export function DataProvider({ children }) {
     return { success: true }
   }
 
+  // Shared helper: try SECURITY DEFINER RPC, fall back to direct DELETE if missing.
+  const deleteViaRpcOrDirect = async (rpcName, paramName, idValue, table) => {
+    const { data: ok, error: rpcErr } = await supabase.rpc(rpcName, { [paramName]: idValue })
+    if (rpcErr && rpcErr.code !== '42883' && rpcErr.code !== 'PGRST202') {
+      return { success: false, error: rpcErr.message }
+    }
+    if (rpcErr) {
+      const { error } = await supabase.from(table).delete().eq('id', idValue)
+      if (error) return { success: false, error: error.message }
+      return { success: true }
+    }
+    if (ok === false) return { success: false, error: 'err_generic' }
+    return { success: true }
+  }
+
   const deleteLab = async (id) => {
     if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const lab = labs.find(l => l.id === id)
@@ -1038,15 +1052,9 @@ export function DataProvider({ children }) {
     )
     if (hasActive) return { success: false, error: 'err_lab_has_appointments' }
 
-    const { error } = await supabase.from('laboratories').delete().eq('id', id)
-    if (error) return { success: false, error: error.message }
-    const { data: all } = await supabase.from('laboratories').select('*')
-    if (all) {
-      if (all.some(l => l.id === id)) return { success: false, error: 'err_update_failed' }
-      setLabs(all)
-    } else {
-      setLabs(prev => prev.filter(l => l.id !== id))
-    }
+    const r = await deleteViaRpcOrDirect('admin_delete_lab', 'p_id', id, 'laboratories')
+    if (!r.success) return r
+    setLabs(prev => prev.filter(l => l.id !== id))
     if (lab) logAudit('DELETE_LAB', 'laboratory', id, lab.name)
     return { success: true }
   }
@@ -1054,11 +1062,9 @@ export function DataProvider({ children }) {
   const forceDeleteLab = async (id) => {
     if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
     const lab = labs.find(l => l.id === id)
-    const { error } = await supabase.from('laboratories').delete().eq('id', id)
-    if (error) return { success: false, error: error.message }
-    const { data: all } = await supabase.from('laboratories').select('*')
-    if (all) setLabs(all)
-    else setLabs(prev => prev.filter(l => l.id !== id))
+    const r = await deleteViaRpcOrDirect('admin_delete_lab', 'p_id', id, 'laboratories')
+    if (!r.success) return r
+    setLabs(prev => prev.filter(l => l.id !== id))
     if (lab) logAudit('DELETE_LAB', 'laboratory', id, t('audit_detail_force_deleted', language).replace('{name}', lab.name))
     return { success: true }
   }
@@ -1093,15 +1099,9 @@ export function DataProvider({ children }) {
     if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const ws = workshops.find(w => w.id === id)
     if (loggedInAdmin.role !== 'GLOBAL' && ws && String(ws.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
-    const { error } = await supabase.from('workshops').delete().eq('id', id)
-    if (error) return { success: false, error: error.message }
-    const { data: all } = await supabase.from('workshops').select('*')
-    if (all) {
-      if (all.some(w => w.id === id)) return { success: false, error: 'err_update_failed' }
-      setWorkshops(all)
-    } else {
-      setWorkshops(prev => prev.filter(w => w.id !== id))
-    }
+    const r = await deleteViaRpcOrDirect('admin_delete_workshop', 'p_id', id, 'workshops')
+    if (!r.success) return r
+    setWorkshops(prev => prev.filter(w => w.id !== id))
     if (ws) logAudit('DELETE_WORKSHOP', 'workshop', id, ws.name)
     return { success: true }
   }
@@ -1130,9 +1130,8 @@ export function DataProvider({ children }) {
     const day = closedDays.find(d => d.id === id)
     if (loggedInAdmin.role !== 'GLOBAL' && day && day.city_id && String(day.city_id) !== String(loggedInAdmin.city_id)) return { success: false, error: 'err_generic' }
     if (loggedInAdmin.role !== 'GLOBAL' && day && !day.city_id) return { success: false, error: 'err_generic' }
-    const { data: deleted, error } = await supabase.from('closed_days').delete().eq('id', id).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!deleted || deleted.length === 0) return { success: false, error: 'err_generic' }
+    const r = await deleteViaRpcOrDirect('admin_delete_closed_day', 'p_id', id, 'closed_days')
+    if (!r.success) return r
     setClosedDays(prev => prev.filter(d => d.id !== id))
     if (day) {
       const cityName = day.city_id ? (cities.find(c => String(c.id) === String(day.city_id))?.name || day.city_id) : t('filter_all_provinces', language)
