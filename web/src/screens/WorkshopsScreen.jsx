@@ -165,9 +165,8 @@ export default function WorkshopsScreen() {
   }
 
   const openCertificate = (ws) => {
-    const template = certificateTemplates.find(t =>
-      String(t.city_id) === String(ws.city_id)
-    ) || certificateTemplates.find(t => !t.city_id) || null
+    // Sertifika şablonu tek-global; CITY-spesifik şablon artık desteklenmiyor.
+    const template = certificateTemplates.find(t => !t.city_id) || null
     setCertModal({ ws, template })
   }
 

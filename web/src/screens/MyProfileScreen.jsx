@@ -654,7 +654,7 @@ export default function MyProfileScreen() {
       {certModalWs && (
         <CertificateModal
           ws={certModalWs}
-          template={certificateTemplates.find(t => String(t.city_id) === String(certModalWs.city_id)) || certificateTemplates[0] || null}
+          template={certificateTemplates.find(t => !t.city_id) || null}
           user={loggedInUser}
           language={language}
           onClose={() => setCertModalWs(null)}

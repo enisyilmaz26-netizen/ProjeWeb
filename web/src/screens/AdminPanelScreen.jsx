@@ -147,7 +147,7 @@ export default function AdminPanelScreen() {
     { key: 'slots', label: t('tab_slots_label', language) },
     { key: 'closed_days', label: t('tab_closed_days', language) },
     { key: 'user_approvals', label: t('tab_approvals_label', language) },
-    { key: 'notifications', label: t('tab_send_notif', language) },
+    ...(isGlobal ? [{ key: 'notifications', label: t('tab_send_notif', language) }] : []),
     { key: 'stats', label: t('tab_stats', language) },
     ...(messagesAvailable ? [{ key: 'messages', label: t('tab_messages', language), unread: adminCityConvUnread }] : []),
     ...(isGlobal ? [{ key: 'certificates', label: t('tab_certificate', language) }] : []),
@@ -319,7 +319,7 @@ export default function AdminPanelScreen() {
         {activeTab === 'studios' && <StudiosTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
         {activeTab === 'slots' && <TimeSlotsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
         {activeTab === 'user_approvals' && <UserApprovalsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} onRequestConfirm={onRequestConfirm} />}
-        {activeTab === 'notifications' && <NotificationsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
+        {activeTab === 'notifications' && isGlobal && <NotificationsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
         {activeTab === 'stats' && <StatsTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
         {activeTab === 'closed_days' && <ClosedDaysTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}
         {activeTab === 'messages' && messagesAvailable && <AdminMessagesTab language={language} isGlobal={isGlobal} adminCityId={adminCityId} />}

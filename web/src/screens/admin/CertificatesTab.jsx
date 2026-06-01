@@ -48,9 +48,8 @@ export default function CertificatesTab({ language, isGlobal, adminCityId, onReq
     reader.readAsDataURL(file)
   }
 
-  const existingTemplate = certificateTemplates.find(tmpl =>
-    isGlobal ? !tmpl.city_id : String(tmpl.city_id) === String(adminCityId)
-  )
+  // Sertifika şablonu artık tek-global; CITY-spesifik şablon desteklenmiyor.
+  const existingTemplate = certificateTemplates.find(tmpl => !tmpl.city_id)
 
   const [form, setForm] = useState({
     title: '', institution: '', body_text: '',
@@ -97,7 +96,7 @@ export default function CertificatesTab({ language, isGlobal, adminCityId, onReq
     setSaving(true)
     const payload = {
       ...form,
-      city_id: isGlobal ? null : adminCityId,
+      city_id: null,
       ...(existingTemplate ? { id: existingTemplate.id } : {}),
     }
     try {
@@ -115,9 +114,8 @@ export default function CertificatesTab({ language, isGlobal, adminCityId, onReq
     }
   }
 
-  const scopedWorkshops = isGlobal
-    ? workshops
-    : workshops.filter(w => String(w.city_id) === String(adminCityId))
+  // Sertifika e-postası tüm atölyeler için (GLOBAL yetki)
+  const scopedWorkshops = workshops
 
   const execSendCertEmails = async () => {
     const ws = workshops.find(w => String(w.id) === String(emailWorkshopId))

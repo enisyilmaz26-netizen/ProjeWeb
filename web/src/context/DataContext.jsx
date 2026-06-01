@@ -937,14 +937,10 @@ export function DataProvider({ children }) {
   }
 
   const createNotification = async ({ title, message, type }) => {
-    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
-    // CITY admin can only post with their own city tag — strip any other [..] and re-add own
-    let finalTitle = String(title || '').trim()
-    if (loggedInAdmin.role !== 'GLOBAL') {
-      const cityName = cities.find(c => String(c.id) === String(loggedInAdmin.city_id))?.name
-      const raw = finalTitle.replace(/\[[^\]]*\]/g, '').trim()
-      finalTitle = cityName ? `[${cityName}] ${raw}` : raw
-    }
+    // Manuel bildirim oluşturma artık sadece GLOBAL admin için.
+    // Auto-bildirimler (approve/cancel/vb.) doğrudan insert kullanmaya devam eder.
+    if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
+    const finalTitle = String(title || '').trim()
     const { data, error } = await supabase
       .from('notifications')
       .insert([{ title: finalTitle, message, type, timestamp: Date.now(), is_read: false }])
@@ -1562,9 +1558,12 @@ export function DataProvider({ children }) {
 
   // CERTIFICATE TEMPLATES
   const saveCertificateTemplate = async (data) => {
-    if (!loggedInAdmin) return { success: false, error: 'err_generic' }
+    // Sertifika şablonu tek merkezden yönetilir → sadece GLOBAL admin,
+    // city_id daima NULL (tek global şablon).
+    if (loggedInAdmin?.role !== 'GLOBAL') return { success: false, error: 'err_generic' }
     try {
       const { id, ...fields } = data
+      fields.city_id = null
       let result, error
       if (id) {
         ;({ data: result, error } = await supabase

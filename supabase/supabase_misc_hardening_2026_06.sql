@@ -89,15 +89,11 @@ BEGIN
 END $$;
 
 
--- ─── 3) Server-side phone format validation ──────────────────────────────────
--- Sadece Türk telefon formatı (0?5XXXXXXXXX, 10 ya da 11 hane); boş izinli.
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_phone_format') THEN
-    ALTER TABLE public.users ADD CONSTRAINT users_phone_format
-      CHECK (phone IS NULL OR phone = '' OR phone ~ '^0?5[0-9]{9}$' OR phone ~ '^[0-9]{10,11}$');
-  END IF;
-END $$;
+-- ─── 3) Phone validation atlandı ─────────────────────────────────────────────
+-- Mevcut veride pattern'e uymayan formatlar var (boşluk, parantez, +90, vb.).
+-- Veriyi otomatik silmek/değiştirmek istemiyoruz; uzunluk sınırı zaten spam'i önler.
+-- Format doğrulaması frontend tarafında devam ediyor (yeni kayıtlarda).
+-- Önceki versiyon kaldırıldı.
 
 
 -- ─── 4) Audit log type check — yalnızca beklenen action'lar ────────────────
