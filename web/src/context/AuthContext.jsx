@@ -50,9 +50,22 @@ function clearAttempts(email) {
   saveRateLimits(all)
 }
 
+const SESSION_TOKEN_KEY = 'session_token'
+
+function loadSessionToken() {
+  try { return localStorage.getItem(SESSION_TOKEN_KEY) || null } catch { return null }
+}
+function saveSessionToken(token) {
+  try {
+    if (token) localStorage.setItem(SESSION_TOKEN_KEY, token)
+    else localStorage.removeItem(SESSION_TOKEN_KEY)
+  } catch {}
+}
+
 export function AuthProvider({ children }) {
   const [loggedInUser, setLoggedInUser] = useState(() => loadFromStorage('session_user'))
   const [loggedInAdmin, setLoggedInAdmin] = useState(() => loadFromStorage('session_admin'))
+  const [sessionToken, setSessionTokenState] = useState(() => loadSessionToken())
   // İngilizce desteği kaldırıldı — language sabit TR. Tüketici kodu hâlâ
   // language okuyabiliyor, ama değer her zaman 'TR'.
   const language = 'TR'
@@ -86,6 +99,12 @@ export function AuthProvider({ children }) {
   }, [loggedInUser, loggedInAdmin])
 
   const logout = useCallback(() => {
+    const tk = loadSessionToken()
+    if (tk) {
+      supabase.rpc('revoke_session', { p_token: tk }).catch(() => {})
+    }
+    saveSessionToken(null)
+    setSessionTokenState(null)
     setLoggedInUser(null)
     setLoggedInAdmin(null)
   }, [])
@@ -129,24 +148,39 @@ export function AuthProvider({ children }) {
     const rl = checkRateLimit(email)
     if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
-    const { data, error } = await supabase.rpc('login_user', { p_email: email, p_password: password })
-
-    if (error || !data || data.length === 0) {
-      const normalizedEmail = email.trim().toLowerCase()
-      const { data: userExists } = await supabase.from('users').select('id').eq('email', normalizedEmail).maybeSingle()
-      if (!userExists) return { success: false, error: 'err_email_not_found' }
-      const { data: adminExists } = await supabase.from('admins').select('id').eq('email', normalizedEmail).maybeSingle()
-      if (adminExists) return { success: false, error: 'err_email_not_found' }
-      recordFailedAttempt(email)
-      return { success: false, error: 'err_user_not_found' }
+    // Token-aware RPC önce — yoksa eski login_user'a fallback (token'sız).
+    let user = null
+    let token = null
+    const v2 = await supabase.rpc('login_user_with_token', { p_email: email, p_password: password })
+    if (!v2.error && v2.data && v2.data.length > 0) {
+      const row = v2.data[0]
+      token = row.session_token
+      user = row
+    } else if (v2.error && v2.error.code !== '42883' && v2.error.code !== 'PGRST202') {
+      const msg = v2.error.message || ''
+      if (msg.includes('err_rate_limited')) return { success: false, error: 'err_rate_limited' }
     }
 
-    const user = data[0]
+    if (!user) {
+      const { data, error } = await supabase.rpc('login_user', { p_email: email, p_password: password })
+      if (error || !data || data.length === 0) {
+        const normalizedEmail = email.trim().toLowerCase()
+        const { data: userExists } = await supabase.from('users').select('id').eq('email', normalizedEmail).maybeSingle()
+        if (!userExists) return { success: false, error: 'err_email_not_found' }
+        const { data: adminExists } = await supabase.from('admins').select('id').eq('email', normalizedEmail).maybeSingle()
+        if (adminExists) return { success: false, error: 'err_email_not_found' }
+        recordFailedAttempt(email)
+        return { success: false, error: 'err_user_not_found' }
+      }
+      user = data[0]
+    }
+
     if (!user.is_approved) return { success: false, error: 'err_not_approved' }
 
     clearAttempts(email)
     const { data: extraFields } = await supabase.from('users').select('must_change_password,avatar_url').eq('id', user.id).single()
     setLoggedInUser({ ...user, must_change_password: extraFields?.must_change_password ?? false, avatar_url: extraFields?.avatar_url ?? user.avatar_url ?? '' })
+    if (token) { saveSessionToken(token); setSessionTokenState(token) }
 
     return { success: true }
   }, [])
@@ -155,17 +189,31 @@ export function AuthProvider({ children }) {
     const rl = checkRateLimit(email)
     if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
-    const { data, error } = await supabase.rpc('login_admin', { p_email: email, p_password: password })
+    let admin = null
+    let token = null
+    const v2 = await supabase.rpc('login_admin_with_token', { p_email: email, p_password: password })
+    if (!v2.error && v2.data && v2.data.length > 0) {
+      const row = v2.data[0]
+      token = row.session_token
+      admin = row
+    } else if (v2.error && v2.error.code !== '42883' && v2.error.code !== 'PGRST202') {
+      const msg = v2.error.message || ''
+      if (msg.includes('err_rate_limited')) return { success: false, error: 'err_rate_limited' }
+    }
 
-    if (error || !data || data.length === 0) {
-      recordFailedAttempt(email)
-      return { success: false, error: 'err_user_not_found' }
+    if (!admin) {
+      const { data, error } = await supabase.rpc('login_admin', { p_email: email, p_password: password })
+      if (error || !data || data.length === 0) {
+        recordFailedAttempt(email)
+        return { success: false, error: 'err_user_not_found' }
+      }
+      admin = data[0]
     }
 
     clearAttempts(email)
-    const admin = data[0]
     const { data: adminExtra } = await supabase.from('admins').select('avatar_url,must_change_password').eq('id', admin.id).single()
     setLoggedInAdmin({ ...admin, avatar_url: adminExtra?.avatar_url ?? admin.avatar_url ?? '', must_change_password: adminExtra?.must_change_password ?? false })
+    if (token) { saveSessionToken(token); setSessionTokenState(token) }
     return { success: true }
   }, [])
 
@@ -272,14 +320,14 @@ export function AuthProvider({ children }) {
   const toggleDarkMode = useCallback(() => setIsDarkMode(prev => !prev), [])
 
   const value = useMemo(() => ({
-    loggedInUser, loggedInAdmin,
+    loggedInUser, loggedInAdmin, sessionToken,
     language, isDarkMode, idleWarning,
     setLoggedInUser, setLoggedInAdmin,
     loginUser, loginAdmin, registerUser, findUserForReset,
     changePassword, changeAdminPassword, uploadAvatar, logout,
     toggleLanguage, toggleDarkMode, dismissIdleWarning,
   }), [
-    loggedInUser, loggedInAdmin, language, isDarkMode, idleWarning,
+    loggedInUser, loggedInAdmin, sessionToken, language, isDarkMode, idleWarning,
     loginUser, loginAdmin, registerUser, findUserForReset,
     changePassword, changeAdminPassword, uploadAvatar, logout,
     toggleLanguage, toggleDarkMode, dismissIdleWarning,

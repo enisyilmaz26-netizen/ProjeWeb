@@ -28,7 +28,7 @@ const ADMIN_PROFILE_UPDATABLE = new Set(['name', 'email', 'phone', 'avatar_url',
 export const DataContext = createContext(null)
 
 export function DataProvider({ children }) {
-  const { loggedInUser, loggedInAdmin, language, setLoggedInUser, setLoggedInAdmin } = useContext(AuthContext)
+  const { loggedInUser, loggedInAdmin, language, sessionToken, setLoggedInUser, setLoggedInAdmin } = useContext(AuthContext)
 
   const [cities, setCities] = useState([])
   const [labs, setLabs] = useState([])
@@ -579,30 +579,54 @@ export function DataProvider({ children }) {
     )
     if (duplicate) return { success: false, error: 'err_duplicate_appointment' }
 
-    const { data, error } = await supabase.rpc('submit_appointment', {
-      p_lab_id:             appointmentData.lab_id,
-      p_lab_name:           appointmentData.lab_name,
-      p_city_id:            appointmentData.city_id,
-      p_city_name:          appointmentData.city_name,
-      p_date:               appointmentData.date,
-      p_time_slot:          appointmentData.time_slot,
-      p_user_name:          appointmentData.user_name,
-      p_user_surname:       appointmentData.user_surname,
-      p_user_branch:        appointmentData.user_branch,
-      p_user_work_location: appointmentData.user_work_location,
-      p_user_phone:         appointmentData.user_phone,
-      p_user_email:         appointmentData.user_email,
-      p_user_city:          appointmentData.user_city,
-      p_user_district:      appointmentData.user_district,
-      p_note:               appointmentData.note || '',
-    })
+    // submit_appointment_v2 token-aware (user kimliği RPC içinde DB'den okunur).
+    // RPC yoksa eski signature'a fallback (token öncesi davranış).
+    let data, error
+    if (sessionToken) {
+      const v2 = await supabase.rpc('submit_appointment_v2', {
+        p_session_token: sessionToken,
+        p_lab_id: appointmentData.lab_id,
+        p_lab_name: appointmentData.lab_name,
+        p_city_id: appointmentData.city_id,
+        p_city_name: appointmentData.city_name,
+        p_date: appointmentData.date,
+        p_time_slot: appointmentData.time_slot,
+        p_note: appointmentData.note || '',
+      })
+      if (v2.error && (v2.error.code === '42883' || v2.error.code === 'PGRST202')) {
+        // v2 yok — legacy'ye fallback
+      } else {
+        data = v2.data; error = v2.error
+      }
+    }
+    if (!data && !error) {
+      ;({ data, error } = await supabase.rpc('submit_appointment', {
+        p_lab_id:             appointmentData.lab_id,
+        p_lab_name:           appointmentData.lab_name,
+        p_city_id:            appointmentData.city_id,
+        p_city_name:          appointmentData.city_name,
+        p_date:               appointmentData.date,
+        p_time_slot:          appointmentData.time_slot,
+        p_user_name:          appointmentData.user_name,
+        p_user_surname:       appointmentData.user_surname,
+        p_user_branch:        appointmentData.user_branch,
+        p_user_work_location: appointmentData.user_work_location,
+        p_user_phone:         appointmentData.user_phone,
+        p_user_email:         appointmentData.user_email,
+        p_user_city:          appointmentData.user_city,
+        p_user_district:      appointmentData.user_district,
+        p_note:               appointmentData.note || '',
+      }))
+    }
 
     if (error) {
       const msg = error.message || ''
+      if (msg.includes('err_unauthenticated')) return { success: false, error: 'err_unauthenticated' }
       if (msg.includes('err_duplicate_appointment') || error.code === '23505') return { success: false, error: 'err_duplicate_appointment' }
       if (msg.includes('err_slot_full')) return { success: false, error: 'err_slot_full' }
       if (msg.includes('err_lab_not_found')) return { success: false, error: 'err_lab_not_found' }
       if (msg.includes('err_lab_city_mismatch')) return { success: false, error: 'err_lab_city_mismatch' }
+      if (msg.includes('err_not_approved')) return { success: false, error: 'err_not_approved' }
       console.error('submitAppointment error:', error)
       return { success: false, error: 'err_generic' }
     }
@@ -1192,6 +1216,29 @@ export function DataProvider({ children }) {
   }
 
   const sendMessage = async (conversationId, body, authoredBy, authorName) => {
+    // Token-aware send_message: server authored_by + author_name'i token'dan
+    // belirler → spoof imkansız. RPC yoksa legacy direct INSERT'e fallback.
+    if (sessionToken) {
+      const v2 = await supabase.rpc('send_message', {
+        p_session_token: sessionToken,
+        p_conversation_id: conversationId,
+        p_body: body.trim(),
+      })
+      if (!v2.error || (v2.error.code !== '42883' && v2.error.code !== 'PGRST202')) {
+        if (v2.error) return { success: false, error: v2.error.message }
+        const row = Array.isArray(v2.data) ? v2.data[0] : v2.data
+        if (!row) return { success: false, error: 'err_generic' }
+        const data = {
+          id: row.id, conversation_id: row.conversation_id, authored_by: row.authored_by,
+          author_name: row.author_name, body: row.body, created_at: row.created_at,
+        }
+        // v2 zaten unread counter'ı atomik şekilde günceller; conversations'ı refresh et
+        const { data: convRow } = await supabase.from('conversations').select('*').eq('id', conversationId).maybeSingle()
+        if (convRow) setConversations(prev => prev.map(c => c.id === conversationId ? convRow : c))
+        return { success: true, data }
+      }
+    }
+
     const { data, error } = await supabase.from('messages').insert([{
       conversation_id: conversationId,
       authored_by: authoredBy,
@@ -1233,14 +1280,29 @@ export function DataProvider({ children }) {
     if (!loggedInUser) return { success: false, error: 'err_generic' }
     const ws = workshops.find(w => w.id === workshopId)
     if (!ws) return { success: false, error: 'err_generic' }
-    // Server-side advisory lock + capacity check (race-safe). Falls back to direct insert if RPC missing.
-    const { data: rpcData, error: rpcErr } = await supabase.rpc('register_for_workshop', {
-      p_workshop_id: workshopId,
-      p_user_id: loggedInUser.id,
-      p_user_email: loggedInUser.email,
-      p_user_name: loggedInUser.name,
-      p_user_surname: loggedInUser.surname,
-    })
+    // Token-aware v2 önce (server user_id'yi token'dan okur → forgery imkansız).
+    // V2 yoksa eski signature'a fallback (param-based, less secure).
+    let rpcData, rpcErr
+    if (sessionToken) {
+      const v2 = await supabase.rpc('register_for_workshop_v2', {
+        p_session_token: sessionToken,
+        p_workshop_id: workshopId,
+      })
+      if (v2.error && (v2.error.code === '42883' || v2.error.code === 'PGRST202')) {
+        // v2 yok — legacy
+      } else {
+        rpcData = v2.data; rpcErr = v2.error
+      }
+    }
+    if (!rpcData && !rpcErr) {
+      ;({ data: rpcData, error: rpcErr } = await supabase.rpc('register_for_workshop', {
+        p_workshop_id: workshopId,
+        p_user_id: loggedInUser.id,
+        p_user_email: loggedInUser.email,
+        p_user_name: loggedInUser.name,
+        p_user_surname: loggedInUser.surname,
+      }))
+    }
     let data
     if (rpcErr) {
       const msg = rpcErr.message || ''
