@@ -35,9 +35,27 @@ ALTER TABLE public.appointments
   FOREIGN KEY (lab_id) REFERENCES public.laboratories(id) ON DELETE RESTRICT;
 
 
--- ─── 2) Eksik GRANT EXECUTE'ler ─────────────────────────────────────────────
-GRANT EXECUTE ON FUNCTION public.set_workshop_attendance(uuid, boolean)        TO anon;
-GRANT EXECUTE ON FUNCTION public.upsert_certificate_template(jsonb)            TO anon;
+-- ─── 2) Eksik GRANT EXECUTE'ler (varsa) ────────────────────────────────────
+-- Bu fonksiyonlar eski sürüm migration'larında tanımlandı; ortam farklılığı
+-- için varlık kontrolü ile GRANT veriyoruz. Eksikse migration'lar (3, 4) ile
+-- eklenecek; o zaman da aşağıdaki blok problem çıkarmaz.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'set_workshop_attendance'
+  ) THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION public.set_workshop_attendance(uuid, boolean) TO anon';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'upsert_certificate_template'
+  ) THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION public.upsert_certificate_template(jsonb) TO anon';
+  END IF;
+END $$;
 
 
 -- ─── 3) Performans index'leri ───────────────────────────────────────────────
