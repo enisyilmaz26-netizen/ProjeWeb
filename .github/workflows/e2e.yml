@@ -1,0 +1,55 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Supabase URL ve publishable anon key tasarım gereği public — tarayıcı
+      # bundle'ında zaten görünüyor, secret olarak saklamanın güvenlik faydası yok.
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: https://nspircxgtrhdcxtnvodz.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_w6ogDn_vc2hgu1okx92j1w_yE0cctpZ
+        run: npm run build
+
+      - name: Serve dist + run E2E
+        env:
+          E2E_BASE_URL: http://localhost:4173
+        run: |
+          npx vite preview --port 4173 &
+          npx wait-on http://localhost:4173 --timeout 30000
+          npm run test:e2e
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            web/playwright-report/
+            web/test-results/
+          retention-days: 7
