@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 import { INPUT_BASE, LABEL_CLASS } from '../lib/ui'
@@ -39,9 +39,21 @@ export default function AuthScreen({ onBack }) {
     confirmInfo: false, // "Bilgilerimi doğruluyorum" beyanı
   })
   const [regError, setRegError] = useState('')
+  const [regErrorField, setRegErrorField] = useState('') // 'password' | 'confirmPassword' | 'phone' | ''
   const [regLoading, setRegLoading] = useState(false)
   const [showRegSuccessModal, setShowRegSuccessModal] = useState(false)
   const [showKvkkModal, setShowKvkkModal] = useState(false)
+
+  // Hata mesajı görünür olunca banner'a kaydır — uzun kayıt formunda alt'taki
+  // hata mesajı mobile'da viewport dışında kalıyordu, kullanıcılar göremiyordu.
+  const loginErrorRef = useRef(null)
+  const regErrorRef = useRef(null)
+  useEffect(() => {
+    if (loginError) loginErrorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [loginError])
+  useEffect(() => {
+    if (regError) regErrorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [regError])
 
   useEffect(() => {
     const anyModal = showRegSuccessModal || showKvkkModal
@@ -75,12 +87,15 @@ export default function AuthScreen({ onBack }) {
   const handleRegister = async (e) => {
     e.preventDefault()
     setRegError('')
+    setRegErrorField('')
     if (!isPasswordStrong(regForm.password)) {
       setRegError(t('err_password_weak', language))
+      setRegErrorField('password')
       return
     }
     if (regForm.password !== regForm.confirmPassword) {
       setRegError(t('err_password_mismatch', language))
+      setRegErrorField('confirmPassword')
       return
     }
     if (!regForm.kvkk) {
@@ -88,7 +103,7 @@ export default function AuthScreen({ onBack }) {
       return
     }
     if (!regForm.confirmInfo) {
-      setRegError('Girdiğiniz bilgilerin doğru ve eksiksiz olduğunu beyan etmeniz gerekiyor.')
+      setRegError(t('err_confirm_info_required', language))
       return
     }
     const phoneDigits = regForm.phone.replace(/\D/g, '')
@@ -96,6 +111,7 @@ export default function AuthScreen({ onBack }) {
     // MyProfileScreen ile aynı strict regex — kayıt'ta girilen telefon edit'te de geçerli olmalı.
     if (!/^(0?5\d{9})$/.test(phoneDigits)) {
       setRegError(t('err_phone_invalid', language))
+      setRegErrorField('phone')
       return
     }
     setRegLoading(true)
@@ -219,7 +235,7 @@ export default function AuthScreen({ onBack }) {
                   />
                 </div>
                 {loginError && (
-                  <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
+                  <div ref={loginErrorRef} role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
                     {loginError}
                   </div>
                 )}
@@ -302,6 +318,7 @@ export default function AuthScreen({ onBack }) {
                     className={inputClass}
                     value={regForm.phone}
                     onChange={e => setRegForm(p => ({ ...p, phone: e.target.value }))}
+                    aria-invalid={regErrorField === 'phone' || undefined}
                     required
                   />
                 </div>
@@ -339,6 +356,7 @@ export default function AuthScreen({ onBack }) {
                     value={regForm.password}
                     onChange={e => setRegForm(p => ({ ...p, password: e.target.value }))}
                     autoComplete="new-password"
+                    aria-invalid={regErrorField === 'password' || undefined}
                     required
                     minLength={8}
                   />
@@ -368,6 +386,7 @@ export default function AuthScreen({ onBack }) {
                     value={regForm.confirmPassword}
                     onChange={e => setRegForm(p => ({ ...p, confirmPassword: e.target.value }))}
                     autoComplete="new-password"
+                    aria-invalid={regErrorField === 'confirmPassword' || undefined}
                     required
                     minLength={8}
                   />
@@ -414,7 +433,7 @@ export default function AuthScreen({ onBack }) {
                 </div>
 
                 {regError && (
-                  <div role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
+                  <div ref={regErrorRef} role="status" aria-live="polite" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 text-sm">
                     {regError}
                   </div>
                 )}

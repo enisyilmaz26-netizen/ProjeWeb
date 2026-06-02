@@ -75,6 +75,11 @@ export default function MyProfileScreen() {
   const [editForm, setEditForm] = useState({})
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError] = useState('')
+  const [editErrorField, setEditErrorField] = useState('') // 'phone' | ''
+  const editErrorRef = useRef(null)
+  useEffect(() => {
+    if (editError) editErrorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [editError])
   const [waitlistRemoving, setWaitlistRemoving] = useState(false)
   const [certModalWs, setCertModalWs] = useState(null)
   const [confirmInfoEdit, setConfirmInfoEdit] = useState(false) // "Bilgilerimi doğruluyorum"
@@ -225,10 +230,12 @@ export default function MyProfileScreen() {
   const handleSaveProfile = async (e) => {
     e.preventDefault()
     setEditError('')
+    setEditErrorField('')
     const phoneDigits = editForm.phone.replace(/\D/g, '')
     // Türk telefon numarası: 05XXXXXXXXX (11 hane) veya 5XXXXXXXXX (10 hane)
     if (phoneDigits.length === 0 || !/^(0?5\d{9})$/.test(phoneDigits)) {
       setEditError(t('err_phone_format', language))
+      setEditErrorField('phone')
       return
     }
     const cityChanged = String(editForm.city_id) !== String(loggedInUser.city_id)
@@ -355,7 +362,7 @@ export default function MyProfileScreen() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>{t('input_phone', language)} *</label>
-                <input type="tel" className={inputClass} value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} required disabled={editLoading} />
+                <input type="tel" className={inputClass} value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} aria-invalid={editErrorField === 'phone' || undefined} required disabled={editLoading} />
               </div>
               <div>
                 <label className={labelClass}>{t('input_district', language)} *</label>
@@ -371,7 +378,7 @@ export default function MyProfileScreen() {
               <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{t('city_change_note', language)}</p>
             </div>
             {editError && (
-              <p role="status" aria-live="polite" className="text-red-600 dark:text-red-400 text-xs">{editError}</p>
+              <p ref={editErrorRef} role="status" aria-live="polite" className="text-red-600 dark:text-red-400 text-xs">{editError}</p>
             )}
             <label className="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer p-2 rounded-lg bg-[#1565C0]/5 dark:bg-[#7DD4FC]/5">
               <input

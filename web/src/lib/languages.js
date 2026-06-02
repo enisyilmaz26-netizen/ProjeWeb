@@ -65,6 +65,7 @@ export const translations = {
   notif_target_city: 'Hedef İl (Opsiyonel)',
   notif_target_all: 'Tüm İller',
   err_kvkk_required: 'KVKK onayı zorunludur.',
+  err_confirm_info_required: 'Girdiğiniz bilgilerin doğru ve eksiksiz olduğunu beyan etmeniz gerekiyor.',
   err_phone_invalid: 'Geçerli bir telefon numarası giriniz (10-11 rakam).',
   err_registration_failed: 'Kayıt sırasında bir hata oluştu.',
   err_generic: 'Bir hata oluştu.',
