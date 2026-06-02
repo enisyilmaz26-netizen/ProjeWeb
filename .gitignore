@@ -1,3 +1,11 @@
 .vercel
 *.pem
 .DS_Store
+
+# Supabase CLI artefacts
+supabase/.temp/
+supabase/.branches/
+
+# Node modules — defansif (web/.gitignore zaten yakalıyor)
+**/node_modules/
+**/dist/

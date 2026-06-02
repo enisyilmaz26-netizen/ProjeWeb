@@ -202,15 +202,15 @@ export default function UserReservationScreen() {
       )}
 
       {/* Breadcrumb / Progress */}
-      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-4 flex-wrap">
-        <button onClick={() => resetToStep(1)} className={`font-medium active:opacity-70 ${step >= 1 ? 'text-[#1565C0] dark:text-[#7DD4FC]' : ''}`}>
+      <nav aria-label={t('select_city', language)} className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-4 flex-wrap">
+        <button onClick={() => resetToStep(1)} aria-label={t('select_city', language)} className={`font-medium active:opacity-70 ${step >= 1 ? 'text-[#1565C0] dark:text-[#7DD4FC]' : ''}`}>
           {t('select_city', language)}
         </button>
-        {step >= 2 && <><span>›</span><button onClick={() => resetToStep(2)} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedCity?.name}</button></>}
-        {step >= 3 && <><span>›</span><button onClick={() => resetToStep(3)} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedLab?.name}</button></>}
-        {step >= 4 && <><span>›</span><button onClick={() => resetToStep(4)} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{formatDate(selectedDate)}</button></>}
-        {step >= 5 && <><span>›</span><span className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedSlot?.time_range}</span></>}
-      </div>
+        {step >= 2 && <><span aria-hidden="true">›</span><button onClick={() => resetToStep(2)} aria-label={selectedCity?.name} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedCity?.name}</button></>}
+        {step >= 3 && <><span aria-hidden="true">›</span><button onClick={() => resetToStep(3)} aria-label={selectedLab?.name} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedLab?.name}</button></>}
+        {step >= 4 && <><span aria-hidden="true">›</span><button onClick={() => resetToStep(4)} aria-label={formatDate(selectedDate)} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{formatDate(selectedDate)}</button></>}
+        {step >= 5 && <><span aria-hidden="true">›</span><span className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedSlot?.time_range}</span></>}
+      </nav>
 
       {/* Step 1: City Selection */}
       {step === 1 && (
@@ -228,6 +228,7 @@ export default function UserReservationScreen() {
                 <button
                   key={city.id}
                   onClick={() => handleCitySelect(city)}
+                  aria-label={city.name}
                   className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-5 text-left hover:ring-2 hover:ring-[#1565C0] dark:hover:ring-[#7DD4FC] transition active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-3">
@@ -522,12 +523,14 @@ export default function UserReservationScreen() {
                 onClick={doSubmit}
                 disabled={submitting}
                 autoFocus
+                aria-label={t('btn_confirm', language)}
                 className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50"
               >
                 {submitting ? t('submitting', language) : t('btn_confirm', language)}
               </button>
               <button
                 onClick={() => setShowConfirm(false)}
+                aria-label={t('btn_go_back', language)}
                 className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.98] transition"
               >
                 {t('btn_go_back', language)}

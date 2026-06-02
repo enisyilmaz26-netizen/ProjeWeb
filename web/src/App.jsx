@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useState } from 'react'
 import { useApp } from './context/AppContext'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const AuthScreen = lazy(() => import('./screens/AuthScreen'))
 const MainAppContainer = lazy(() => import('./screens/MainAppContainer'))
@@ -20,15 +21,17 @@ export default function App() {
   const isLoggedIn = loggedInUser !== null || loggedInAdmin !== null
 
   return (
-    <Suspense fallback={<PageLoader />}>
-      {isLoggedIn && (loggedInUser?.must_change_password || loggedInAdmin?.must_change_password)
-        ? <ForcePasswordChange />
-        : isLoggedIn
-        ? <MainAppContainer />
-        : showAuth
-        ? <AuthScreen onBack={() => setShowAuth(false)} />
-        : <LandingPage onLoginClick={() => setShowAuth(true)} />
-      }
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        {isLoggedIn && (loggedInUser?.must_change_password || loggedInAdmin?.must_change_password)
+          ? <ForcePasswordChange />
+          : isLoggedIn
+          ? <MainAppContainer />
+          : showAuth
+          ? <AuthScreen onBack={() => setShowAuth(false)} />
+          : <LandingPage onLoginClick={() => setShowAuth(true)} />
+        }
+      </Suspense>
+    </ErrorBoundary>
   )
 }

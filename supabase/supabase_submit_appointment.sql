@@ -45,7 +45,7 @@ BEGIN
   SELECT city_id, COALESCE(capacity_per_slot, 1)
     INTO v_lab_city_id, v_max_capacity
   FROM public.laboratories
-  WHERE id = p_lab_id;
+  WHERE laboratories.id = p_lab_id;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'err_lab_not_found';
