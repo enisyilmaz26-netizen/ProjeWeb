@@ -3,11 +3,11 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import { useApp } from '../context/AppContext'
 import { t } from '../lib/languages'
 import { Settings, Lock, X, RefreshCw, Pencil } from 'lucide-react'
-import { INPUT_BASE } from '../lib/ui'
-import PasswordInput from '../components/PasswordInput'
 import { isPasswordStrong } from '../lib/passwordUtils'
 import StatCard from '../components/admin/StatCard'
 import ConfirmModal from '../components/admin/ConfirmModal'
+import AdminProfileEditModal from '../components/admin/AdminProfileEditModal'
+import AdminPasswordChangeModal from '../components/admin/AdminPasswordChangeModal'
 
 const AppointmentsTab   = lazy(() => import('./admin/AppointmentsTab'))
 const StudiosTab        = lazy(() => import('./admin/StudiosTab'))
@@ -41,7 +41,6 @@ export default function AdminPanelScreen() {
     loadAllData,
   } = useApp()
 
-  const inputClass = INPUT_BASE
   const isGlobal = loggedInAdmin?.role === 'GLOBAL'
   const adminCityId = loggedInAdmin?.city_id
 
@@ -223,62 +222,6 @@ export default function AdminPanelScreen() {
           </div>
         </div>
 
-        {showAdminProfileEdit && (
-          <form onSubmit={handleAdminProfileSave} className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
-            <p className="text-[10px] text-gray-400 dark:text-gray-500">{t('photo_hint', language)}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_full_name', language)}</label>
-                <input type="text" className={`w-full ${inputClass}`} value={adminProfileForm.name} onChange={e => setAdminProfileForm(p => ({ ...p, name: e.target.value }))} required />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('lbl_phone', language)}</label>
-                <input type="text" className={`w-full ${inputClass}`} value={adminProfileForm.phone} onChange={e => setAdminProfileForm(p => ({ ...p, phone: e.target.value }))} />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_email', language)}</label>
-              <input type="email" className={`w-full ${inputClass}`} value={adminProfileForm.email} onChange={e => setAdminProfileForm(p => ({ ...p, email: e.target.value }))} required />
-            </div>
-            {adminProfileError && <p role="status" aria-live="polite" className="text-red-500 dark:text-red-400 text-xs">{adminProfileError}</p>}
-            <div className="flex gap-2">
-              <button type="submit" disabled={adminProfileLoading} className="flex-1 py-2 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60">
-                {adminProfileLoading ? '...' : t('btn_save', language)}
-              </button>
-              <button type="button" onClick={() => setShowAdminProfileEdit(false)} className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">
-                {t('btn_nevermind', language)}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {showAdminPwChange && (
-          <form onSubmit={handleAdminPwChange} className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('current_password', language)} *</label>
-                <PasswordInput className={inputClass} value={adminPwForm.current} onChange={e => setAdminPwForm(p => ({ ...p, current: e.target.value }))} autoComplete="current-password" required />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('new_password', language)} *</label>
-                <PasswordInput className={inputClass} value={adminPwForm.newPw} onChange={e => setAdminPwForm(p => ({ ...p, newPw: e.target.value }))} autoComplete="new-password" required minLength={8} />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('input_confirm_password', language)} *</label>
-                <PasswordInput className={inputClass} value={adminPwForm.confirm} onChange={e => setAdminPwForm(p => ({ ...p, confirm: e.target.value }))} autoComplete="new-password" required minLength={8} />
-              </div>
-            </div>
-            {adminPwError && <p role="status" aria-live="polite" className="text-red-500 dark:text-red-400 text-xs">{adminPwError}</p>}
-            <div className="flex gap-2">
-              <button type="submit" disabled={adminPwLoading} className="py-2 px-4 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-xs font-semibold rounded-xl disabled:opacity-60 hover:opacity-90 transition">
-                {adminPwLoading ? '...' : t('btn_update_password', language)}
-              </button>
-              <button type="button" onClick={() => setShowAdminPwChange(false)} className="py-2 px-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl">
-                {t('btn_nevermind', language)}
-              </button>
-            </div>
-          </form>
-        )}
       </div>
 
       {/* Stats */}
@@ -351,6 +294,28 @@ export default function AdminPanelScreen() {
       </div>
 
       <ConfirmModal confirmModal={confirmModal} onClose={() => setConfirmModal(null)} language={language} />
+
+      <AdminProfileEditModal
+        isOpen={showAdminProfileEdit}
+        form={adminProfileForm}
+        onChange={setAdminProfileForm}
+        onSubmit={handleAdminProfileSave}
+        onClose={() => setShowAdminProfileEdit(false)}
+        error={adminProfileError}
+        loading={adminProfileLoading}
+        language={language}
+      />
+
+      <AdminPasswordChangeModal
+        isOpen={showAdminPwChange}
+        form={adminPwForm}
+        onChange={setAdminPwForm}
+        onSubmit={handleAdminPwChange}
+        onClose={() => setShowAdminPwChange(false)}
+        error={adminPwError}
+        loading={adminPwLoading}
+        language={language}
+      />
     </div>
   )
 }
