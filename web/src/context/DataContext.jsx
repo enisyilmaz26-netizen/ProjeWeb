@@ -645,9 +645,24 @@ export function DataProvider({ children }) {
   const markAppointmentCompleted = async (id) => {
     if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const appt = appointments.find(a => a.id === id)
-    const { data: updated, error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id).eq('status', 'APPROVED').select('id')
-    if (error) return { success: false, error: error.message }
-    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    let updated = null
+    if (sessionToken) {
+      const v2 = await supabase.rpc('mark_appointment_completed_v2', {
+        p_session_token: sessionToken, p_appt_id: id,
+      })
+      if (v2.error && (v2.error.code === '42883' || v2.error.code === 'PGRST202')) {
+        // fallback
+      } else if (v2.error) {
+        return { success: false, error: v2.error.message }
+      } else {
+        updated = v2.data
+      }
+    }
+    if (!updated) {
+      const { data, error } = await supabase.from('appointments').update({ status: 'COMPLETED' }).eq('id', id).eq('status', 'APPROVED').select('id')
+      if (error) return { success: false, error: error.message }
+      if (!data || data.length === 0) return { success: false, error: 'err_generic' }
+    }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'COMPLETED' } : a))
     if (appt) logAudit('COMPLETE_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     if (appt) {
@@ -671,9 +686,25 @@ export function DataProvider({ children }) {
     const updates = { status: 'APPROVED' }
     if (newDate) updates.date = newDate
     if (newTimeSlot) updates.time_slot = newTimeSlot
-    const { data: updated, error } = await supabase.from('appointments').update(updates).eq('id', id).in('status', ['PENDING', 'CANCELLATION_REQUESTED']).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    let updated = null
+    if (sessionToken) {
+      const v2 = await supabase.rpc('approve_appointment_v2', {
+        p_session_token: sessionToken, p_appt_id: id,
+        p_new_date: newDate || '', p_new_time_slot: newTimeSlot || '',
+      })
+      if (v2.error && (v2.error.code === '42883' || v2.error.code === 'PGRST202')) {
+        // fallback
+      } else if (v2.error) {
+        return { success: false, error: v2.error.message }
+      } else {
+        updated = v2.data
+      }
+    }
+    if (!updated) {
+      const { data, error } = await supabase.from('appointments').update(updates).eq('id', id).in('status', ['PENDING', 'CANCELLATION_REQUESTED']).select('id')
+      if (error) return { success: false, error: error.message }
+      if (!data || data.length === 0) return { success: false, error: 'err_generic' }
+    }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a))
     const finalDate = newDate || appt?.date
     const finalSlot = newTimeSlot || appt?.time_slot
@@ -711,9 +742,24 @@ export function DataProvider({ children }) {
   const cancelAppointment = async (id) => {
     if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const appt = appointments.find(a => a.id === id)
-    const { data: updated, error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id).in('status', ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED']).select('id')
-    if (error) return { success: false, error: error.message }
-    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    let updated = null
+    if (sessionToken) {
+      const v2 = await supabase.rpc('cancel_appointment_admin_v2', {
+        p_session_token: sessionToken, p_appt_id: id,
+      })
+      if (v2.error && (v2.error.code === '42883' || v2.error.code === 'PGRST202')) {
+        // fallback
+      } else if (v2.error) {
+        return { success: false, error: v2.error.message }
+      } else {
+        updated = v2.data
+      }
+    }
+    if (!updated) {
+      const { data, error } = await supabase.from('appointments').update({ status: 'CANCELLED' }).eq('id', id).in('status', ['PENDING', 'APPROVED', 'CANCELLATION_REQUESTED']).select('id')
+      if (error) return { success: false, error: error.message }
+      if (!data || data.length === 0) return { success: false, error: 'err_generic' }
+    }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
     if (appt) logAudit('CANCEL_APPOINTMENT', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     if (appt) {
@@ -754,15 +800,29 @@ export function DataProvider({ children }) {
     if (!appt || appt.user_email !== loggedInUser?.email || appt.status !== 'PENDING') {
       return { success: false, error: 'err_generic' }
     }
-    const { data: updated, error } = await supabase
-      .from('appointments')
-      .update({ status: 'CANCELLED' })
-      .eq('id', id)
-      .eq('user_email', loggedInUser.email)
-      .eq('status', 'PENDING')
-      .select('id')
-    if (error) return { success: false, error: error.message }
-    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    // Token-aware RPC: server ownership check (RLS bypass riskini kapatır).
+    // RPC yoksa legacy direct UPDATE'e fallback.
+    let updated = null
+    if (sessionToken) {
+      const v2 = await supabase.rpc('cancel_own_appointment_v2', {
+        p_session_token: sessionToken, p_appt_id: id,
+      })
+      if (v2.error && (v2.error.code === '42883' || v2.error.code === 'PGRST202')) {
+        // RPC yok — fallback
+      } else if (v2.error) {
+        return { success: false, error: v2.error.message }
+      } else {
+        updated = v2.data
+      }
+    }
+    if (!updated) {
+      const { data, error } = await supabase
+        .from('appointments').update({ status: 'CANCELLED' })
+        .eq('id', id).eq('user_email', loggedInUser.email).eq('status', 'PENDING')
+        .select('id')
+      if (error) return { success: false, error: error.message }
+      if (!data || data.length === 0) return { success: false, error: 'err_generic' }
+    }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' } : a))
     logAudit('USER_CANCEL_APPOINTMENT', 'appointment', id, `${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
     const cityName = cities.find(c => String(c.id) === String(appt.city_id))?.name
@@ -784,14 +844,26 @@ export function DataProvider({ children }) {
 
   const submitCancellationRequest = async (id, note) => {
     const appt = appointments.find(a => a.id === id)
-    const { data: updated, error } = await supabase
-      .from('appointments')
-      .update({ status: 'CANCELLATION_REQUESTED', note: note || '' })
-      .eq('id', id)
-      .eq('status', 'APPROVED')
-      .select('id')
-    if (error) return { success: false, error: error.message }
-    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    let updated = null
+    if (sessionToken) {
+      const v2 = await supabase.rpc('submit_cancellation_request_v2', {
+        p_session_token: sessionToken, p_appt_id: id, p_note: note || '',
+      })
+      if (v2.error && (v2.error.code === '42883' || v2.error.code === 'PGRST202')) {
+        // fallback
+      } else if (v2.error) {
+        return { success: false, error: v2.error.message }
+      } else {
+        updated = v2.data
+      }
+    }
+    if (!updated) {
+      const { data, error } = await supabase
+        .from('appointments').update({ status: 'CANCELLATION_REQUESTED', note: note || '' })
+        .eq('id', id).eq('status', 'APPROVED').select('id')
+      if (error) return { success: false, error: error.message }
+      if (!data || data.length === 0) return { success: false, error: 'err_generic' }
+    }
     setAppointments(prev => prev.map(a =>
       a.id === id ? { ...a, status: 'CANCELLATION_REQUESTED', note: note || '' } : a
     ))
@@ -817,9 +889,24 @@ export function DataProvider({ children }) {
   const denyCancellationRequest = async (id) => {
     if (!loggedInAdmin) return { success: false, error: 'err_generic' }
     const appt = appointments.find(a => a.id === id)
-    const { data: updated, error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id).eq('status', 'CANCELLATION_REQUESTED').select('id')
-    if (error) return { success: false, error: error.message }
-    if (!updated || updated.length === 0) return { success: false, error: 'err_generic' }
+    let updated = null
+    if (sessionToken) {
+      const v2 = await supabase.rpc('deny_cancellation_request_v2', {
+        p_session_token: sessionToken, p_appt_id: id,
+      })
+      if (v2.error && (v2.error.code === '42883' || v2.error.code === 'PGRST202')) {
+        // fallback
+      } else if (v2.error) {
+        return { success: false, error: v2.error.message }
+      } else {
+        updated = v2.data
+      }
+    }
+    if (!updated) {
+      const { data, error } = await supabase.from('appointments').update({ status: 'APPROVED' }).eq('id', id).eq('status', 'CANCELLATION_REQUESTED').select('id')
+      if (error) return { success: false, error: error.message }
+      if (!data || data.length === 0) return { success: false, error: 'err_generic' }
+    }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'APPROVED' } : a))
     if (appt) {
       logAudit('DENY_CANCELLATION', 'appointment', id, `${appt.user_name} ${appt.user_surname} — ${appt.lab_name} — ${appt.date} ${appt.time_slot}`)
