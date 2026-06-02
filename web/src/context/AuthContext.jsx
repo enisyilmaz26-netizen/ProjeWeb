@@ -153,31 +153,27 @@ export function AuthProvider({ children }) {
     const rl = checkRateLimit(email)
     if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
-    // Token-aware RPC önce — yoksa eski login_user'a fallback (token'sız).
-    let user = null
-    let token = null
+    // Token-aware RPC zorunlu. Eski rate-limit'siz login_user fallback'i
+    // anon REST'ten doğrudan brute-force'a açıktı — kaldırıldı.
     const v2 = await supabase.rpc('login_user_with_token', { p_email: email, p_password: password })
-    if (!v2.error && v2.data && v2.data.length > 0) {
-      const row = v2.data[0]
-      token = row.session_token
-      user = row
-    } else if (v2.error && v2.error.code !== '42883' && v2.error.code !== 'PGRST202') {
+    if (v2.error) {
       const msg = v2.error.message || ''
       if (msg.includes('err_rate_limited')) return { success: false, error: 'err_rate_limited' }
+      console.error('login_user_with_token error:', v2.error)
+      return { success: false, error: 'err_generic' }
     }
+    let user = v2.data && v2.data[0]
+    const token = user?.session_token
 
     if (!user) {
-      const { data, error } = await supabase.rpc('login_user', { p_email: email, p_password: password })
-      if (error || !data || data.length === 0) {
-        const normalizedEmail = email.trim().toLowerCase()
-        const { data: userExists } = await supabase.from('users').select('id').eq('email', normalizedEmail).maybeSingle()
-        if (!userExists) return { success: false, error: 'err_email_not_found' }
-        const { data: adminExists } = await supabase.from('admins').select('id').eq('email', normalizedEmail).maybeSingle()
-        if (adminExists) return { success: false, error: 'err_email_not_found' }
-        recordFailedAttempt(email)
-        return { success: false, error: 'err_user_not_found' }
-      }
-      user = data[0]
+      // Login başarısız — email var/yok ayrımı için fallback lookup
+      const normalizedEmail = email.trim().toLowerCase()
+      const { data: userExists } = await supabase.from('users').select('id').eq('email', normalizedEmail).maybeSingle()
+      if (!userExists) return { success: false, error: 'err_email_not_found' }
+      const { data: adminExists } = await supabase.from('admins').select('id').eq('email', normalizedEmail).maybeSingle()
+      if (adminExists) return { success: false, error: 'err_email_not_found' }
+      recordFailedAttempt(email)
+      return { success: false, error: 'err_user_not_found' }
     }
 
     if (!user.is_approved) return { success: false, error: 'err_not_approved' }
@@ -194,25 +190,19 @@ export function AuthProvider({ children }) {
     const rl = checkRateLimit(email)
     if (rl.locked) return { success: false, error: 'err_rate_limited', secs: rl.secs }
 
-    let admin = null
-    let token = null
     const v2 = await supabase.rpc('login_admin_with_token', { p_email: email, p_password: password })
-    if (!v2.error && v2.data && v2.data.length > 0) {
-      const row = v2.data[0]
-      token = row.session_token
-      admin = row
-    } else if (v2.error && v2.error.code !== '42883' && v2.error.code !== 'PGRST202') {
+    if (v2.error) {
       const msg = v2.error.message || ''
       if (msg.includes('err_rate_limited')) return { success: false, error: 'err_rate_limited' }
+      console.error('login_admin_with_token error:', v2.error)
+      return { success: false, error: 'err_generic' }
     }
+    let admin = v2.data && v2.data[0]
+    const token = admin?.session_token
 
     if (!admin) {
-      const { data, error } = await supabase.rpc('login_admin', { p_email: email, p_password: password })
-      if (error || !data || data.length === 0) {
-        recordFailedAttempt(email)
-        return { success: false, error: 'err_user_not_found' }
-      }
-      admin = data[0]
+      recordFailedAttempt(email)
+      return { success: false, error: 'err_user_not_found' }
     }
 
     clearAttempts(email)
