@@ -9,3 +9,8 @@ supabase/.branches/
 # Node modules — defansif (web/.gitignore zaten yakalıyor)
 **/node_modules/
 **/dist/
+
+# Playwright
+**/test-results/
+**/playwright-report/
+**/.playwright/
