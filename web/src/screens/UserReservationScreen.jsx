@@ -66,6 +66,19 @@ export default function UserReservationScreen() {
   }, [cities, loggedInUser])
 
   const availableCities = userCity ? [userCity] : []
+  const singleCity = availableCities.length === 1
+
+  // Kullanıcı zaten kendi iline kilitli — şehir kartı tıklatmak gereksiz friction.
+  // cities listesi async yüklendiği için useEffect ile bekleyip otomatik geçiyoruz.
+  useEffect(() => {
+    if (singleCity && step === 1 && !selectedCity) {
+      setSelectedCity(userCity)
+      setSelectedLab(null)
+      setSelectedDate('')
+      setSelectedSlot(null)
+      setStep(2)
+    }
+  }, [singleCity, step, selectedCity, userCity])
 
   const cityLabs = useMemo(() => {
     if (!selectedCity) return []
@@ -203,10 +216,12 @@ export default function UserReservationScreen() {
 
       {/* Breadcrumb / Progress */}
       <nav aria-label={t('select_city', language)} className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-4 flex-wrap">
-        <button onClick={() => resetToStep(1)} aria-label={t('select_city', language)} className={`font-medium active:opacity-70 ${step >= 1 ? 'text-[#1565C0] dark:text-[#7DD4FC]' : ''}`}>
-          {t('select_city', language)}
-        </button>
-        {step >= 2 && <><span aria-hidden="true">›</span><button onClick={() => resetToStep(2)} aria-label={selectedCity?.name} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedCity?.name}</button></>}
+        {!singleCity && (
+          <button onClick={() => resetToStep(1)} aria-label={t('select_city', language)} className={`font-medium active:opacity-70 ${step >= 1 ? 'text-[#1565C0] dark:text-[#7DD4FC]' : ''}`}>
+            {t('select_city', language)}
+          </button>
+        )}
+        {step >= 2 && <>{!singleCity && <span aria-hidden="true">›</span>}<button onClick={() => resetToStep(2)} aria-label={selectedCity?.name} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedCity?.name}</button></>}
         {step >= 3 && <><span aria-hidden="true">›</span><button onClick={() => resetToStep(3)} aria-label={selectedLab?.name} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedLab?.name}</button></>}
         {step >= 4 && <><span aria-hidden="true">›</span><button onClick={() => resetToStep(4)} aria-label={formatDate(selectedDate)} className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{formatDate(selectedDate)}</button></>}
         {step >= 5 && <><span aria-hidden="true">›</span><span className="font-medium text-[#1565C0] dark:text-[#7DD4FC]">{selectedSlot?.time_range}</span></>}
