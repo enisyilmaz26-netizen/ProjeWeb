@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase, supabaseUrl } from '../lib/supabase'
 import { t } from '../lib/languages'
 import { writeNotification } from '../lib/notifications'
+import { setSentryUser } from '../lib/sentry'
 
 export const AuthContext = createContext(null)
 
@@ -96,6 +97,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     isLoggedInRef.current = !!(loggedInUser || loggedInAdmin)
+    setSentryUser(loggedInAdmin || loggedInUser || null)
   }, [loggedInUser, loggedInAdmin])
 
   const logout = useCallback(() => {
