@@ -201,7 +201,6 @@ export const translations = {
   restore_notifications: 'Geri Al',
   updating: 'Güncelleniyor...',
   restore_notifications_hint: '{n} gizlenmiş bildirim',
-  err_phone_format: 'Geçerli bir Türk telefon numarası giriniz (05XXXXXXXXX).',
   confirm_approve_appt: 'Bu randevuyu onaylamak istediğinizden emin misiniz?',
   confirm_cancel_appt: 'Bu randevuyu iptal etmek istediğinizden emin misiniz?',
   confirm_complete_appt: 'Bu randevuyu tamamlandı olarak işaretlemek istediğinizden emin misiniz?',
