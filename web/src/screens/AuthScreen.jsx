@@ -427,7 +427,7 @@ export default function AuthScreen({ onBack }) {
                       className="mt-0.5 accent-[#1565C0]"
                     />
                     <span className="text-xs text-gray-700 dark:text-gray-300">
-                      Girdiğim bilgilerin doğru ve eksiksiz olduğunu beyan ediyorum.
+                      {t('confirm_info_label', language)}
                     </span>
                   </label>
                 </div>

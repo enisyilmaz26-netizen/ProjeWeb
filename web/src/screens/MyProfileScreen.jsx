@@ -387,7 +387,7 @@ export default function MyProfileScreen() {
                 onChange={e => setConfirmInfoEdit(e.target.checked)}
                 className="mt-0.5 w-4 h-4 accent-[#1565C0] dark:accent-[#7DD4FC] cursor-pointer flex-shrink-0"
               />
-              <span>Girdiğim bilgilerin doğru ve eksiksiz olduğunu beyan ediyorum.</span>
+              <span>{t('confirm_info_label', language)}</span>
             </label>
             <div className="flex gap-2 pt-1">
               <button type="submit" disabled={editLoading || !confirmInfoEdit} className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] rounded-xl font-semibold text-sm disabled:opacity-60 hover:opacity-90 active:scale-[0.98] transition">

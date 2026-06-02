@@ -68,12 +68,12 @@ export default function MainAppContainer() {
     { key: 'profile', label: t('tab_profile', language), icon: <User className="w-4 h-4" /> },
     { key: 'notifications', label: t('tab_notifications', language), icon: <Bell className="w-4 h-4" /> },
     ...(messagesAvailable ? [{ key: 'messages', label: t('tab_messages', language), icon: <MessageSquare className="w-4 h-4" />, unread: userMsgUnread }] : []),
-    { key: 'help', label: 'Nasıl Kullanırım', icon: <HelpCircle className="w-4 h-4" /> },
+    { key: 'help', label: t('tab_how_to_use', language), icon: <HelpCircle className="w-4 h-4" /> },
   ]
   const adminTabs = [
     { key: 'admin', label: t('tab_admin', language), icon: <Settings className="w-4 h-4" /> },
     { key: 'notifications', label: t('tab_notifications', language), icon: <Bell className="w-4 h-4" /> },
-    { key: 'help', label: 'Nasıl Kullanırım', icon: <HelpCircle className="w-4 h-4" /> },
+    { key: 'help', label: t('tab_how_to_use', language), icon: <HelpCircle className="w-4 h-4" /> },
   ]
   const tabs = isAdmin ? adminTabs : userTabs
 
