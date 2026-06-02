@@ -755,7 +755,7 @@ export default function MyProfileScreen() {
                   onClick={handleReschedule}
                   className="flex-1 py-2.5 bg-[#1565C0] dark:bg-[#7DD4FC] text-white dark:text-[#060E26] text-sm font-semibold rounded-xl disabled:opacity-40 active:scale-[0.98] transition"
                 >
-                  {rescheduleLoading ? '...' : t('btn_update', language)}
+                  {rescheduleLoading ? t('updating', language) : t('btn_update', language)}
                 </button>
                 <button
                   onClick={() => setShowReschedule(false)}

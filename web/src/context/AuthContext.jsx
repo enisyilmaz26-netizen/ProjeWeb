@@ -308,8 +308,14 @@ export function AuthProvider({ children }) {
     if (file.size > 1048576) return { success: false, error: t('err_file_too_large', language) }
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     if (!allowed.includes(file.type)) return { success: false, error: t('err_file_type', language) }
-    const ext = file.name.split('.').pop().toLowerCase()
-    const path = `${type}/${id}.${ext}`
+    // Extension allowlist — input filename'i güvenilmez, only allowed image MIME → uzantı
+    const mimeExt = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }
+    const ext = mimeExt[file.type] || 'jpg'
+    // UUID suffix → her upload yeni dosya yolu; başka kullanıcı `users/<id>.jpg`
+    // path'ini bilse bile, gerçek dosya `users/<id>-<uuid>.jpg`'a yazılır.
+    // Eski path'i overwrite etmek için tahmin imkansız.
+    const uuid = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const path = `${type}/${id}-${uuid}.${ext}`
     const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
     if (upErr) return { success: false, error: upErr.message }
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/avatars/${path}`

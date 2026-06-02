@@ -76,7 +76,8 @@ function UserHelp() {
       </Section>
 
       <Section icon={<Lock className="w-4 h-4" />} title="Güvenlik">
-        <p>25 dakika boyunca aktif olmazsanız uyarı gösterilir; 5 dakika daha pasif kalırsanız oturum otomatik kapatılır. 5 yanlış şifre denemesinde 60 saniye boyunca giriş engellenir.</p>
+        <p>Uzun süre aktif olmazsanız oturumunuz güvenliğiniz için otomatik kapatılır (uyarı + ek süre tanınır). Şifre yanlış girilirse kısa süreli giriş engeli devreye girer.</p>
+        <p>Tüm hassas işlemler oturum jetonu (session token) ile doğrulanır — başka biri sizin adınıza randevu açamaz, mesaj yazamaz veya atölyeye kayıt olamaz.</p>
       </Section>
     </>
   )
