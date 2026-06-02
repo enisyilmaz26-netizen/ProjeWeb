@@ -103,7 +103,10 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     const tk = loadSessionToken()
     if (tk) {
-      supabase.rpc('revoke_session', { p_token: tk }).catch(() => {})
+      // supabase.rpc() PostgrestFilterBuilder döndürür — thenable ama .catch() yok.
+      // Doğrudan .catch çağırmak runtime error fırlatır, setLoggedInUser hiç çalışmaz
+      // ve kullanıcı çıkış yapamaz. Promise.resolve sarmalayarak güvene alıyoruz.
+      Promise.resolve(supabase.rpc('revoke_session', { p_token: tk })).catch(() => {})
     }
     saveSessionToken(null)
     setSessionTokenState(null)

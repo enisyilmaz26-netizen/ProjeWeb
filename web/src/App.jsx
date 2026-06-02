@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState } from 'react'
+import React, { lazy, Suspense, useState, useEffect } from 'react'
 import { useApp } from './context/AppContext'
 import ErrorBoundary from './components/ErrorBoundary'
 
@@ -19,6 +19,11 @@ export default function App() {
   const { loggedInUser, loggedInAdmin } = useApp()
   const [showAuth, setShowAuth] = useState(false)
   const isLoggedIn = loggedInUser !== null || loggedInAdmin !== null
+
+  // Login başarılı olunca AuthScreen flag'ini sıfırla — yoksa Çıkış sonrası
+  // isLoggedIn false olduğunda showAuth hâlâ true kalır ve AuthScreen render edilir,
+  // kullanıcının "çıkış çalışmıyor" diye algıladığı görünüm budur.
+  useEffect(() => { if (isLoggedIn) setShowAuth(false) }, [isLoggedIn])
 
   return (
     <ErrorBoundary>
