@@ -65,6 +65,73 @@ export function DataProvider({ children }) {
   const loadAllData = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true)
     try {
+      const isAuthed = !!(loggedInUser || loggedInAdmin)
+      const isUser = !!loggedInUser && !loggedInAdmin
+      const isGlobal = loggedInAdmin?.role === 'GLOBAL'
+      const isCityAdmin = !!loggedInAdmin && !isGlobal
+      const adminCityId = loggedInAdmin?.city_id
+      const userEmail = loggedInUser?.email
+      const userId = loggedInUser?.id
+      const userCityId = loggedInUser?.city_id
+      const NOOP = Promise.resolve({ data: [] })
+
+      // appointments — kullanıcı sadece kendi randevuları, CITY admin kendi şehri,
+      // GLOBAL admin son 5000. Auth yokken çekmeye gerek yok (LandingPage kullanmaz).
+      let apptQ = NOOP
+      if (isAuthed) {
+        let q = supabase.from('appointments').select('*').order('created_timestamp', { ascending: false })
+        if (isUser) q = q.eq('user_email', userEmail)
+        else if (isCityAdmin) q = q.eq('city_id', adminCityId)
+        else if (isGlobal) q = q.limit(5000)
+        apptQ = q
+      }
+
+      // notifications — kullanıcı ADMIN_ONLY almasın. Auth yokken hiç gerek yok.
+      let notifQ = NOOP
+      if (isAuthed) {
+        let q = supabase.from('notifications').select('*').order('timestamp', { ascending: false })
+        if (isUser) q = q.neq('type', 'ADMIN_ONLY').limit(500)
+        else q = q.limit(1000)
+        notifQ = q
+      }
+
+      // users — sadece admin gerekir; CITY admin kendi şehri.
+      let usersQ = NOOP
+      if (loggedInAdmin) {
+        let q = supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password,avatar_url').order('name')
+        if (isCityAdmin) q = q.eq('city_id', adminCityId)
+        usersQ = q
+      }
+
+      // workshops — kullanıcı/CITY admin kendi şehri; GLOBAL admin + unauth tümü
+      // (LandingPage upcoming workshop'ları gösterir).
+      let workshopsQ = supabase.from('workshops').select('*').order('date', { ascending: false })
+      if (isUser) workshopsQ = workshopsQ.eq('city_id', userCityId)
+      else if (isCityAdmin) workshopsQ = workshopsQ.eq('city_id', adminCityId)
+
+      // admins — sadece admin oturumda lazım (CITY admin GLOBAL'leri görür).
+      const adminsQ = loggedInAdmin
+        ? supabase.from('admins').select('id,name,email,role,city_id,phone,avatar_url').order('name')
+        : NOOP
+
+      // workshop_registrations — kullanıcı sadece kendi kayıtları, admin için sert limit.
+      let wsRegQ = NOOP
+      if (isAuthed) {
+        let q = supabase.from('workshop_registrations').select('*')
+        if (isUser) q = q.eq('user_email', userEmail)
+        else q = q.limit(10000)
+        wsRegQ = q
+      }
+
+      // conversations — kullanıcı kendi sender_id; CITY admin kendi şehri.
+      let convQ = NOOP
+      if (isAuthed) {
+        let q = supabase.from('conversations').select('*').order('last_message_at', { ascending: false })
+        if (isUser && userId) q = q.eq('sender_id', userId)
+        else if (isCityAdmin) q = q.eq('city_id', adminCityId)
+        convQ = q
+      }
+
       const [
         { data: citiesData },
         { data: labsData },
@@ -81,14 +148,14 @@ export function DataProvider({ children }) {
       ] = await Promise.all([
         supabase.from('cities').select('*').order('name'),
         supabase.from('laboratories').select('*').order('name'),
-        supabase.from('appointments').select('*').order('created_timestamp', { ascending: false }),
-        supabase.from('notifications').select('*').order('timestamp', { ascending: false }),
+        apptQ,
+        notifQ,
         supabase.from('city_time_slots').select('*').order('id'),
-        supabase.from('users').select('id,name,surname,email,is_approved,city_id,city_name,phone,branch,work_location,district,must_change_password,avatar_url').order('name'),
-        supabase.from('workshops').select('*').order('date', { ascending: false }),
-        supabase.from('admins').select('id,name,email,role,city_id,phone,avatar_url').order('name'),
-        supabase.from('workshop_registrations').select('*'),
-        supabase.from('conversations').select('*').order('last_message_at', { ascending: false }),
+        usersQ,
+        workshopsQ,
+        adminsQ,
+        wsRegQ,
+        convQ,
         supabase.from('closed_days').select('*').order('date'),
         supabase.from('certificate_templates').select('*'),
       ])
@@ -111,7 +178,7 @@ export function DataProvider({ children }) {
     } finally {
       if (showLoader) setLoading(false)
     }
-  }, [])
+  }, [loggedInUser, loggedInAdmin])
 
   useEffect(() => { loadAllData() }, [loadAllData])
 
