@@ -2,9 +2,10 @@ import React from 'react'
 import { useApp } from '../context/AppContext'
 import {
   Calendar, CheckCircle2, GraduationCap, Award, Bell, MessageSquare,
-  User, Lock, Settings, ClipboardList, Users, FlaskConical, Clock,
+  User, Lock, Settings, ClipboardList, Users, Clock,
   CalendarOff, Shield, Mail, ShieldCheck
 } from 'lucide-react'
+import { StudioLabIcon } from '../lib/icons'
 
 function Section({ icon, title, children }) {
   return (
@@ -101,7 +102,7 @@ function AdminHelp({ isGlobal }) {
         <p>Yeni atölye oluşturma, kapasiteyi belirleme, kayıtlı kullanıcı listesini görme ve katılım onayı (sertifika için gerekli) bu sekmeden yapılır.</p>
       </Section>
 
-      <Section icon={<FlaskConical className="w-4 h-4" />} title="Alanlar (Stüdyolar)">
+      <Section icon={<StudioLabIcon size={16} />} title="Alanlar (Stüdyolar)">
         <p>İlinize ait stüdyoları ekleyebilir, düzenleyebilirsiniz. Kapasite slot başına 1 (ses/video/podcast) veya özel ayar olabilir. Aktif randevusu olan bir alan silinemez; önce randevular iptal edilmelidir.</p>
       </Section>
 

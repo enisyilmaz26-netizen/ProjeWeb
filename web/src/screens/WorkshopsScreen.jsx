@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { t, formatDate } from '../lib/languages'
-import { BookOpen, Calendar, Clock, Users, CheckCircle2, Award } from 'lucide-react'
+import { Calendar, Clock, Users, CheckCircle2, Award } from 'lucide-react'
+import { InstructionalDesignIcon } from '../lib/icons'
 import { getLabIcon } from '../lib/icons'
 import CertificateModal from '../components/CertificateModal'
 
@@ -200,7 +201,7 @@ export default function WorkshopsScreen() {
 
       {cityWorkshops.length === 0 ? (
         <div className="bg-white dark:bg-[#0D1E3D] rounded-2xl shadow p-12 text-center">
-          <div className="mb-3 flex justify-center text-gray-400 dark:text-gray-500"><BookOpen className="w-10 h-10" aria-hidden="true" /></div>
+          <div className="mb-3 flex justify-center text-gray-400 dark:text-gray-500"><InstructionalDesignIcon size={40} /></div>
           <p className="text-gray-500 dark:text-gray-400 text-sm">{t('no_workshops', language)}</p>
         </div>
       ) : (
