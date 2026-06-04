@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import AppLogo from '../components/AppLogo'
 import { t, formatDate } from '../lib/languages'
-import { Sun, Moon, MapPin, Calendar, Clock, Mic, Video, Monitor, BookOpen, GraduationCap, FlaskConical, Users } from 'lucide-react'
-import { getLabIcon } from '../lib/icons'
+import { Sun, Moon, MapPin, Calendar, Clock, GraduationCap, Users } from 'lucide-react'
+import { getLabIcon, PodcastIcon, VideoStudioIcon, PostProdIcon, InstructionalDesignIcon, StudioLabIcon } from '../lib/icons'
 
 const NAV_LINKS = [
   { href: '#proje', label: 'Proje' },
@@ -33,7 +33,7 @@ export default function LandingPage({ onLoginClick }) {
       value: 8,
       label: 'Laboratuvar',
       color: '#1565C0',
-      icon: <FlaskConical className="w-6 h-6" />,
+      icon: <StudioLabIcon size={24} />,
     },
     {
       value: workshops.length || 0,
@@ -51,22 +51,22 @@ export default function LandingPage({ onLoginClick }) {
 
   const features = [
     {
-      icon: <Mic className="w-7 h-7" />,
+      icon: <PodcastIcon size="lg" />,
       title: 'Podcast & Ses Stüdyosu',
       desc: 'Profesyonel ses kayıt ekipmanlarıyla podcast ve sesli içerik üretimi.',
     },
     {
-      icon: <Video className="w-7 h-7" />,
+      icon: <VideoStudioIcon size="lg" />,
       title: 'Video Kayıt & Yeşil Ekran',
       desc: 'Yüksek kaliteli video içerik üretimi için profesyonel yeşil ekran stüdyoları.',
     },
     {
-      icon: <Monitor className="w-7 h-7" />,
+      icon: <PostProdIcon size="lg" />,
       title: 'Post Prodüksiyon Lab',
       desc: 'Video düzenleme ve dijital içerik geliştirme için donanımlı post prodüksiyon laboratuvarları.',
     },
     {
-      icon: <BookOpen className="w-7 h-7" />,
+      icon: <InstructionalDesignIcon size="lg" />,
       title: 'Öğretim Tasarımı Atölyesi',
       desc: 'Eğitim materyali ve senaryo geliştirme için uzman destekli atölye çalışmaları.',
     },
